@@ -19,7 +19,7 @@ type Expression =
     | LiteralExpr of Literal
     | IfExpr of If
     | FixExpr of Expression
-    | BinaryOperationExpr of BinaryOperator * Expression * Expression
+    | BinaryOperationExpr of BinaryOperation
 
 and Application =
     {
@@ -47,7 +47,23 @@ and If =
         FalseBranch : Expression
     }
 
-// let add x y = x + y; => let add = \x -> \y -> x + y;
-type Declaration = Identifier * Expression
+and BinaryOperation =
+    {
+        Operator : BinaryOperator
+        Left : Expression
+        Right : Expression
+    }
 
-type Program = Program of List<Declaration> * Expression
+/// Top-level declaration.
+/// E.g. let add x y = x + y => let add = \x -> \y -> x + y
+type Declaration =
+    {
+        Identifier : Identifier
+        Body : Expression
+    }
+
+type Program =
+    {
+        Declarations : List<Declaration>
+        Main : Expression
+    }
