@@ -14,23 +14,45 @@ module Parse =
             reply
 #endif
 
-    let private identifier =
+    let private parseIdentifier : Parser<_, unit> =
         identifier (IdentifierOptions ())
 
-    let private parseExpr, private parseExprRef =
+    let private parseExpression, private parseExpressionRef =
         createParserForwardedToRef ()
 
     let private parseVariable : Parser<Variable, _> =
-        identifier .>> spaces
+        parseIdentifier
+
+    let private parseApplication =
+        parse {
+            let! func = parseExpression
+            do! spaces
+            let! arg = parseExpression
+            return {
+                Function = func
+                Argument = arg
+            }
+        }
+
+    let private parseLambda =
+        parse {
+            let! ident = parseIdentifier
+            do! spaces >>. skipString "=>" >>. spaces
+            let! body = parseExpression
+            return {
+                LambdaAbstraction.Identifier = ident
+                Body = body
+            }
+        }
 
     let private parseIf =
         parse {
             do! skipString "if" >>. spaces
-            let! cond = parseExpr
+            let! cond = parseExpression
             do! spaces
-            let! trueBranch = parseExpr
+            let! trueBranch = parseExpression
             do! spaces >>. skipString "else" >>. spaces
-            let! falseBranch = parseExpr
+            let! falseBranch = parseExpression
             return {
                 Condition = cond
                 TrueBranch = trueBranch
@@ -41,6 +63,8 @@ module Parse =
     let private parseSimpleExpr =
         choice [
             parseVariable |>> VariableExpr
+            parseApplication |>> ApplicationExpr
+            parseLambda |>> LambdaExpr
             parseIf |>> IfExpr
         ]
 
@@ -70,3 +94,5 @@ module Parse =
         chainl1
             (parseSimpleExpr .>> spaces)
             (parseOp .>> spaces)
+
+    do parseExpressionRef.Value <- parseExprImpl
