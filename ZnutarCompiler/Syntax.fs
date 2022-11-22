@@ -7,7 +7,7 @@ type Literal =
     | BoolLiteral of bool
 
 type BinaryOperator =
-    | Add | Sub | Mul | Eql
+    | Plus | Minus | Times | Equals
 
 type Variable = string
 
