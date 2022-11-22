@@ -34,7 +34,7 @@ module Parse =
             }
         }
 
-    let private parseLambda =
+    let private parseLambdaAbstraction =
         parse {
             let! ident = parseIdentifier
             do! spaces >>. skipString "=>" >>. spaces
@@ -44,6 +44,28 @@ module Parse =
                 Body = body
             }
         }
+
+    let private parseLetBinding =
+        parse {
+            do! skipString "let" >>. spaces
+            let! ident = parseIdentifier
+            do! spaces >>. skipChar '=' >>. spaces
+            let! arg = parseExpression
+            do! spaces >>. skipString "in" >>. spaces
+            let! body = parseExpression
+            return {
+                Identifier = ident
+                Argument = arg
+                Body = body
+            }
+        }
+
+    let private parseLiteral =
+        choice [
+            pint32 |>> IntLiteral
+            skipString "true" >>% BoolLiteral true
+            skipString "false" >>% BoolLiteral false
+        ]
 
     let private parseIf =
         parse {
@@ -60,12 +82,21 @@ module Parse =
             }
         }
 
+    let private parseFix =
+        parse {
+            do! skipString "fix" >>. spaces
+            return! parseExpression
+        }
+
     let private parseSimpleExpr =
         choice [
             parseVariable |>> VariableExpr
             parseApplication |>> ApplicationExpr
-            parseLambda |>> LambdaExpr
+            parseLambdaAbstraction |>> LambdaExpr
+            parseLetBinding |>> LetExpr
+            parseLiteral |>> LiteralExpr
             parseIf |>> IfExpr
+            parseFix |>> FixExpr
         ]
 
     let private parseExprImpl =
