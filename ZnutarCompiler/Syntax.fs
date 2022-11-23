@@ -75,18 +75,25 @@ module Expression =
         | ApplicationExpr app ->
             $"({unparse app.Function} {unparse app.Argument})"
         | LambdaExpr lam ->
-            $"fun {Identifier.unparse lam.Identifier} -> {unparse lam.Body}"
+            $"fun {Identifier.unparse lam.Identifier} -> \
+                {unparse lam.Body}"
         | LetExpr letb ->
-            $"let {Identifier.unparse letb.Identifier} = {unparse letb.Argument} in {unparse letb.Body}"
+            $"let {Identifier.unparse letb.Identifier} = \
+                {unparse letb.Argument} in \
+                {unparse letb.Body}"
         | LiteralExpr (IntLiteral n) -> string n
         | LiteralExpr (BoolLiteral b) ->
             if b then "true" else "false"
         | IfExpr iff ->
-            $"if {unparse iff.Condition} then {unparse iff.TrueBranch} else {unparse iff.FalseBranch}"
+            $"if {unparse iff.Condition} \
+                then {unparse iff.TrueBranch} \
+                else {unparse iff.FalseBranch}"
         | FixExpr expr ->
             $"fix {unparse expr}"
         | BinaryOperationExpr bop ->
-            $"{unparse bop.Left} {BinaryOperator.unparse bop.Operator} {unparse bop.Right}"
+            $"{unparse bop.Left} \
+                {BinaryOperator.unparse bop.Operator} \
+                {unparse bop.Right}"
 
 /// Top-level declaration.
 /// E.g. let add x y = x + y => let add = \x -> \y -> x + y
