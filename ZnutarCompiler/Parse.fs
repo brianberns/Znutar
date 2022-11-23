@@ -118,22 +118,21 @@ module Parse =
             parseParenExpression
         ]
 
-    let chainl1 p op =
-        Inline.SepBy(
-            (fun x0 -> x0),
-            (fun x f y -> f x y),
-            (fun x -> x),
-            p <!> "p",
-            op <!> "op")
+    let private parseSimpleExprs =
 
-    let private parseMidExpr =
-        chainl1
-            (parseSimpleExpr <!> "parseSimpleExpr" .>> spaces)
-            (preturn (fun func arg ->
-                ApplicationExpr {
-                    Function = func
-                    Argument = arg
-                }))
+        let rec gather = function
+            | [] -> failwith "Unexpected"
+            | [expr] -> expr
+            | func :: arg :: tail ->
+                let expr =
+                    ApplicationExpr {
+                        Function = func
+                        Argument = arg
+                    }
+                gather (expr :: tail)
+
+        many1 (parseSimpleExpr .>> spaces)
+            |>> gather
 
     let private parseExprImpl =
 
@@ -159,7 +158,7 @@ module Parse =
                 |> choice
 
         chainl1
-            (parseMidExpr .>> spaces)
+            (parseSimpleExprs .>> spaces)
             (parseOp .>> spaces)
 
     do parseExpressionRef.Value <- parseExprImpl
