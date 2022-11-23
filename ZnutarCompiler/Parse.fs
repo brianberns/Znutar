@@ -28,8 +28,24 @@ module Parse =
     let private parseAngles parser =
         parseBrackets '<' '>' parser
 
+    let private parseKeyword =
+        [
+            "fun"
+            "let"
+            "in"
+            "true"
+            "false"
+            "if"
+            "then"
+            "else"
+            "fix"
+        ]
+            |> List.map pstring
+            |> choice
+
     let private parseIdentifier : Parser<_, unit> =
-        identifier (IdentifierOptions ())
+        notFollowedBy (lookAhead parseKeyword)
+            >>. identifier (IdentifierOptions ())
             |>> Name
 
     let parseExpression, private parseExpressionRef =
@@ -109,12 +125,12 @@ module Parse =
 
     let private parseSimpleExpr : Parser<_, _> =
         choice [
+            parseVariable |>> VariableExpr
             parseLambdaAbstraction |>> LambdaExpr
             parseLetBinding |>> LetExpr
             parseLiteral |>> LiteralExpr
             parseIf |>> IfExpr
             parseFix |>> FixExpr
-            parseVariable |>> VariableExpr   // must be last
             parseParenExpression
         ]
 
