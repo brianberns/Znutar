@@ -2,5 +2,5 @@ namespace Znutar
 
 module Program =
 
-    Parse.run Parse.parseExpression "if false then l else false"
+    Parse.run Parse.parseExpression "z"
         |> printfn "%A"

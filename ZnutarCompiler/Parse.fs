@@ -107,9 +107,8 @@ module Parse =
     let private parseParenExpression =
         parseParens parseExpression
 
-    let private parseSimpleExpr =
+    let private parseSimpleExpr : Parser<_, _> =
         choice [
-            parseApplication |>> ApplicationExpr
             parseLambdaAbstraction |>> LambdaExpr
             parseLetBinding |>> LetExpr
             parseLiteral |>> LiteralExpr
@@ -118,6 +117,23 @@ module Parse =
             parseVariable |>> VariableExpr   // must be last
             parseParenExpression
         ]
+
+    let chainl1 p op =
+        Inline.SepBy(
+            (fun x0 -> x0),
+            (fun x f y -> f x y),
+            (fun x -> x),
+            p <!> "p",
+            op <!> "op")
+
+    let private parseMidExpr =
+        chainl1
+            (parseSimpleExpr <!> "parseSimpleExpr" .>> spaces)
+            (preturn (fun func arg ->
+                ApplicationExpr {
+                    Function = func
+                    Argument = arg
+                }))
 
     let private parseExprImpl =
 
@@ -143,7 +159,7 @@ module Parse =
                 |> choice
 
         chainl1
-            (parseSimpleExpr .>> spaces)
+            (parseMidExpr .>> spaces)
             (parseOp .>> spaces)
 
     do parseExpressionRef.Value <- parseExprImpl
