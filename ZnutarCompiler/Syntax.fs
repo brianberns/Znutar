@@ -73,7 +73,7 @@ module Expression =
         | VariableExpr ident ->
             Identifier.unparse ident
         | ApplicationExpr app ->
-            $"({unparse app.Function} {unparse app.Argument})"
+            $"{unparse app.Function} {unparse app.Argument}"
         | LambdaExpr lam ->
             $"fun {Identifier.unparse lam.Identifier} -> \
                 {unparse lam.Body}"

@@ -40,11 +40,9 @@ module Parse =
 
     let private parseApplication =
         parse {
-            do! skipChar '(' >>. spaces
             let! func = parseExpression
             do! spaces
             let! arg = parseExpression
-            do! skipChar ')' >>. spaces
             return {
                 Function = func
                 Argument = arg
@@ -106,9 +104,8 @@ module Parse =
             return! parseExpression
         }
 
-    let private parseParenExpr =
-        parseExpr
-            |> parseParens
+    let private parseParenExpression =
+        parseParens parseExpression
 
     let private parseSimpleExpr =
         choice [
@@ -119,7 +116,7 @@ module Parse =
             parseIf |>> IfExpr
             parseFix |>> FixExpr
             parseVariable |>> VariableExpr   // must be last
-            parseParenExpr
+            parseParenExpression
         ]
 
     let private parseExprImpl =
