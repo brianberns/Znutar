@@ -26,9 +26,11 @@ module Parse =
 
     let private parseApplication =
         parse {
+            do! skipChar '(' >>. spaces
             let! func = parseExpression
             do! spaces
             let! arg = parseExpression
+            do! skipChar ')' >>. spaces
             return {
                 Function = func
                 Argument = arg
@@ -37,8 +39,9 @@ module Parse =
 
     let private parseLambdaAbstraction =
         parse {
+            do! skipString "fun" >>. spaces
             let! ident = parseIdentifier
-            do! spaces >>. skipString "=>" >>. spaces
+            do! spaces >>. skipString "->" >>. spaces
             let! body = parseExpression
             return {
                 LambdaAbstraction.Identifier = ident
@@ -91,13 +94,13 @@ module Parse =
 
     let private parseSimpleExpr =
         choice [
-            parseVariable |>> VariableExpr
             parseApplication |>> ApplicationExpr
             parseLambdaAbstraction |>> LambdaExpr
             parseLetBinding |>> LetExpr
             parseLiteral |>> LiteralExpr
             parseIf |>> IfExpr
             parseFix |>> FixExpr
+            parseVariable |>> VariableExpr   // must be last
         ]
 
     let private parseExprImpl =
