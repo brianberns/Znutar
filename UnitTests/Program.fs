@@ -1,1 +1,6 @@
-module Program = let [<EntryPoint>] main _ = 0
+namespace Znutar
+
+module Program =
+
+    Parse.run Parse.parseExpression "if false then l else false"
+        |> printfn "%A"

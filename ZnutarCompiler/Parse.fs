@@ -75,7 +75,7 @@ module Parse =
         parse {
             do! skipString "if" >>. spaces
             let! cond = parseExpression
-            do! spaces
+            do! spaces >>. skipString "then" >>. spaces
             let! trueBranch = parseExpression
             do! spaces >>. skipString "else" >>. spaces
             let! falseBranch = parseExpression
