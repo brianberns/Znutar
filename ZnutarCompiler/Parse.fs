@@ -16,8 +16,9 @@ module Parse =
 
     let private parseIdentifier : Parser<_, unit> =
         identifier (IdentifierOptions ())
+            |>> Name
 
-    let private parseExpression, private parseExpressionRef =
+    let parseExpression, private parseExpressionRef =
         createParserForwardedToRef ()
 
     let private parseVariable : Parser<Variable, _> =
@@ -127,3 +128,10 @@ module Parse =
             (parseOp .>> spaces)
 
     do parseExpressionRef.Value <- parseExprImpl
+
+    /// Runs the given parser on the given text.
+    let run parser text =
+        let parser' = parser .>> eof
+        match runParserOnString parser' () "" text with
+            | Success (result, _, _) -> Result.Ok result
+            | Failure (msg, _, _) -> Result.Error msg
