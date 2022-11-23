@@ -14,6 +14,20 @@ module Parse =
             reply
 #endif
 
+    let private parseBrackets cOpen cClose parser =
+        parse {
+            do! skipChar cOpen >>. spaces
+            let! value = parser
+            do! spaces >>. skipChar cClose
+            return value
+        }
+
+    let private parseParens parser =
+        parseBrackets '(' ')' parser
+
+    let private parseAngles parser =
+        parseBrackets '<' '>' parser
+
     let private parseIdentifier : Parser<_, unit> =
         identifier (IdentifierOptions ())
             |>> Name
@@ -92,6 +106,10 @@ module Parse =
             return! parseExpression
         }
 
+    let private parseParenExpr =
+        parseExpr
+            |> parseParens
+
     let private parseSimpleExpr =
         choice [
             parseApplication |>> ApplicationExpr
@@ -101,6 +119,7 @@ module Parse =
             parseIf |>> IfExpr
             parseFix |>> FixExpr
             parseVariable |>> VariableExpr   // must be last
+            parseParenExpr
         ]
 
     let private parseExprImpl =
