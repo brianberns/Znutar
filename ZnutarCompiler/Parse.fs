@@ -54,17 +54,6 @@ module Parse =
     let private parseVariable : Parser<Variable, _> =
         parseIdentifier
 
-    let private parseApplication =
-        parse {
-            let! func = parseExpression
-            do! spaces
-            let! arg = parseExpression
-            return {
-                Function = func
-                Argument = arg
-            }
-        }
-
     let private parseLambdaAbstraction =
         parse {
             do! skipString "fun" >>. spaces
