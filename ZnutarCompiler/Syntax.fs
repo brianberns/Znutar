@@ -108,7 +108,7 @@ module Declaration =
     let unparse decl =
         let ident = Identifier.unparse decl.Identifier
         let body = Expression.unparse decl.Body
-        $"let {ident} = {body};"
+        $"decl {ident} = {body}"
 
 type Program =
     {

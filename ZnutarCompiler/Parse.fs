@@ -174,11 +174,10 @@ module Parse =
 
     let private parseDeclaration =
         parse {
-            do! skipString "let" >>. spaces
+            do! skipString "decl" >>. spaces
             let! ident = parseIdentifier
             do! spaces >>. skipChar '=' >>. spaces
             let! body = Expression.parse
-            do! spaces >>. skipChar ';'
             return {
                 Identifier = ident
                 Body = body
