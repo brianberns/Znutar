@@ -56,7 +56,7 @@ module Parse =
         let private parseVariable : Parser<Variable, _> =
             parseIdentifier
 
-        let private parseLambdaAbstraction =
+        let private parseLambdaAbstraction =   // to-do: fold multiple arguments
             parse {
                 do! skipString "fun" >>. spaces
                 let! ident = parseIdentifier

@@ -1,6 +1,5 @@
 namespace Znutar
 
-open System
 open Microsoft.VisualStudio.TestTools.UnitTesting
 open FsCheck
 
