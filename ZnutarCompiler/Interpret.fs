@@ -56,7 +56,7 @@ module Interpret =
                             return! evalExpr env clo.Lambda.Body
                         | _ -> return! Error $"Invalid application: {app}"
                 | LetExpr letb ->
-                    let! exprVal = evalExpr env letb.Body
+                    let! exprVal = evalExpr env letb.Argument
                     let env' = Map.add letb.Identifier exprVal env
                     return! evalExpr env' letb.Body
                 | IfExpr iff ->
