@@ -178,6 +178,7 @@ module Parse =
             let! ident = parseIdentifier
             do! spaces >>. skipChar '=' >>. spaces
             let! body = Expression.parse
+            do! spaces >>. skipChar ';'
             return {
                 Identifier = ident
                 Body = body
