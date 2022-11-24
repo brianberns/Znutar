@@ -127,16 +127,16 @@ module Parse =
 
         let private parseSimpleExprs =
 
-            let rec gather = function
+            let gather = function
                 | [] -> failwith "Unexpected"
                 | [expr] -> expr
-                | func :: arg :: tail ->
-                    let expr =
-                        ApplicationExpr {
-                            Function = func
-                            Argument = arg
-                        }
-                    gather (expr :: tail)
+                | func :: exprs ->
+                    (func, exprs)
+                        ||> List.fold (fun func arg ->
+                                ApplicationExpr {
+                                    Function = func
+                                    Argument = arg
+                                })
 
             many1 (parseSimpleExpr .>> spaces)
                 |>> gather
