@@ -15,7 +15,7 @@ and TermEnvironment = Map<Identifier, Value>
 
 module Interpret =
 
-    let private evalBinaryOperation op xValue yValue =
+    let private evalBinOp op xValue yValue =
         match op, xValue, yValue with
             | Plus, IntValue x, IntValue y -> Ok (IntValue (x + y))
             | Minus, IntValue x, IntValue y -> Ok (IntValue (x - y))
@@ -39,7 +39,7 @@ module Interpret =
                 | BinaryOperationExpr bop ->
                     let! leftVal = evalExpr env bop.Left
                     let! rightVal = evalExpr env bop.Right
-                    return! evalBinaryOperation
+                    return! evalBinOp
                         bop.Operator
                         leftVal
                         rightVal
@@ -75,4 +75,20 @@ module Interpret =
                             Argument = FixExpr expr
                         }
                     return! evalExpr env expr
+        }
+
+    let private evalDecl env decl =
+        result {
+            let! declVal = evalExpr env decl.Body
+            return Map.add decl.Identifier declVal env
+        }
+
+    let evalProgram program =
+        result {
+            let! env =
+                Result.foldM
+                    evalDecl
+                    Map.empty
+                    program.Declarations
+            return! evalExpr env program.Main
         }
