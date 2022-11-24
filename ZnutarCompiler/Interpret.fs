@@ -48,4 +48,31 @@ module Eval =
                         Lambda = lam
                         Environment = env
                     }
+                | ApplicationExpr app ->
+                    match! evalExpr env app.Function with
+                        | ClosureValue clo ->
+                            let! argVal = evalExpr env app.Argument
+                            let env = Map.add clo.Lambda.Identifier argVal clo.Environment
+                            return! evalExpr env clo.Lambda.Body
+                        | _ -> return! Error $"Invalid application: {app}"
+                | LetExpr letb ->
+                    let! exprVal = evalExpr env letb.Body
+                    let env' = Map.add letb.Identifier exprVal env
+                    return! evalExpr env' letb.Body
+                | IfExpr iff ->
+                    let! condVal = evalExpr env iff.Condition
+                    match condVal with
+                        | BoolValue true ->
+                            return! evalExpr env iff.TrueBranch
+                        | BoolValue false ->
+                            return! evalExpr env iff.FalseBranch
+                        | _ ->
+                            return! Error $"Invalid condition value: {condVal}"
+                | FixExpr fix ->
+                    let expr =
+                        ApplicationExpr {
+                            Function = expr
+                            Argument = FixExpr expr
+                        }
+                    return! evalExpr env expr
         }

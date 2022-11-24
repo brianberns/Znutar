@@ -9,7 +9,7 @@
     <Compile Include="Result.fs" />
     <Compile Include="Syntax.fs" />
     <Compile Include="Parse.fs" />
-    <Compile Include="Eval.fs" />
+    <Compile Include="Interpret.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
