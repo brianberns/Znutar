@@ -103,8 +103,25 @@ type Declaration =
         Body : Expression
     }
 
+module Declaration =
+
+    let unparse decl =
+        let ident = Identifier.unparse decl.Identifier
+        let body = Expression.unparse decl.Body
+        $"let {ident} = {body};"
+
 type Program =
     {
         Declarations : List<Declaration>
         Main : Expression
     }
+
+module Program =
+
+    let unparse program =
+        let decls =
+            program.Declarations
+                |> Seq.map Declaration.unparse
+                |> String.concat "\n\n"
+        let main = Expression.unparse program.Main
+        $"{decls}\n\n{main}"

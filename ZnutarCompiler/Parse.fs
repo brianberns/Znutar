@@ -48,125 +48,154 @@ module Parse =
             >>. identifier (IdentifierOptions ())
             |>> Name
 
-    let parseExpression, private parseExpressionRef =
-        createParserForwardedToRef ()
+    module private Expression =
 
-    let private parseVariable : Parser<Variable, _> =
-        parseIdentifier
+        let private parseExpression, private parseExpressionRef =
+            createParserForwardedToRef ()
 
-    let private parseLambdaAbstraction =
-        parse {
-            do! skipString "fun" >>. spaces
-            let! ident = parseIdentifier
-            do! spaces >>. skipString "->" >>. spaces
-            let! body = parseExpression
-            return {
-                LambdaAbstraction.Identifier = ident
-                Body = body
+        let private parseVariable : Parser<Variable, _> =
+            parseIdentifier
+
+        let private parseLambdaAbstraction =
+            parse {
+                do! skipString "fun" >>. spaces
+                let! ident = parseIdentifier
+                do! spaces >>. skipString "->" >>. spaces
+                let! body = parseExpression
+                return {
+                    LambdaAbstraction.Identifier = ident
+                    Body = body
+                }
             }
-        }
 
-    let private parseLetBinding =
+        let private parseLetBinding =
+            parse {
+                do! skipString "let" >>. spaces
+                let! ident = parseIdentifier
+                do! spaces >>. skipChar '=' >>. spaces
+                let! arg = parseExpression
+                do! spaces >>. skipString "in" >>. spaces
+                let! body = parseExpression
+                return {
+                    Identifier = ident
+                    Argument = arg
+                    Body = body
+                }
+            }
+
+        let private parseLiteral =
+            choice [
+                pint32 |>> IntLiteral
+                skipString "true" >>% BoolLiteral true
+                skipString "false" >>% BoolLiteral false
+            ]
+
+        let private parseIf =
+            parse {
+                do! skipString "if" >>. spaces
+                let! cond = parseExpression
+                do! spaces >>. skipString "then" >>. spaces
+                let! trueBranch = parseExpression
+                do! spaces >>. skipString "else" >>. spaces
+                let! falseBranch = parseExpression
+                return {
+                    Condition = cond
+                    TrueBranch = trueBranch
+                    FalseBranch = falseBranch
+                }
+            }
+
+        let private parseFix =
+            parse {
+                do! skipString "fix" >>. spaces
+                return! parseExpression
+            }
+
+        let private parseParenExpression =
+            parseParens parseExpression
+
+        let private parseSimpleExpr : Parser<_, _> =
+            choice [
+                parseVariable |>> VariableExpr
+                parseLambdaAbstraction |>> LambdaExpr
+                parseLetBinding |>> LetExpr
+                parseLiteral |>> LiteralExpr
+                parseIf |>> IfExpr
+                parseFix |>> FixExpr
+                parseParenExpression
+            ]
+
+        let private parseSimpleExprs =
+
+            let rec gather = function
+                | [] -> failwith "Unexpected"
+                | [expr] -> expr
+                | func :: arg :: tail ->
+                    let expr =
+                        ApplicationExpr {
+                            Function = func
+                            Argument = arg
+                        }
+                    gather (expr :: tail)
+
+            many1 (parseSimpleExpr .>> spaces)
+                |>> gather
+
+        let private parseExprImpl =
+
+            let create (str, op) =
+                parse {
+                    do! skipString str >>. spaces
+                    return (fun left right ->
+                        BinaryOperationExpr {
+                            Operator = op
+                            Left = left
+                            Right = right
+                        })
+                }
+
+            let parseOp =
+                [
+                    "+", Plus
+                    "-", Minus
+                    "*", Times
+                    "=", Equals
+                ]
+                    |> List.map create
+                    |> choice
+
+            chainl1
+                (parseSimpleExprs .>> spaces)
+                (parseOp .>> spaces)
+
+        do parseExpressionRef.Value <- parseExprImpl
+
+        let parse = parseExpression
+
+    let private parseDeclaration =
         parse {
             do! skipString "let" >>. spaces
             let! ident = parseIdentifier
             do! spaces >>. skipChar '=' >>. spaces
-            let! arg = parseExpression
-            do! spaces >>. skipString "in" >>. spaces
-            let! body = parseExpression
+            let! body = Expression.parse
+            do! spaces >>. skipChar ';'
             return {
                 Identifier = ident
-                Argument = arg
                 Body = body
             }
         }
 
-    let private parseLiteral =
-        choice [
-            pint32 |>> IntLiteral
-            skipString "true" >>% BoolLiteral true
-            skipString "false" >>% BoolLiteral false
-        ]
-
-    let private parseIf =
+    let parseProgram =
         parse {
-            do! skipString "if" >>. spaces
-            let! cond = parseExpression
-            do! spaces >>. skipString "then" >>. spaces
-            let! trueBranch = parseExpression
-            do! spaces >>. skipString "else" >>. spaces
-            let! falseBranch = parseExpression
+            do! spaces
+            let! decls = many (parseDeclaration .>> spaces)
+            let! main = Expression.parse
+            do! spaces
             return {
-                Condition = cond
-                TrueBranch = trueBranch
-                FalseBranch = falseBranch
+                Declarations = decls
+                Main = main
             }
         }
-
-    let private parseFix =
-        parse {
-            do! skipString "fix" >>. spaces
-            return! parseExpression
-        }
-
-    let private parseParenExpression =
-        parseParens parseExpression
-
-    let private parseSimpleExpr : Parser<_, _> =
-        choice [
-            parseVariable |>> VariableExpr
-            parseLambdaAbstraction |>> LambdaExpr
-            parseLetBinding |>> LetExpr
-            parseLiteral |>> LiteralExpr
-            parseIf |>> IfExpr
-            parseFix |>> FixExpr
-            parseParenExpression
-        ]
-
-    let private parseSimpleExprs =
-
-        let rec gather = function
-            | [] -> failwith "Unexpected"
-            | [expr] -> expr
-            | func :: arg :: tail ->
-                let expr =
-                    ApplicationExpr {
-                        Function = func
-                        Argument = arg
-                    }
-                gather (expr :: tail)
-
-        many1 (parseSimpleExpr .>> spaces)
-            |>> gather
-
-    let private parseExprImpl =
-
-        let create (str, op) =
-            parse {
-                do! skipString str >>. spaces
-                return (fun left right ->
-                    BinaryOperationExpr {
-                        Operator = op
-                        Left = left
-                        Right = right
-                    })
-            }
-
-        let parseOp =
-            [
-                "+", Plus
-                "-", Minus
-                "*", Times
-                "=", Equals
-            ]
-                |> List.map create
-                |> choice
-
-        chainl1
-            (parseSimpleExprs .>> spaces)
-            (parseOp .>> spaces)
-
-    do parseExpressionRef.Value <- parseExprImpl
 
     /// Runs the given parser on the given text.
     let run parser text =
