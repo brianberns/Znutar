@@ -77,6 +77,7 @@ module Interpret =
                         | _ ->
                             return! Error $"Invalid condition value: {condVal}"
 
+                    // fix f = \x -> f (fix f) x
                     // https://en.wikipedia.org/wiki/Fixed-point_combinator#Strict_functional_implementation
                 | FixExpr f ->
                     let lamExpr =
