@@ -14,18 +14,18 @@ type Assert private () =
 type InterpretTests() =
 
     [<TestMethod>]
-    member _.Interpret() =
+    member _.Factorial() =
         let result =
             result {
                 let text =
                     """
-                    let fact = fix (fun fact -> fun n ->
+                    decl factorial = fix (fun fact -> fun n ->
                         if (n = 0) then 1
-                        else (n * (fact (n-1))));
+                        else (n * (fact (n - 1))));
 
-                    fact 6
+                    factorial 6
                     """
                 let! program = Parse.run Parse.parseProgram text
                 return! Interpret.evalProgram program
             }
-        Assert.AreEqual(Ok (IntValue 6), result)
+        Assert.AreEqual(Ok (IntValue 720), result)
