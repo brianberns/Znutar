@@ -26,16 +26,17 @@ module Interpret =
     let rec evalExpr env expr =
         result {
             match expr with
-                | LiteralExpr (IntLiteral n) ->
-                    return IntValue n
-                | LiteralExpr (BoolLiteral b) ->
-                    return BoolValue b
+
+                | LiteralExpr (IntLiteral n) -> return IntValue n
+                | LiteralExpr (BoolLiteral b) -> return BoolValue b
+
                 | VariableExpr var ->
                     match Map.tryFind var env with
                         | Some value ->
                             return value
                         | None ->
                             return! Error $"No such variable: {var}"
+
                 | BinaryOperationExpr bop ->
                     let! leftVal = evalExpr env bop.Left
                     let! rightVal = evalExpr env bop.Right
@@ -43,22 +44,29 @@ module Interpret =
                         bop.Operator
                         leftVal
                         rightVal
+
                 | LambdaExpr lam ->
                     return ClosureValue {
                         Lambda = lam
                         Environment = env
                     }
+
                 | ApplicationExpr app ->
                     match! evalExpr env app.Function with
                         | ClosureValue clo ->
                             let! argVal = evalExpr env app.Argument
-                            let env = Map.add clo.Lambda.Identifier argVal clo.Environment
-                            return! evalExpr env clo.Lambda.Body
+                            let cloEnv =
+                                Map.add
+                                    clo.Lambda.Identifier
+                                    argVal clo.Environment
+                            return! evalExpr cloEnv clo.Lambda.Body
                         | _ -> return! Error $"Invalid application: {app}"
+
                 | LetExpr letb ->
                     let! exprVal = evalExpr env letb.Argument
                     let env' = Map.add letb.Identifier exprVal env
                     return! evalExpr env' letb.Body
+
                 | IfExpr iff ->
                     let! condVal = evalExpr env iff.Condition
                     match condVal with
@@ -68,10 +76,13 @@ module Interpret =
                             return! evalExpr env iff.FalseBranch
                         | _ ->
                             return! Error $"Invalid condition value: {condVal}"
+
+                    // https://en.wikipedia.org/wiki/Fixed-point_combinator#Strict_functional_implementation
                 | FixExpr f ->
-                    let expr =
+                    let lamExpr =
+                        let ident = Name "$x"
                         LambdaExpr {
-                            Identifier = Name "$x"
+                            Identifier = ident
                             Body =
                                 ApplicationExpr {
                                     Function =
@@ -79,10 +90,10 @@ module Interpret =
                                             Function = f
                                             Argument = FixExpr f
                                         }
-                                    Argument = VariableExpr (Name "$x")
+                                    Argument = VariableExpr ident
                                 }
                         }
-                    return! evalExpr env expr
+                    return! evalExpr env lamExpr
         }
 
     let private evalDecl env decl =
