@@ -13,7 +13,7 @@ and Closure =
 
 and TermEnvironment = Map<Identifier, Value>
 
-module Interpret =
+module Interpreter =
 
     let private evalBinOp op xValue yValue =
         match op, xValue, yValue with

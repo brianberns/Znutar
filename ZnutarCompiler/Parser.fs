@@ -2,7 +2,7 @@
 
 open FParsec
 
-module Parse =
+module Parser =
 
 #if DEBUG
     let (<!>) (p: Parser<_,_>) label : Parser<_,_> =

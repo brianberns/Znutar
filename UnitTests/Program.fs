@@ -10,6 +10,6 @@ module Program =
 
             fact 6
             """
-        let! program = Parse.run Parse.parseProgram text
-        return! Interpret.evalProgram program
+        let! program = Parser.run Parser.parseProgram text
+        return! Interpreter.evalProgram program
     } |> printfn "%A"
