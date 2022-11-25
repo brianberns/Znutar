@@ -24,6 +24,7 @@ module BinaryOperator =
 
 type Variable = Identifier
 
+[<System.Diagnostics.DebuggerDisplay("{Unparse()}")>]
 type Expression =
     | VariableExpr of Variable
     | ApplicationExpr of Application
@@ -33,6 +34,34 @@ type Expression =
     | IfExpr of If
     | FixExpr of Expression
     | BinaryOperationExpr of BinaryOperation
+    with
+
+    member expr.Unparse() =
+        match expr with
+            | VariableExpr ident ->
+                Identifier.unparse ident
+            | ApplicationExpr app ->
+                $"({app.Function.Unparse()} {app.Argument.Unparse()})"
+            | LambdaExpr lam ->
+                $"(fun {Identifier.unparse lam.Identifier} -> \
+                    {lam.Body.Unparse()})"
+            | LetExpr letb ->
+                $"(let {Identifier.unparse letb.Identifier} = \
+                    {letb.Argument.Unparse()} in \
+                    {letb.Body.Unparse()})"
+            | LiteralExpr (IntLiteral n) -> string n
+            | LiteralExpr (BoolLiteral b) ->
+                if b then "true" else "false"
+            | IfExpr iff ->
+                $"(if {iff.Condition.Unparse()} \
+                    then {iff.TrueBranch.Unparse()} \
+                    else {iff.FalseBranch.Unparse()})"
+            | FixExpr expr ->
+                $"(fix {expr.Unparse()})"
+            | BinaryOperationExpr bop ->
+                $"({bop.Left.Unparse()} \
+                    {BinaryOperator.unparse bop.Operator} \
+                    {bop.Right.Unparse()})"
 
 and Application =
     {
@@ -69,31 +98,8 @@ and BinaryOperation =
 
 module Expression =
 
-    let rec unparse = function
-        | VariableExpr ident ->
-            Identifier.unparse ident
-        | ApplicationExpr app ->
-            $"({unparse app.Function} {unparse app.Argument})"
-        | LambdaExpr lam ->
-            $"(fun {Identifier.unparse lam.Identifier} -> \
-                {unparse lam.Body})"
-        | LetExpr letb ->
-            $"(let {Identifier.unparse letb.Identifier} = \
-                {unparse letb.Argument} in \
-                {unparse letb.Body})"
-        | LiteralExpr (IntLiteral n) -> string n
-        | LiteralExpr (BoolLiteral b) ->
-            if b then "true" else "false"
-        | IfExpr iff ->
-            $"(if {unparse iff.Condition} \
-                then {unparse iff.TrueBranch} \
-                else {unparse iff.FalseBranch})"
-        | FixExpr expr ->
-            $"(fix {unparse expr})"
-        | BinaryOperationExpr bop ->
-            $"({unparse bop.Left} \
-                {BinaryOperator.unparse bop.Operator} \
-                {unparse bop.Right})"
+    let rec unparse (expr : Expression) =
+        expr.Unparse()
 
 /// Top-level declaration.
 /// E.g. let add x y = x + y => let add = \x -> \y -> x + y
