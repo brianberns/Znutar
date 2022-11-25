@@ -13,15 +13,65 @@ and Closure =
 
 and TermEnvironment = Map<Identifier, Value>
 
+type InvalidBinaryOperation =
+    {
+        Operator : BinaryOperator
+        LeftValue : Value
+        RightValue : Value
+    }
+    interface ICompilerError
+
+module InvalidBinaryOperation =
+
+    let error op leftVal rightVal =
+        CompilerError.create {
+            Operator = op
+            LeftValue = leftVal
+            RightValue = rightVal
+        }
+
+type UndefinedVariable =
+    {
+        Variable : Variable
+    }
+    interface ICompilerError
+
+module UndefinedVariable =
+
+    let error var =
+        CompilerError.create { Variable = var }
+
+type InvalidApplication =
+    {
+        Application : Application
+    }
+    interface ICompilerError
+
+module InvalidApplication =
+
+    let error app =
+        CompilerError.create { Application = app }
+
+type InvalidConditionValue =
+    {
+        Value : Value
+    }
+    interface ICompilerError
+
+module InvalidConditionValue =
+
+    let error value =
+        CompilerError.create { Value = value }
+
 module Interpreter =
 
-    let private evalBinOp op xValue yValue =
-        match op, xValue, yValue with
+    let private evalBinOp op leftVal rightVal =
+        match op, leftVal, rightVal with
             | Plus, IntValue x, IntValue y -> Ok (IntValue (x + y))
             | Minus, IntValue x, IntValue y -> Ok (IntValue (x - y))
             | Times, IntValue x, IntValue y -> Ok (IntValue (x * y))
             | Equals, IntValue x, IntValue y -> Ok (BoolValue (x = y))
-            | _ -> Error $"Invalid operation: {xValue} {op} {yValue}"
+            | _ -> InvalidBinaryOperation.error op leftVal rightVal
 
     let rec evalExpr env expr =
         result {
@@ -35,7 +85,7 @@ module Interpreter =
                         | Some value ->
                             return value
                         | None ->
-                            return! Error $"No such variable: {var}"
+                            return! UndefinedVariable.error var
 
                 | BinaryOperationExpr bop ->
                     let! leftVal = evalExpr env bop.Left
@@ -60,7 +110,7 @@ module Interpreter =
                                     clo.Lambda.Identifier
                                     argVal clo.Environment
                             return! evalExpr cloEnv clo.Lambda.Body
-                        | _ -> return! Error $"Invalid application: {app}"
+                        | _ -> return! InvalidApplication.error app
 
                 | LetExpr letb ->
                     let! exprVal = evalExpr env letb.Argument
@@ -75,7 +125,7 @@ module Interpreter =
                         | BoolValue false ->
                             return! evalExpr env iff.FalseBranch
                         | _ ->
-                            return! Error $"Invalid condition value: {condVal}"
+                            return! InvalidConditionValue.error condVal
 
                     // fix f = \x -> f (fix f) x
                     // https://en.wikipedia.org/wiki/Fixed-point_combinator#Strict_functional_implementation

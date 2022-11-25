@@ -2,6 +2,17 @@
 
 open FParsec
 
+type ParserError =
+    {
+        Message : string
+    }
+    interface ICompilerError
+
+module ParserError =
+
+    let error msg =
+        CompilerError.create { Message = msg }
+
 module Parser =
 
 #if DEBUG
@@ -202,4 +213,4 @@ module Parser =
         let parser' = parser .>> eof
         match runParserOnString parser' () "" text with
             | Success (result, _, _) -> Result.Ok result
-            | Failure (msg, _, _) -> Result.Error msg
+            | Failure (msg, _, _) -> ParserError.error msg

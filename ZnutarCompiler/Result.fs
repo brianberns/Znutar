@@ -28,3 +28,10 @@ module Result =
             | [] -> Ok state
 
         loop state items
+
+type ICompilerError = interface end
+
+module CompilerError =
+
+    let create (err : ICompilerError) =
+        Error err
