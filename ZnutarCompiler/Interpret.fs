@@ -68,11 +68,19 @@ module Interpret =
                             return! evalExpr env iff.FalseBranch
                         | _ ->
                             return! Error $"Invalid condition value: {condVal}"
-                | FixExpr fix ->
+                | FixExpr f ->
                     let expr =
-                        ApplicationExpr {
-                            Function = expr
-                            Argument = FixExpr expr
+                        LambdaExpr {
+                            Identifier = Name "$x"
+                            Body =
+                                ApplicationExpr {
+                                    Function =
+                                        ApplicationExpr {
+                                            Function = f
+                                            Argument = FixExpr f
+                                        }
+                                    Argument = VariableExpr (Name "$x")
+                                }
                         }
                     return! evalExpr env expr
         }
