@@ -14,8 +14,27 @@ type Assert private () =
 type InterpretTests() =
 
     [<TestMethod>]
+    member _.Subtraction() =
+
+        let res =
+            result {
+                let text = "3-2"
+                let! program = Parse.run Parse.parseProgram text
+                return! Interpret.evalProgram program
+            }
+        Assert.AreEqual(Ok (IntValue 1), res)
+
+        let res =
+            result {
+                let text = "3-2"
+                let! program = Parse.run Parse.parseProgram text
+                return! Interpret.evalProgram program
+            }
+        Assert.AreEqual(Ok (IntValue 1), res)
+
+    [<TestMethod>]
     member _.Factorial() =
-        let result =
+        let res =
             result {
                 let text =
                     """
@@ -28,4 +47,4 @@ type InterpretTests() =
                 let! program = Parse.run Parse.parseProgram text
                 return! Interpret.evalProgram program
             }
-        Assert.AreEqual(Ok (IntValue 720), result)
+        Assert.AreEqual(Ok (IntValue 720), res)
