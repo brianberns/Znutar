@@ -48,9 +48,6 @@ module Substitution =
 
     /// Composition of substitutions.
     let compose (subst1 : Substitution) (subst2 : Substitution) : Substitution =
-        assert(Set.intersect
-            (set subst1.Keys)
-            (set subst2.Keys) = Set.empty)
         subst2
             |> Map.map (fun _ value ->
                 Type.apply subst1 value)
