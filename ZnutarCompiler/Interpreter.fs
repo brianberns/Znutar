@@ -14,54 +14,41 @@ and Closure =
 and TermEnvironment = Map<Identifier, Value>
 
 type InvalidBinaryOperation =
-    {
-        Operator : BinaryOperator
-        LeftValue : Value
-        RightValue : Value
-    }
-    interface ICompilerError
+    InvalidBinaryOperation of BinaryOperator * Value * Value
+    with interface ICompilerError
 
 module InvalidBinaryOperation =
 
     let error op leftVal rightVal =
-        CompilerError.create {
-            Operator = op
-            LeftValue = leftVal
-            RightValue = rightVal
-        }
+        (op, leftVal, rightVal)
+            |> InvalidBinaryOperation
+            |> CompilerError.create            
 
-type UndefinedVariable =
-    {
-        Variable : Variable
-    }
-    interface ICompilerError
+type UnboundVariable = UnboundVariable of Variable
+    with interface ICompilerError
 
 module UndefinedVariable =
 
-    let error var =
-        CompilerError.create { Variable = var }
+    let error =
+        UnboundVariable >> CompilerError.create
 
 type InvalidApplication =
-    {
-        Application : Application
-    }
-    interface ICompilerError
+    InvalidApplication of Application
+    with interface ICompilerError
 
 module InvalidApplication =
 
-    let error app =
-        CompilerError.create { Application = app }
+    let error =
+        InvalidApplication >> CompilerError.create
 
 type InvalidConditionValue =
-    {
-        Value : Value
-    }
-    interface ICompilerError
+    InvalidConditionValue of Value
+    with interface ICompilerError
 
 module InvalidConditionValue =
 
-    let error value =
-        CompilerError.create { Value = value }
+    let error =
+        InvalidConditionValue >> CompilerError.create
 
 module Interpreter =
 

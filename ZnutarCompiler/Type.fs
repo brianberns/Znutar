@@ -25,12 +25,6 @@ type Type =
 
 module Type =
 
-    let rec freeTypeVars = function
-        | TypeConstant _ -> Set.empty
-        | TypeVariable ident -> Set.singleton ident
-        | TypeArrow (inpType, outType) ->
-            freeTypeVars inpType + freeTypeVars outType
-
     let int = TypeConstant { Name = "Int" }
     let bool = TypeConstant { Name = "Bool" }
 
