@@ -19,14 +19,17 @@ type Type =
 
     /// Function type. E.g. "'a -> Int".
     | TypeArrow of Type * Type
-    with
 
+    with
     member typ.Unparse() =
         match typ with
             | TypeConstant ident -> ident.Name
             | TypeVariable tv -> TypeVariable.unparse tv
             | TypeArrow (inpType, outType) ->
                 $"({inpType.Unparse()} -> {outType.Unparse()})"
+
+    static member (=>) (type1, type2) =
+        TypeArrow (type1, type2)
 
 module Type =
 

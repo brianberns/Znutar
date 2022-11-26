@@ -6,11 +6,6 @@ type UnificationFailure =
     UnificationFailure of Type * Type
     with interface ICompilerError
 
-[<AutoOpen>]
-module Arrow =
-
-    let (=>) t1 t2 = TypeArrow (t1, t2)
-
 module Substitution =
 
     let empty : Substitution = Map.empty

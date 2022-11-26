@@ -37,8 +37,8 @@ type Expression =
     | IfExpr of If
     | FixExpr of Expression
     | BinaryOperationExpr of BinaryOperation
-    with
 
+    with
     member expr.Unparse() =
         match expr with
             | VariableExpr ident ->
