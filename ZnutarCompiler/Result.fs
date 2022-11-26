@@ -31,7 +31,8 @@ module Result =
 
 type ICompilerError = interface end
 
+[<AutoOpen>]
 module CompilerError =
 
-    let create (err : ICompilerError) =
+    let error (err : ICompilerError) =
         Error err

@@ -22,33 +22,18 @@ module InvalidBinaryOperation =
     let error op leftVal rightVal =
         (op, leftVal, rightVal)
             |> InvalidBinaryOperation
-            |> CompilerError.create            
+            |> error
 
 type UnboundVariable = UnboundVariable of Variable
     with interface ICompilerError
-
-module UndefinedVariable =
-
-    let error =
-        UnboundVariable >> CompilerError.create
 
 type InvalidApplication =
     InvalidApplication of Application
     with interface ICompilerError
 
-module InvalidApplication =
-
-    let error =
-        InvalidApplication >> CompilerError.create
-
 type InvalidConditionValue =
     InvalidConditionValue of Value
     with interface ICompilerError
-
-module InvalidConditionValue =
-
-    let error =
-        InvalidConditionValue >> CompilerError.create
 
 module Interpreter =
 
@@ -72,7 +57,7 @@ module Interpreter =
                         | Some value ->
                             return value
                         | None ->
-                            return! UndefinedVariable.error var
+                            return! error (UnboundVariable var)
 
                 | BinaryOperationExpr bop ->
                     let! leftVal = evalExpr env bop.Left
@@ -97,7 +82,7 @@ module Interpreter =
                                     clo.Lambda.Identifier
                                     argVal clo.Environment
                             return! evalExpr cloEnv clo.Lambda.Body
-                        | _ -> return! InvalidApplication.error app
+                        | _ -> return! error (InvalidApplication app)
 
                 | LetExpr letb ->
                     let! exprVal = evalExpr env letb.Argument
@@ -112,7 +97,7 @@ module Interpreter =
                         | BoolValue false ->
                             return! evalExpr env iff.FalseBranch
                         | _ ->
-                            return! InvalidConditionValue.error condVal
+                            return! error (InvalidConditionValue condVal)
 
                     // fix f = \x -> f (fix f) x
                     // https://en.wikipedia.org/wiki/Fixed-point_combinator#Strict_functional_implementation

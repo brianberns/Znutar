@@ -6,19 +6,9 @@ type UnificationFailure =
     UnificationFailure of Type * Type
     with interface ICompilerError
 
-module UnificationFailure =
-
-    let error =
-        UnificationFailure >> CompilerError.create
-
 type InfiniteType =
     InfiniteType of TypeVariable * Type
     with interface ICompilerError
-
-module InfiniteType =
-
-    let error =
-        InfiniteType >> CompilerError.create
 
 [<AutoOpen>]
 module Arrow =
@@ -69,7 +59,7 @@ module Substitution =
             if t = TypeVariable a then
                 Ok empty
             elif occursCheck a t then
-                InfiniteType.error (a, t)
+                error (InfiniteType (a, t))
             else
                 Ok (Map [a, t])
 
@@ -86,7 +76,7 @@ module Substitution =
                 bind a t
             | (TypeConstant a), (TypeConstant b) when a = b ->
                 Ok empty
-            | _ -> UnificationFailure.error (t1, t2)
+            | _ -> error (UnificationFailure (t1, t2))
 
     module Scheme =
 

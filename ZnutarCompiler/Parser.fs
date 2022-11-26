@@ -2,16 +2,8 @@
 
 open FParsec
 
-type ParserError =
-    {
-        Message : string
-    }
-    interface ICompilerError
-
-module ParserError =
-
-    let error msg =
-        CompilerError.create { Message = msg }
+type ParserError = ParserError of string
+    with interface ICompilerError
 
 module Parser =
 
@@ -216,4 +208,4 @@ module Parser =
         let parser' = parser .>> eof
         match runParserOnString parser' () "" text with
             | Success (result, _, _) -> Result.Ok result
-            | Failure (msg, _, _) -> ParserError.error msg
+            | Failure (msg, _, _) -> error (ParserError msg)
