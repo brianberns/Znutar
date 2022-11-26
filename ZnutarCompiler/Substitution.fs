@@ -6,10 +6,6 @@ type UnificationFailure =
     UnificationFailure of Type * Type
     with interface ICompilerError
 
-type InfiniteType =
-    InfiniteType of TypeVariable * Type
-    with interface ICompilerError
-
 [<AutoOpen>]
 module Arrow =
 
@@ -42,7 +38,7 @@ module Substitution =
             | TypeVariable tv as typ ->
                 subst
                     |> Map.tryFind tv
-                    |> Option.map (apply subst)   // must apply substitution recursively
+                    |> Option.map (apply subst)   // https://github.com/sdiehl/write-you-a-haskell/issues/116
                     |> Option.defaultValue typ
             | TypeArrow (type1, type2) ->
                 apply subst type1 => apply subst type2
@@ -88,7 +84,7 @@ module Substitution =
                 if typ = TypeVariable tv then
                     Ok empty
                 elif occursCheck tv typ then
-                    cerror (InfiniteType (tv, typ))
+                    cerror (UnificationFailure (type1, type2))
                 else
                     Ok (Map [tv, typ])
             | (TypeConstant ident1), (TypeConstant ident2)
