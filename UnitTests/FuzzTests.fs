@@ -62,7 +62,6 @@ type FuzzTests() =
     member _.UnifyTypes() =
 
         let unify (type1 : Type, type2 : Type, subst : Substitution) =
-            assert(Substitution.unify type1 type2 = Ok subst)
             let type1' = Substitution.Type.apply subst type1
             let type2' = Substitution.Type.apply subst type2
             let msg =
