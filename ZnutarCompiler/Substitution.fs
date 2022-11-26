@@ -23,7 +23,7 @@ module Substitution =
         subst
             |> Map.toSeq
             |> Seq.map (fun (tv, typ) ->
-                $"{TypeVariable.unparse tv} -> {Type.unparse typ}")
+                $"{TypeVariable.unparse tv} <- {Type.unparse typ}")
             |> String.concat ", "
 
     module Map =
