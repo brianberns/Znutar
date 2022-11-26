@@ -29,10 +29,12 @@ module Result =
 
         loop state items
 
+/// Standard compiler error type.
 type ICompilerError = interface end
 
 [<AutoOpen>]
 module CompilerError =
 
+    /// Creates a standard compiler error.
     let cerror (err : ICompilerError) =
         Error err
