@@ -41,7 +41,7 @@ type Arbitraries =
 type FuzzTests() =
 
     let config =
-        { Config.VerboseThrowOnFailure with
+        { Config.QuickThrowOnFailure with
             Arbitrary = [ typeof<Arbitraries> ]
             MaxTest = 1000
             Replay = Some (Random.StdGen (0, 0)) }
