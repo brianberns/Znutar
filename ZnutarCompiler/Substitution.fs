@@ -48,7 +48,7 @@ module Substitution =
                 Type.apply subst1 value)
             |> Map.union subst1
 
-    let (++) = compose
+    let inline (++) subst1 subst2 = compose subst1 subst2
 
     let rec unify type1 type2 =
 
