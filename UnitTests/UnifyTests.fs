@@ -14,7 +14,7 @@ type UnifyTests() =
         let t1 = TypeVariable x => Type.int
         let t2 = Type.bool => TypeVariable y
         let expected =
-            Ok (Map [
+            Ok ([
                 x, Type.bool
                 y, Type.int
             ] : Substitution)
@@ -26,7 +26,7 @@ type UnifyTests() =
         let t1 = TypeVariable x => TypeVariable x
         let t2 = Type.int => TypeVariable y
         let expected =
-            Ok (Map [
+            Ok ([
                 x, Type.int
                 y, Type.int
             ] : Substitution)
@@ -34,7 +34,7 @@ type UnifyTests() =
         Assert.AreEqual(expected, actual)
 
     [<TestMethod>]
-    member this.UnifyFail() =
+    member this.UnifyFail1() =
         let t1 = Type.int => TypeVariable x
         let t2 = Type.bool => TypeVariable y
         let expected =
@@ -43,9 +43,9 @@ type UnifyTests() =
         Assert.AreEqual(expected, actual)
 
     [<TestMethod>]
-    member this.InfiniteType() =
+    member this.UnifyFail2() =
         let t1 = TypeVariable x
         let t2 = TypeVariable x => TypeVariable y
-        let expected = cerror (InfiniteType (x, t2))
+        let expected = cerror (UnificationFailure (t1, t2))
         let actual = Substitution.unify t1 t2
         Assert.AreEqual(expected, actual)
