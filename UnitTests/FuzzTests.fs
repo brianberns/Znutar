@@ -11,7 +11,7 @@ module Identifier =
 
     let arb =
         Gen.elements ['a' .. 'z']       // limit to single character names for simplicity
-            |> Gen.map (string >> Name)
+            |> Gen.map (fun c -> { Name = string c })
             |> Arb.fromGen
 
 type Arbitraries =

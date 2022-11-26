@@ -10,6 +10,7 @@
     <Compile Include="Syntax.fs" />
     <Compile Include="Parser.fs" />
     <Compile Include="Interpreter.fs" />
+    <Compile Include="Type.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

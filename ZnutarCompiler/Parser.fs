@@ -55,9 +55,12 @@ module Parser =
             |> choice
 
     let private parseIdentifier : Parser<_, unit> =
-        notFollowedBy (lookAhead parseKeyword)
-            >>. identifier (IdentifierOptions ())
-            |>> Name
+        parse {
+            let! name =
+                notFollowedBy (lookAhead parseKeyword)
+                    >>. identifier (IdentifierOptions ())
+            return { Name = name }
+        }
 
     module private Expression =
 

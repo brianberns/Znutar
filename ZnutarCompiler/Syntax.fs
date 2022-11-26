@@ -1,11 +1,14 @@
 ﻿namespace Znutar
 
-type Identifier = Name of string
+type Identifier =
+    {
+        Name : string
+    }
 
 module Identifier =
 
-    let unparse (Name str) =
-        str
+    let unparse ident =
+        ident.Name
 
 type Literal =
     | IntLiteral of int
