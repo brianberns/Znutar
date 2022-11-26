@@ -1,5 +1,6 @@
 ﻿namespace Znutar
 
+/// Substitute types for type variables.
 type Substitution = Map<TypeVariable, Type>
 
 type UnificationFailure =
@@ -61,7 +62,7 @@ module Substitution =
     /// Attempts to find a substitution that unifies the given types.
     let rec unify type1 type2 =
 
-        let occursCheck tv typ =
+        let occurs tv typ =
             Set.contains tv (Type.freeTypeVariables typ)
 
         match type1, type2 with
@@ -78,7 +79,7 @@ module Substitution =
             | typ, TypeVariable tv ->
                 if typ = TypeVariable tv then
                     Ok empty
-                elif occursCheck tv typ then
+                elif occurs tv typ then
                     cerror (UnificationFailure (type1, type2))
                 else
                     Ok (Map [tv, typ])

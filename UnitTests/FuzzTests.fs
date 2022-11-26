@@ -3,9 +3,17 @@ namespace Znutar
 open Microsoft.VisualStudio.TestTools.UnitTesting
 open FsCheck
 
-module Generator =
+module Gen =
 
-    let from<'t> = Arb.from<'t>.Generator   // is there a better way to get this?
+    let from<'t> = Arb.from<'t>.Generator   // to-do: is there a better way to get this?
+
+    let rec pick chooser gn =               // to-do: is there a better way to do this?
+        gen {
+            let! value = gn
+            match chooser value with
+                | Some v -> return v
+                | None -> return! pick chooser gn
+        }
 
 module Identifier =
 
@@ -14,32 +22,29 @@ module Identifier =
             |> Gen.map (fun c -> { Name = string c })
             |> Arb.fromGen
 
+module Unifiable =
+
+    let arb =
+        Gen.from<Type * Type>
+            |> Gen.pick (fun (type1, type2) ->
+                Substitution.unify type1 type2
+                    |> Result.toOption
+                    |> Option.map (fun subst ->
+                        type1, type2, subst))
+            |> Arb.fromGen
+
 type Arbitraries =
     static member Identifier() = Identifier.arb
+    static member Unifiable() = Unifiable.arb
 
 [<TestClass>]
 type FuzzTests() =
 
     let config =
-        { Config.QuickThrowOnFailure with
+        { Config.VerboseThrowOnFailure with
             Arbitrary = [ typeof<Arbitraries> ]
             MaxTest = 1000
             Replay = Some (Random.StdGen (0, 0)) }
-
-    let unify (type1 : Type) (type2 : Type) =
-        match Substitution.unify type1 type2 with
-            | Ok subst ->
-                let type1' = Substitution.Type.apply subst type1
-                let type2' = Substitution.Type.apply subst type2
-                let msg =
-                    sprintf "\nType 1: %s\nType 2: %s\nSubstitution: %s\nType 1': %s\nType 2': %s"
-                        (Type.unparse type1)
-                        (Type.unparse type2)
-                        (Substitution.toString subst)
-                        (Type.unparse type1')
-                        (Type.unparse type2')
-                type1' = type2' |@ msg
-            | _ -> true |@ ""
 
     [<TestMethod>]
     member _.ParseUnparseIsOriginal() =
@@ -55,14 +60,18 @@ type FuzzTests() =
 
     [<TestMethod>]
     member _.UnifyTypes() =
-        let config = { config with MaxTest = 10000 }
+
+        let unify (type1 : Type, type2 : Type, subst : Substitution) =
+            assert(Substitution.unify type1 type2 = Ok subst)
+            let type1' = Substitution.Type.apply subst type1
+            let type2' = Substitution.Type.apply subst type2
+            let msg =
+                sprintf "\nType 1: %s\nType 2: %s\nSubstitution: %s\nType 1': %s\nType 2': %s"
+                    (Type.unparse type1)
+                    (Type.unparse type2)
+                    (Substitution.toString subst)
+                    (Type.unparse type1')
+                    (Type.unparse type2')
+            type1' = type2' |@ msg
+
         Check.One(config, unify)
-
-    [<TestMethod>]
-    member _.UnifyTypeArrows() =
-
-        let unifyArrows arrow1 arrow2 =
-            unify (TypeArrow arrow1) (TypeArrow arrow2)
-
-        let config = { config with MaxTest = 10000 }
-        Check.One(config, unifyArrows)
