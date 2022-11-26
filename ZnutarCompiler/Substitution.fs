@@ -21,71 +21,71 @@ module Substitution =
 
     module private Map =
 
-        let map' f =
-            Map.map (fun _ v -> f v)
-
-        let union m1 m2 =
-            Seq.append (Map.toSeq m2) (Map.toSeq m1)   // left-biased
+        let union map1 map2 =
+            Seq.append (Map.toSeq map2) (Map.toSeq map1)   // left-biased
                 |> Map.ofSeq
 
     module Type =
 
-        let rec apply (s : Substitution) = function
-            | TypeConstant a -> TypeConstant a
-            | TypeVariable a as t ->
-                s
-                    |> Map.tryFind a
-                    |> Option.defaultValue t
-            | TypeArrow (t1, t2) ->
-                apply s t1 => apply s t2
+        let rec apply (subst : Substitution) = function
+            | TypeConstant ident -> TypeConstant ident
+            | TypeVariable tv as typ ->
+                subst
+                    |> Map.tryFind tv
+                    |> Option.defaultValue typ
+            | TypeArrow (type1, type2) ->
+                apply subst type1 => apply subst type2
 
         let rec freeTypeVariables = function
             | TypeConstant _ -> Set.empty
-            | TypeVariable a -> set [a]
-            | TypeArrow (t1, t2) -> freeTypeVariables t1 + freeTypeVariables t2
+            | TypeVariable tv -> set [tv]
+            | TypeArrow (type1, type2) ->
+                freeTypeVariables type1 + freeTypeVariables type2
 
-    let compose (s1 : Substitution) (s2 : Substitution) : Substitution =
-        Map.map' (Type.apply s1) s2
-            |> Map.union s1
+    let compose (subst1 : Substitution) (subst2 : Substitution) : Substitution =
+        subst2
+            |> Map.map (fun _ value ->
+                Type.apply subst1 value)
+            |> Map.union subst1
 
     let (++) = compose
 
-    let rec unify t1 t2 =
+    let rec unify type1 type2 =
 
-        let occursCheck a t =
-            Set.contains a (Type.freeTypeVariables t)
+        let occursCheck tv typ =
+            Set.contains tv (Type.freeTypeVariables typ)
 
-        let bind a t =
-            if t = TypeVariable a then
-                Ok empty
-            elif occursCheck a t then
-                error (InfiniteType (a, t))
-            else
-                Ok (Map [a, t])
-
-        match t1, t2 with
-            | TypeArrow (l, r), TypeArrow (l', r') ->
+        match type1, type2 with
+            | TypeArrow (left1, right1), TypeArrow (left2, right2) ->
                 result {
-                    let! s1 = unify l l'
-                    let! s2 =
-                        unify (Type.apply s1 r) (Type.apply s1 r')
-                    return s1 ++ s2
+                    let! subst1 = unify left1 left2
+                    let! subst2 =
+                        unify
+                            (Type.apply subst1 right1)
+                            (Type.apply subst1 right2)
+                    return subst1 ++ subst2
                 }
-            | TypeVariable a, t
-            | t, TypeVariable a ->
-                bind a t
-            | (TypeConstant a), (TypeConstant b) when a = b ->
+            | TypeVariable tv, typ
+            | typ, TypeVariable tv ->
+                if typ = TypeVariable tv then
+                    Ok empty
+                elif occursCheck tv typ then
+                    error (InfiniteType (tv, typ))
+                else
+                    Ok (Map [tv, typ])
+            | (TypeConstant ident1), (TypeConstant ident2)
+                when ident1 = ident2 ->
                 Ok empty
-            | _ -> error (UnificationFailure (t1, t2))
+            | _ -> error (UnificationFailure (type1, type2))
 
     module Scheme =
 
-        let apply (s : Substitution) scheme =
-            let s' : Substitution =
-                List.foldBack Map.remove scheme.TypeVariables s
+        let apply (subst : Substitution) scheme =
+            let subst' : Substitution =
+                List.foldBack Map.remove scheme.TypeVariables subst
             {
                 scheme with
-                    Type = Type.apply s' scheme.Type
+                    Type = Type.apply subst' scheme.Type
             }
 
         let freeTypeVariables scheme =
@@ -94,8 +94,9 @@ module Substitution =
 
     module TypeEnv =
 
-        let apply s (env : TypeEnvironment) : TypeEnvironment =
-            Map.map' (Scheme.apply s) env
+        let apply subst (env : TypeEnvironment) : TypeEnvironment =
+            Map.map (fun _ value ->
+                Scheme.apply subst value) env
 
         let freeTypeVariables (env : TypeEnvironment) =
             Seq.collect
