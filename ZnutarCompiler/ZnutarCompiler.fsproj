@@ -11,8 +11,8 @@
     <Compile Include="Parser.fs" />
     <Compile Include="Interpreter.fs" />
     <Compile Include="Type.fs" />
-    <Compile Include="Program.fs" />
     <Compile Include="Substitution.fs" />
+    <Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
