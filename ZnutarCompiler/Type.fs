@@ -33,3 +33,16 @@ module Type =
 
     let int = TypeConstant { Name = "Int" }
     let bool = TypeConstant { Name = "Bool" }
+
+/// E.g. <'a>('a -> 'a).
+type Scheme =
+    {
+        TypeVariables : List<TypeVariable>
+        Type : Type
+    }
+
+type TypeEnvironment = Map<Variable, Scheme>
+
+module TypeEnvironment =
+
+    let empty : TypeEnvironment = Map.empty
