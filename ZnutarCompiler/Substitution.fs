@@ -70,13 +70,13 @@ module Substitution =
                 if typ = TypeVariable tv then
                     Ok empty
                 elif occursCheck tv typ then
-                    error (InfiniteType (tv, typ))
+                    cerror (InfiniteType (tv, typ))
                 else
                     Ok (Map [tv, typ])
             | (TypeConstant ident1), (TypeConstant ident2)
                 when ident1 = ident2 ->
                 Ok empty
-            | _ -> error (UnificationFailure (type1, type2))
+            | _ -> cerror (UnificationFailure (type1, type2))
 
     module Scheme =
 

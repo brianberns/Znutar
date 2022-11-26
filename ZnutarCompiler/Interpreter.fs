@@ -22,7 +22,7 @@ module InvalidBinaryOperation =
     let error op leftVal rightVal =
         (op, leftVal, rightVal)
             |> InvalidBinaryOperation
-            |> error
+            |> cerror
 
 type UnboundVariable = UnboundVariable of Variable
     with interface ICompilerError
@@ -57,7 +57,7 @@ module Interpreter =
                         | Some value ->
                             return value
                         | None ->
-                            return! error (UnboundVariable var)
+                            return! cerror (UnboundVariable var)
 
                 | BinaryOperationExpr bop ->
                     let! leftVal = evalExpr env bop.Left
@@ -82,7 +82,7 @@ module Interpreter =
                                     clo.Lambda.Identifier
                                     argVal clo.Environment
                             return! evalExpr cloEnv clo.Lambda.Body
-                        | _ -> return! error (InvalidApplication app)
+                        | _ -> return! cerror (InvalidApplication app)
 
                 | LetExpr letb ->
                     let! exprVal = evalExpr env letb.Argument
@@ -97,7 +97,7 @@ module Interpreter =
                         | BoolValue false ->
                             return! evalExpr env iff.FalseBranch
                         | _ ->
-                            return! error (InvalidConditionValue condVal)
+                            return! cerror (InvalidConditionValue condVal)
 
                     // fix f = \x -> f (fix f) x
                     // https://en.wikipedia.org/wiki/Fixed-point_combinator#Strict_functional_implementation

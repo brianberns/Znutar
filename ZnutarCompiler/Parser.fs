@@ -208,4 +208,4 @@ module Parser =
         let parser' = parser .>> eof
         match runParserOnString parser' () "" text with
             | Success (result, _, _) -> Result.Ok result
-            | Failure (msg, _, _) -> error (ParserError msg)
+            | Failure (msg, _, _) -> cerror (ParserError msg)

@@ -34,5 +34,5 @@ type ICompilerError = interface end
 [<AutoOpen>]
 module CompilerError =
 
-    let error (err : ICompilerError) =
+    let cerror (err : ICompilerError) =
         Error err
