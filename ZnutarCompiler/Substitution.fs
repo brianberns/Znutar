@@ -19,6 +19,13 @@ module Substitution =
 
     let empty : Substitution = Map.empty
 
+    let toString (subst : Substitution) =
+        subst
+            |> Map.toSeq
+            |> Seq.map (fun (tv, typ) ->
+                $"{TypeVariable.unparse tv} -> {Type.unparse typ}")
+            |> String.concat ", "
+
     module Map =
 
         /// Left-biased union of two maps.
