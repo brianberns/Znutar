@@ -36,8 +36,8 @@ module Type =
     let unparse (typ : Type) =
         typ.Unparse()
 
-    let int = TypeConstant { Name = "Int" }
-    let bool = TypeConstant { Name = "Bool" }
+    let int = TypeConstant (Identifier.create "Int")
+    let bool = TypeConstant (Identifier.create "Bool")
 
 /// E.g. <'a>('a -> 'a).
 type Scheme =
@@ -51,3 +51,6 @@ type TypeEnvironment = Map<Variable, Scheme>
 module TypeEnvironment =
 
     let empty : TypeEnvironment = Map.empty
+
+    let add var scheme (env : TypeEnvironment) : TypeEnvironment =
+        env |> Map.add var scheme

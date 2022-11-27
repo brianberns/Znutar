@@ -6,8 +6,8 @@ open Znutar
 [<TestClass>]
 type UnifyTests() =
 
-    let x : TypeVariable = { Name = "X" }
-    let y : TypeVariable = { Name = "Y" }
+    let x : TypeVariable = Identifier.create "X"
+    let y : TypeVariable = Identifier.create "Y"
 
     [<TestMethod>]
     member this.UnifySucceed1() =

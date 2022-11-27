@@ -101,7 +101,7 @@ module Substitution =
             Type.freeTypeVariables scheme.Type
                 - set scheme.TypeVariables
 
-    module TypeEnv =
+    module TypeEnvironment =
 
         /// Applies the given substitution to the given environment.
         let apply subst (env : TypeEnvironment) : TypeEnvironment =

@@ -103,7 +103,7 @@ module Interpreter =
                     // https://en.wikipedia.org/wiki/Fixed-point_combinator#Strict_functional_implementation
                 | FixExpr f ->
                     let lamExpr =
-                        let ident = { Name = "$x" }
+                        let ident = Identifier.create "$x"
                         LambdaExpr {
                             Identifier = ident
                             Body =

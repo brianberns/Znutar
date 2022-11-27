@@ -51,7 +51,7 @@ module Parser =
             let! name =
                 notFollowedBy (lookAhead parseKeyword)
                     >>. identifier (IdentifierOptions ())
-            return { Name = name }
+            return Identifier.create name
         }
 
     module private Expression =

@@ -19,7 +19,7 @@ module Identifier =
 
     let arb =
         Gen.elements ['a' .. 'z']       // limit to single character names for simplicity
-            |> Gen.map (fun c -> { Name = string c })
+            |> Gen.map (string >> Identifier.create)
             |> Arb.fromGen
 
 module Unifiable =

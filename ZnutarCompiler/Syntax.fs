@@ -7,6 +7,9 @@ type Identifier =
 
 module Identifier =
 
+    let create name =
+        { Name = name }
+
     let unparse ident =
         ident.Name
 
