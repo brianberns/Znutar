@@ -20,22 +20,25 @@ type TypeInferenceTests() =
                 Assert.AreEqual(expected, actual)
             | Error err -> Assert.Fail(string err)
 
-    (*
     [<TestMethod>]
     member this.InferDecl() =
-        let decl : Decl =
-            "id", Lam ("x", Var "x")
-        let expected =
-            let tv = TV "tv1"
-            Ok (Forall ([tv], TVar tv => TVar tv))
-        let actual =
-            result {
-                let! (TypeEnv env) =
-                    Infer.inferTop TypeEnv.empty [decl]
-                return env[fst decl]
-            }
-        Assert.AreEqual(expected, actual)
+        let text = "decl id = fun x -> x;"
+        match Parser.run Parser.parseDeclaration text with
+            | Ok decl ->
+                let expected =
+                    let tv = Identifier.create "tv1"
+                    let scheme = { TypeVariables = [tv]; Type = TypeVariable tv => TypeVariable tv }
+                    Ok scheme
+                let actual =
+                    result {
+                        let! env =
+                            TypeInference.inferTop TypeEnvironment.empty [decl]
+                        return env[decl.Identifier]
+                    }
+                Assert.AreEqual(expected, actual)
+            | Error err -> Assert.Fail(string err)
 
+    (*
     [<TestMethod>]
     member this.InferFail() =
         let expr =

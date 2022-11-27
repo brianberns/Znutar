@@ -178,7 +178,7 @@ module Parser =
 
         let parse = parseExpression
 
-    let private parseDeclaration =
+    let parseDeclaration =
         parse {
             do! skipString "decl" >>. spaces
             let! ident = parseIdentifier
