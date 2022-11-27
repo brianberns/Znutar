@@ -54,7 +54,7 @@ module Parser =
             return Identifier.create name
         }
 
-    module private Expression =
+    module Expression =
 
         let private parseExpression, private parseExpressionRef =
             createParserForwardedToRef ()
