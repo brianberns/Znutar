@@ -38,14 +38,14 @@ type TypeInferenceTests() =
                 Assert.AreEqual(expected, actual)
             | Error err -> Assert.Fail(string err)
 
-    (*
     [<TestMethod>]
     member this.InferFail() =
-        let expr =
-            Op (Mul, Lit (LBool false), Lit (LInt 1))
-        let expected =
-            Error (UnificationFail (Type.bool, Type.int))
-        let actual =
-            Infer.infer TypeEnv.empty expr
-        Assert.AreEqual(expected, actual)
-    *)
+        let text = "false * 1"
+        match Parser.run Parser.Expression.parse text with
+            | Ok expr ->
+                let expected =
+                    cerror (UnificationFailure (Type.bool, Type.int))
+                let actual =
+                    TypeInference.infer TypeEnvironment.empty expr
+                Assert.AreEqual(expected, actual)
+            | Error err -> Assert.Fail(string err)
