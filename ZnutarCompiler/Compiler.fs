@@ -108,7 +108,7 @@ module Compiler =
             | ApplicationExpr app -> compileApplication env app
             | LetExpr letb -> compileLet env letb
             | IfExpr iff -> compileIf env iff
-            | FixExpr expr -> compileFix env expr
+            // | FixExpr expr -> compileFix env expr
             | BinaryOperationExpr bop -> compileBinaryOperation env bop
             | LiteralExpr lit -> compileLiteral env lit
 
@@ -132,50 +132,33 @@ module Compiler =
                 return node, env
             }
 
-        let private compileNumber (env : env) (def : NumberDef<_>) =
+        let private compileLiteral env (lit : Literal) =
             let node =
-                Syntax.numericLiteral def.Number
-                    :> Syntax.ExpressionSyntax
+                match lit with
+                    | IntLiteral n ->
+                        Syntax.numericLiteral n
+                            :> Syntax.ExpressionSyntax
+                    | BoolLiteral b ->
+                        Syntax.boolLiteral b
             Ok (node, env)
 
-        let private compileBool (env : env) (def : BoolDef<_>) =
-            let node =
-                Syntax.boolLiteral def.Flag
-                    :> Syntax.ExpressionSyntax
-            Ok (node, env)
-
-        let private compileLet env (def : LetDef<_>) =
+        let private compileLet env (letb : LetBinding) =
             result {
-                let! env' =
-                    (env, def.Bindings)
-                        ||> Result.List.foldM (fun acc binding ->
-                            result {
-                                let! node, acc' =
-                                    compile acc binding.Expr
-                                return! acc'
-                                    |> Env.tryAdd
-                                        binding.Identifier.Name
-                                        node
-                            })
-                return! compile env' def.Expr
+                let! node, env' = compile env letb.Body
+                let env'' = Map.add letb.Identifier node env'
+                return node, env''
             }
 
-        let private compilePrim2 env (def: Prim2Def<_>) =
+        let private compileBinaryOperation env (bop : BinaryOperation) =
             let kind =
-                match def.Operator with
+                match bop.Operator with
                     | Plus -> SyntaxKind.AddExpression
                     | Minus -> SyntaxKind.SubtractExpression
                     | Times -> SyntaxKind.MultiplyExpression
-                    | And -> SyntaxKind.LogicalAndExpression
-                    | Or -> SyntaxKind.LogicalOrExpression
-                    | Greater -> SyntaxKind.GreaterThanExpression
-                    | GreaterEq -> SyntaxKind.GreaterThanOrEqualExpression
-                    | Less -> SyntaxKind.LessThanExpression
-                    | LessEq -> SyntaxKind.LessThanOrEqualExpression
-                    | Eq -> SyntaxKind.EqualsExpression
+                    | Equals -> SyntaxKind.EqualsExpression
             result {
-                let! leftNode, _ = compile env def.Left
-                let! rightNode, _ = compile env def.Right
+                let! leftNode, _ = compile env bop.Left
+                let! rightNode, _ = compile env bop.Right
                 let node =
                     BinaryExpression(
                         kind,
@@ -184,12 +167,12 @@ module Compiler =
                 return node, env
             }
 
-        let private compileIf env (def : IfDef<_>) =
+        let private compileIf env (iff : If) =
             result {
 
-                let! condNode, _ = compile env def.Condition
-                let! trueNode, _ = compile env def.TrueBranch
-                let! falseNode, _ = compile env def.FalseBranch
+                let! condNode, _ = compile env iff.Condition
+                let! trueNode, _ = compile env iff.TrueBranch
+                let! falseNode, _ = compile env iff.FalseBranch
 
                 let node =
                     ConditionalExpression(
@@ -215,7 +198,6 @@ module Compiler =
 
         let private compileType typ =
             result {
-                do! TypeCheck.Type.checkMissing typ
                 match typ with
                     | TypeConstant _ as typ ->
                         let kind = predefinedTypeMap[typ]
