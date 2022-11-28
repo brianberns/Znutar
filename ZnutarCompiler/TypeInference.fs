@@ -11,8 +11,8 @@ module TypeInference =
         Identifier.create $"tv{count}" |> TypeVariable
 
     let instantiate scheme =
-        let tvs = List.map fresh scheme.TypeVariables
-        let subst = Map (List.zip scheme.TypeVariables tvs)
+        let types = List.map fresh scheme.TypeVariables
+        let subst = Map (List.zip scheme.TypeVariables types)
         Type.apply subst scheme.Type
 
     let generalize env typ =
@@ -25,17 +25,16 @@ module TypeInference =
             Type = typ
         }
 
-    let private lookupEnv (env : TypeEnvironment) x =
-        result {
-            match Map.tryFind x env with
-                | None ->
-                    return! cerror (UnboundVariable x)
-                | Some s ->
-                    let t = instantiate s
-                    return Substitution.empty, t
-        }
+    module private TypeEnvironment =
 
-    let private ops =
+        let instantiate var (env : TypeEnvironment) =
+            match Map.tryFind var env with
+                | None ->
+                    cerror (UnboundVariable var)
+                | Some scheme ->
+                    Ok (instantiate scheme)
+
+    let private binOpMap =
         Map [
             Plus, Type.int => Type.int => Type.int
             Minus, Type.int => Type.int => Type.int
@@ -43,48 +42,49 @@ module TypeInference =
             Equals, Type.int => Type.int => Type.bool   // to-do: make polymorphic
         ]
 
-    let rec infer env ex =
+    let rec infer env expr =
         result {
-            match ex with
-                | VariableExpr x ->
-                    return! lookupEnv env x
+            match expr with
+                | VariableExpr var ->
+                    let! typ = TypeEnvironment.instantiate var env
+                    return Substitution.empty, typ
                 | LambdaExpr lam ->
-                    let tv = fresh ()
-                    let scheme = { TypeVariables = []; Type = tv }
+                    let freshType = fresh ()
+                    let scheme = { TypeVariables = []; Type = freshType }
                     let env' = TypeEnvironment.add lam.Identifier scheme env
-                    let! s1, t1 = infer env' lam.Body
-                    return s1, Type.apply s1 tv => t1
+                    let! subst1, type1 = infer env' lam.Body
+                    return subst1, Type.apply subst1 freshType => type1
                 | ApplicationExpr app ->
-                    let tv = fresh ()
-                    let! s1, t1 = infer env app.Function
-                    let! s2, t2 = infer (TypeEnvironment.apply s1 env) app.Argument
-                    let! s3 = unify (Type.apply s2 t1) (t2 => tv)
-                    return s3 ++ s2 ++ s1, Type.apply s3 tv
+                    let freshType = fresh ()
+                    let! subst1, type1 = infer env app.Function
+                    let! subst2, type2 = infer (TypeEnvironment.apply subst1 env) app.Argument
+                    let! subst3 = unify (Type.apply subst2 type1) (type2 => freshType)
+                    return subst3 ++ subst2 ++ subst1, Type.apply subst3 freshType
                 | LetExpr letb ->
-                    let! s1, t1 = infer env letb.Argument
-                    let env' = TypeEnvironment.apply s1 env
-                    let t' = generalize env' t1
-                    let! s2, t2 =
-                        infer (TypeEnvironment.add letb.Identifier t' env') letb.Body
-                    return s1 ++ s2, t2
+                    let! subst1, type1 = infer env letb.Argument
+                    let env' = TypeEnvironment.apply subst1 env
+                    let type1' = generalize env' type1
+                    let! subst2, type2 =
+                        infer (TypeEnvironment.add letb.Identifier type1' env') letb.Body
+                    return subst1 ++ subst2, type2
                 | IfExpr iff ->
-                    let! s1, t1 = infer env iff.Condition
-                    let! s2, t2 = infer env iff.TrueBranch
-                    let! s3, t3 = infer env iff.FalseBranch
-                    let! s4 = unify t1 Type.bool
-                    let! s5 = unify t2 t3
-                    return s5 ++ s4 ++ s3 ++ s2 ++ s1, Type.apply s5 t2
+                    let! subst1, type1 = infer env iff.Condition
+                    let! subst2, type2 = infer env iff.TrueBranch
+                    let! subst3, type3 = infer env iff.FalseBranch
+                    let! subst4 = unify type1 Type.bool
+                    let! subst5 = unify type2 type3
+                    return subst5 ++ subst4 ++ subst3 ++ subst2 ++ subst1, Type.apply subst5 type2
                 | FixExpr fix ->
-                    let! s1, t = infer env fix
-                    let tv = fresh ()
-                    let! s2 = unify (tv => tv) t
-                    return s2, Type.apply s1 tv
+                    let! subst1, typ = infer env fix
+                    let freshType = fresh ()
+                    let! subst2 = unify (freshType => freshType) typ
+                    return subst2, Type.apply subst1 freshType
                 | BinaryOperationExpr bop ->
-                    let! s1, t1 = infer env bop.Left
-                    let! s2, t2 = infer env bop.Right
-                    let tv = fresh ()
-                    let! s3 = unify (t1 => t2 => tv) ops[bop.Operator]
-                    return s1 ++ s2 ++ s3, Type.apply s3 tv
+                    let! subst1, type1 = infer env bop.Left
+                    let! subst2, type2 = infer env bop.Right
+                    let freshType = fresh ()
+                    let! subst3 = unify (type1 => type2 => freshType) binOpMap[bop.Operator]
+                    return subst1 ++ subst2 ++ subst3, Type.apply subst3 freshType
                 | LiteralExpr (IntLiteral _) ->
                     return Substitution.empty, Type.int
                 | LiteralExpr (BoolLiteral _) ->
