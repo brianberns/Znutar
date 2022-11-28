@@ -109,7 +109,7 @@ module Compiler =
 
         let compile venv = function
             | VariableExpr ident -> compileIdentifier venv ident
-            // | LambdaExpr lam -> compileLambda env lam
+            | LambdaExpr lam -> compileLambda venv lam
             | ApplicationExpr app -> compileApplication venv app
             | LetExpr letb -> compileLet venv letb
             | IfExpr iff -> compileIf venv iff
@@ -120,6 +120,9 @@ module Compiler =
         let private compileIdentifier venv ident =
             VariableEnvironment.tryFind ident venv
                 |> Result.map (fun node -> node, venv)
+
+        let private compileLambda venv (lam : LambdaAbstraction) =
+            ()
 
         let private compileApplication venv (app : Application) =
             result {
@@ -193,106 +196,13 @@ module Compiler =
                 node.WithTypeParameterList(typeParameterList)
             else node
 
-    module private Decl =
-
-        let private predefinedTypeMap =
-            Map [
-                Type.int, SyntaxKind.IntKeyword
-                Type.bool, SyntaxKind.BoolKeyword
-            ]
-
-        let private compileType typ =
-            result {
-                match typ with
-                    | TypeConstant _ as typ ->
-                        let kind = predefinedTypeMap[typ]
-                        return (PredefinedType(Token(kind)) : Syntax.TypeSyntax)
-                    | TypeVariable def ->
-                        return IdentifierName(def.Name)
-                    | _ -> return! cerror (Unsupported "Unexpected type")
-            }
-
-        let private compileParameter parm typ =
-            result {
-                let! typeNode = compileType typ
-                return Parameter(
-                    Identifier(parm.Name))
-                        .WithType(typeNode)
-            }
-
-        let compile tenv decl =
-            result {
-
-                let! scheme =
-                    TypeEnvironment.tryFind decl.Identifier tenv
-                match scheme.Type with
-                    | TypeArrow (inpType, outType) ->
-                        let! returnType = compileType outType
-                        let typeParmNodes =
-                            scheme.TypeVariables
-                                |> Seq.map (fun tv ->
-                                    TypeParameter(Identifier(tv.Name)))
-                        let! env =
-                            (VariableEnvironment.empty, typedParms)
-                                ||> Result.List.foldM (fun acc (parm, _) ->
-                                    result {
-                                        let node = IdentifierName(parm.Name)
-                                        return! acc
-                                            |> Env.tryAdd parm.Name node
-                                    })
-                        let! parmNodes =
-                            typedParms
-                                |> Result.List.traverse (fun (parm, typ) ->
-                                    compileParameter parm typ)
-                        let! bodyNode, _ = Expression.compile env decl.Body
-
-                        return MethodDeclaration(
-                            returnType = returnType,
-                            identifier = decl.Identifier.Name)
-                            .AddModifiers(
-                                Token(SyntaxKind.StaticKeyword))
-                            .MaybeWithTypeParameterList(
-                                TypeParameterList(SeparatedList(typeParmNodes)))
-                            .WithParameterList(
-                                ParameterList(SeparatedList(parmNodes)))
-                            .WithBody(
-                                Block(ReturnStatement(bodyNode)))
-                    | _ -> return! cerror (Unsupported "Not supported")
-            }
-
-    module private DeclGroup =
-
-        let compile group =
-            group.Decls
-                |> Result.List.traverse Decl.compile
-
-    module private Program =
-
-        let compile program =
-            result {
-                let! declNodes =
-                    program.DeclGroups
-                        |> Result.List.traverse DeclGroup.compile
-                        |> Result.map (Seq.concat >> Seq.toArray)
-                let! mainNode, _ =
-                    Expression.compile Env.empty program.Main
-                return mainNode, declNodes
-            }
-
     let compile assemblyName text =
         result {
-            let! program = Parser.parse text
-            let! program' = TypeInfer.annotate program
-            do! TypeCheck.validate program'
-            let! mainNode, methodNodes =
-                Program.compile program'
-            let memberNodes =
-                methodNodes
-                    |> Array.map (fun node ->
-                        node :> Syntax.MemberDeclarationSyntax)
+            let! program = Parser.run Parser.parseProgram text
+            let! mainNode, _ = Expression.compile VariableEnvironment.empty program.Main
             do!
-                Compiler.compileWithMembers
+                compileWithMembers
                     assemblyName
                     mainNode
-                    memberNodes
+                    Array.empty
         }
