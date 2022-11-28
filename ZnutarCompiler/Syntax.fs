@@ -28,11 +28,9 @@ module BinaryOperator =
         | Times -> "*"
         | Equals -> "="
 
-type Variable = Identifier
-
 [<System.Diagnostics.DebuggerDisplay("{Unparse()}")>]
 type Expression =
-    | VariableExpr of Variable
+    | VariableExpr of Identifier
     | ApplicationExpr of Application
     | LambdaExpr of LambdaAbstraction
     | LetExpr of LetBinding

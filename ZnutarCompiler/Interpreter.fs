@@ -24,7 +24,7 @@ module InvalidBinaryOperation =
             |> InvalidBinaryOperation
             |> cerror
 
-type UnboundVariable = UnboundVariable of Variable
+type UnboundVariable = UnboundVariable of Identifier
     with interface ICompilerError
 
 type InvalidApplication =
@@ -52,12 +52,12 @@ module Interpreter =
                 | LiteralExpr (IntLiteral n) -> return IntValue n
                 | LiteralExpr (BoolLiteral b) -> return BoolValue b
 
-                | VariableExpr var ->
-                    match Map.tryFind var env with
+                | VariableExpr ident ->
+                    match Map.tryFind ident env with
                         | Some value ->
                             return value
                         | None ->
-                            return! cerror (UnboundVariable var)
+                            return! cerror (UnboundVariable ident)
 
                 | BinaryOperationExpr bop ->
                     let! leftVal = evalExpr env bop.Left

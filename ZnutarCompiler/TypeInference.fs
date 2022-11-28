@@ -28,10 +28,10 @@ module TypeInference =
 
     module private TypeEnvironment =
 
-        let instantiate var (env : TypeEnvironment) =
-            match Map.tryFind var env with
+        let instantiate ident (env : TypeEnvironment) =
+            match Map.tryFind ident env with
                 | None ->
-                    cerror (UnboundVariable var)
+                    cerror (UnboundVariable ident)
                 | Some scheme ->
                     Ok (instantiate scheme)
 
@@ -44,7 +44,7 @@ module TypeInference =
         ]
 
     let rec inferExpression env = function
-        | VariableExpr var -> inferVariable env var
+        | VariableExpr ident -> inferVariable env ident
         | LambdaExpr lam -> inferLambda env lam
         | ApplicationExpr app -> inferApplication env app
         | LetExpr letb -> inferLet env letb
@@ -56,9 +56,9 @@ module TypeInference =
         | LiteralExpr (BoolLiteral _) ->
             Ok (Substitution.empty, Type.bool)
 
-    and private inferVariable env var =
+    and private inferVariable env ident =
         result {
-            let! typ = TypeEnvironment.instantiate var env
+            let! typ = TypeEnvironment.instantiate ident env
             return Substitution.empty, typ
         }
 

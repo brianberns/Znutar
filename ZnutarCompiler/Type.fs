@@ -54,11 +54,11 @@ module Scheme =
             Type = typ
         }
 
-type TypeEnvironment = Map<Variable, Scheme>
+type TypeEnvironment = Map<Identifier, Scheme>
 
 module TypeEnvironment =
 
     let empty : TypeEnvironment = Map.empty
 
-    let add var scheme (env : TypeEnvironment) : TypeEnvironment =
-        env |> Map.add var scheme
+    let add ident scheme (env : TypeEnvironment) : TypeEnvironment =
+        env |> Map.add ident scheme

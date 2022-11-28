@@ -59,9 +59,6 @@ module Parser =
         let private parseExpression, private parseExpressionRef =
             createParserForwardedToRef ()
 
-        let private parseVariable : Parser<Variable, _> =
-            parseIdentifier
-
         let private parseLambdaAbstraction =   // to-do: fold multiple arguments
             parse {
                 do! skipString "fun" >>. spaces
@@ -122,7 +119,7 @@ module Parser =
 
         let private parseSimpleExpr : Parser<_, _> =
             choice [
-                parseVariable |>> VariableExpr
+                parseIdentifier |>> VariableExpr
                 parseLambdaAbstraction |>> LambdaExpr
                 parseLetBinding |>> LetExpr
                 parseLiteral |>> LiteralExpr
