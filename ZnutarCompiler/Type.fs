@@ -62,3 +62,10 @@ module TypeEnvironment =
 
     let add ident scheme (env : TypeEnvironment) : TypeEnvironment =
         env |> Map.add ident scheme
+
+    let tryFind ident (env : TypeEnvironment) =
+        match Map.tryFind ident env with
+            | Some scheme ->
+                Ok scheme
+            | None ->
+                cerror (UnboundVariable ident)

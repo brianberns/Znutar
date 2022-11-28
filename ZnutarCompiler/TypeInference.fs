@@ -26,15 +26,6 @@ module TypeInference =
                     - TypeEnvironment.freeTypeVariables env)
         Scheme.create tvs typ
 
-    module TypeEnvironment =
-
-        let instantiate ident (env : TypeEnvironment) =
-            match Map.tryFind ident env with
-                | Some scheme ->
-                    Ok (instantiate scheme)
-                | None ->
-                    cerror (UnboundVariable ident)
-
     let private binOpMap =
         Map [
             Plus, Type.int => Type.int => Type.int
@@ -58,8 +49,8 @@ module TypeInference =
 
     and private inferVariable env ident =
         result {
-            let! typ = TypeEnvironment.instantiate ident env
-            return Substitution.empty, typ
+            let! scheme = TypeEnvironment.tryFind ident env
+            return Substitution.empty, instantiate scheme
         }
 
     and private inferLambda env lam =

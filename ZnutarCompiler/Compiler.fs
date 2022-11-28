@@ -48,7 +48,7 @@ module private Syntax =
 
 type VariableEnvironment = Map<Identifier, Syntax.ExpressionSyntax>
 
-module Env =
+module VariableEnvironment =
 
     let empty : VariableEnvironment =
         Map.empty
@@ -57,6 +57,10 @@ module Env =
         match Map.tryFind ident env with
             | Some node -> Ok node
             | None -> cerror (UnboundVariable ident)
+
+type Unsupported =
+    Unsupported of string
+    with interface ICompilerError
 
 module Compiler =
 
@@ -97,7 +101,8 @@ module Compiler =
                 return! emitResult.Diagnostics
                     |> Seq.map string
                     |> String.concat "\n"
-                    |> Error
+                    |> Unsupported
+                    |> cerror
         }
 
     module private rec Expression =
@@ -113,7 +118,7 @@ module Compiler =
             | LiteralExpr lit -> compileLiteral venv lit
 
         let private compileIdentifier venv ident =
-            Env.tryFind ident venv
+            VariableEnvironment.tryFind ident venv
                 |> Result.map (fun node -> node, venv)
 
         let private compileApplication venv (app : Application) =
@@ -204,7 +209,7 @@ module Compiler =
                         return (PredefinedType(Token(kind)) : Syntax.TypeSyntax)
                     | TypeVariable def ->
                         return IdentifierName(def.Name)
-                    | _ -> return! Error "Unexpected type"
+                    | _ -> return! cerror (Unsupported "Unexpected type")
             }
 
         let private compileParameter parm typ =
@@ -218,39 +223,41 @@ module Compiler =
         let compile tenv decl =
             result {
 
-                let! typ =
-                    TypeInference.TypeEnvironment.instantiate decl.Identifier tenv
-                let! returnType = compileType outputType
-                let typeParmNodes =
-                    decl.Scheme.TypeVariableIdents
-                        |> Seq.map (fun tvIdent ->
-                            TypeParameter(
-                                Identifier(tvIdent.Name)))
-                let! env =
-                    (Env.empty, typedParms)
-                        ||> Result.List.foldM (fun acc (parm, _) ->
-                            result {
-                                let node = IdentifierName(parm.Name)
-                                return! acc
-                                    |> Env.tryAdd parm.Name node
-                            })
-                let! parmNodes =
-                    typedParms
-                        |> Result.List.traverse (fun (parm, typ) ->
-                            compileParameter parm typ)
-                let! bodyNode, _ = Expression.compile env decl.Body
+                let! scheme =
+                    TypeEnvironment.tryFind decl.Identifier tenv
+                match scheme.Type with
+                    | TypeArrow (inpType, outType) ->
+                        let! returnType = compileType outType
+                        let typeParmNodes =
+                            scheme.TypeVariables
+                                |> Seq.map (fun tv ->
+                                    TypeParameter(Identifier(tv.Name)))
+                        let! env =
+                            (VariableEnvironment.empty, typedParms)
+                                ||> Result.List.foldM (fun acc (parm, _) ->
+                                    result {
+                                        let node = IdentifierName(parm.Name)
+                                        return! acc
+                                            |> Env.tryAdd parm.Name node
+                                    })
+                        let! parmNodes =
+                            typedParms
+                                |> Result.List.traverse (fun (parm, typ) ->
+                                    compileParameter parm typ)
+                        let! bodyNode, _ = Expression.compile env decl.Body
 
-                return MethodDeclaration(
-                    returnType = returnType,
-                    identifier = decl.Identifier.Name)
-                    .AddModifiers(
-                        Token(SyntaxKind.StaticKeyword))
-                    .MaybeWithTypeParameterList(
-                        TypeParameterList(SeparatedList(typeParmNodes)))
-                    .WithParameterList(
-                        ParameterList(SeparatedList(parmNodes)))
-                    .WithBody(
-                        Block(ReturnStatement(bodyNode)))
+                        return MethodDeclaration(
+                            returnType = returnType,
+                            identifier = decl.Identifier.Name)
+                            .AddModifiers(
+                                Token(SyntaxKind.StaticKeyword))
+                            .MaybeWithTypeParameterList(
+                                TypeParameterList(SeparatedList(typeParmNodes)))
+                            .WithParameterList(
+                                ParameterList(SeparatedList(parmNodes)))
+                            .WithBody(
+                                Block(ReturnStatement(bodyNode)))
+                    | _ -> return! cerror (Unsupported "Not supported")
             }
 
     module private DeclGroup =
