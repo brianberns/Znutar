@@ -6,12 +6,12 @@ module TypeInference =
 
     let mutable count = 0
 
-    let private fresh _ =
+    let private createFreshTypeVariable _ =
         count <- count + 1
         Identifier.create $"tv{count}" |> TypeVariable
 
     let private instantiate scheme =
-        let types = List.map fresh scheme.TypeVariables
+        let types = List.map createFreshTypeVariable scheme.TypeVariables
         let subst = Map (List.zip scheme.TypeVariables types)
         Type.apply subst scheme.Type
 
@@ -60,7 +60,7 @@ module TypeInference =
 
     and private inferLambda env lam =
         result {
-            let freshType = fresh ()
+            let freshType = createFreshTypeVariable ()
             let env' =
                 let scheme = Scheme.create [] freshType
                 TypeEnvironment.add lam.Identifier scheme env
@@ -72,7 +72,7 @@ module TypeInference =
 
     and private inferApplication env app =
         result {
-            let freshType = fresh ()
+            let freshType = createFreshTypeVariable ()
             let! funSubst, funType =
                 inferExpression env app.Function
             let! argSubst, argType =
@@ -120,7 +120,7 @@ module TypeInference =
         result {
             let! exprSubst, exprType =
                 inferExpression env expr
-            let freshType = fresh ()
+            let freshType = createFreshTypeVariable ()
             let! arrowSubst =
                 unify (freshType => freshType) exprType
             return
@@ -134,7 +134,7 @@ module TypeInference =
                 inferExpression env bop.Left
             let! rightSubst, rightType =
                 inferExpression env bop.Right
-            let freshType = fresh ()
+            let freshType = createFreshTypeVariable ()
             let! arrowSubst =
                 unify
                     (leftType => rightType => freshType)

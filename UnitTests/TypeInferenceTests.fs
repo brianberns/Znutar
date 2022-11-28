@@ -15,7 +15,8 @@ type TypeInferenceTests() =
                     Ok (Substitution.empty, Type.int)
                         |> Result.map snd
                 let actual =
-                    TypeInference.inferExpression TypeEnvironment.empty expr
+                    TypeInference.inferExpression
+                        TypeEnvironment.empty expr
                         |> Result.map snd
                 Assert.AreEqual(expected, actual)
             | Error err -> Assert.Fail(string err)
@@ -38,7 +39,8 @@ type TypeInferenceTests() =
                     Ok (scheme, Type.bool)
                 let actual =
                     result {
-                        let! env, typ = TypeInference.inferProgram program
+                        let! env, typ =
+                            TypeInference.inferProgram program
                         return env[Identifier.create "id"], typ
                     }
                 Assert.AreEqual(expected, actual)
@@ -50,8 +52,10 @@ type TypeInferenceTests() =
         match Parser.run Parser.Expression.parse text with
             | Ok expr ->
                 let expected =
-                    cerror (UnificationFailure (Type.bool, Type.int))
+                    cerror (
+                        UnificationFailure (Type.bool, Type.int))
                 let actual =
-                    TypeInference.inferExpression TypeEnvironment.empty expr
+                    TypeInference.inferExpression
+                        TypeEnvironment.empty expr
                 Assert.AreEqual(expected, actual)
             | Error err -> Assert.Fail(string err)
