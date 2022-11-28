@@ -143,18 +143,13 @@ module TypeInference =
             return TypeEnvironment.add decl.Identifier scheme env
         }
 
-    let  rec private inferDecls env = function
-        | [] -> Ok env
-        | decl :: decls ->
-            result {
-                let! env' = inferDecl env decl
-                return! inferDecls env' decls
-            }
-
     let inferProgram program =
         result {
             let! env =
-                inferDecls TypeEnvironment.empty program.Declarations
+                Result.foldM
+                    inferDecl
+                    TypeEnvironment.empty
+                    program.Declarations
             let! _subst, typ = infer env program.Main
             return env, typ
         }

@@ -16,6 +16,20 @@ module ResultBuilder =
 
 module Result =
 
+    // https://stackoverflow.com/a/53029378/344223
+    let traverse f items = 
+        let folder head tail =
+            result {
+                let! h = f head
+                let! t = tail
+                return h :: t
+            }
+        let empty = result { return List.empty }
+        List.foldBack folder items empty
+
+    let sequence items =
+        traverse id items
+
     // https://hoogle.haskell.org/?hoogle=foldM
     let foldM f state items =
 
