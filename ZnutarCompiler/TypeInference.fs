@@ -12,11 +12,11 @@ module TypeInference =
             |> TypeVariable
 
     let private instantiate scheme =
-        let types =
-            scheme.TypeVariables
-                |> List.map (fun tv ->
-                    createFreshTypeVariable tv.Name)
-        let subst = Map (List.zip scheme.TypeVariables types)
+        let subst =
+            (Substitution.empty, scheme.TypeVariables)
+                ||> List.fold (fun acc tv ->
+                    let typ = createFreshTypeVariable tv.Name
+                    acc |> Map.add tv typ)
         Type.apply subst scheme.Type
 
     let private generalize env typ =
