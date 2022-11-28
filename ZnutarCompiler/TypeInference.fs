@@ -6,16 +6,16 @@ module TypeInference =
 
     let mutable count = 0
 
-    let private createFreshTypeVariable () =
+    let private createFreshTypeVariable (prefix : string) =
         count <- count + 1
-        let typ = Identifier.create $"tv{count}" |> TypeVariable
-        typ
+        Identifier.create $"{prefix}{count}"
+            |> TypeVariable
 
     let private instantiate scheme =
         let types =
-            List.init
-                scheme.TypeVariables.Length (fun _ ->
-                    createFreshTypeVariable ())
+            scheme.TypeVariables
+                |> List.map (fun tv ->
+                    createFreshTypeVariable tv.Name)
         let subst = Map (List.zip scheme.TypeVariables types)
         Type.apply subst scheme.Type
 
@@ -64,7 +64,8 @@ module TypeInference =
 
     and private inferLambda env lam =
         result {
-            let freshType = createFreshTypeVariable ()
+            let freshType =
+                createFreshTypeVariable lam.Identifier.Name
             let env' =
                 let scheme = Scheme.create [] freshType
                 TypeEnvironment.add lam.Identifier scheme env
@@ -76,7 +77,8 @@ module TypeInference =
 
     and private inferApplication env app =
         result {
-            let freshType = createFreshTypeVariable ()
+            let freshType =
+                createFreshTypeVariable "app"
             let! funSubst, funType =
                 inferExpression env app.Function
             let! argSubst, argType =
@@ -124,7 +126,7 @@ module TypeInference =
         result {
             let! exprSubst, exprType =
                 inferExpression env expr
-            let freshType = createFreshTypeVariable ()
+            let freshType = createFreshTypeVariable "fix"
             let! arrowSubst =
                 unify (freshType => freshType) exprType
             return
@@ -138,7 +140,7 @@ module TypeInference =
                 inferExpression env bop.Left
             let! rightSubst, rightType =
                 inferExpression env bop.Right
-            let freshType = createFreshTypeVariable ()
+            let freshType = createFreshTypeVariable "bop"
             let! arrowSubst =
                 unify
                     (leftType => rightType => freshType)

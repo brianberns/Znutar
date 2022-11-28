@@ -31,7 +31,7 @@ type TypeInferenceTests() =
         match Parser.run Parser.parseProgram text with
             | Ok program ->
                 let expected =
-                    let tv = Identifier.create "tv1"
+                    let tv = Identifier.create "x1"
                     let scheme =
                         Scheme.create
                             [tv]
