@@ -39,20 +39,20 @@ module TypeInference =
             Equals, Type.int => Type.int => Type.bool   // to-do: make polymorphic
         ]
 
-    let rec inferExpr env = function
-        | VariableExpr var -> inferVar env var
+    let rec inferExpression env = function
+        | VariableExpr var -> inferVariable env var
         | LambdaExpr lam -> inferLambda env lam
         | ApplicationExpr app -> inferApplication env app
         | LetExpr letb -> inferLet env letb
         | IfExpr iff -> inferIf env iff
         | FixExpr expr -> inferFix env expr
-        | BinaryOperationExpr bop -> inferBinOp env bop
+        | BinaryOperationExpr bop -> inferBinaryOperation env bop
         | LiteralExpr (IntLiteral _) ->
             Ok (Substitution.empty, Type.int)
         | LiteralExpr (BoolLiteral _) ->
             Ok (Substitution.empty, Type.bool)
 
-    and private inferVar env var =
+    and private inferVariable env var =
         result {
             let! typ = TypeEnvironment.instantiate var env
             return Substitution.empty, typ
@@ -64,7 +64,8 @@ module TypeInference =
             let env' =
                 let scheme = Scheme.create [] freshType
                 TypeEnvironment.add lam.Identifier scheme env
-            let! bodySubst, bodyType = inferExpr env' lam.Body
+            let! bodySubst, bodyType =
+                inferExpression env' lam.Body
             let freshType' = Type.apply bodySubst freshType
             return bodySubst, freshType' => bodyType
         }
@@ -72,10 +73,11 @@ module TypeInference =
     and private inferApplication env app =
         result {
             let freshType = fresh ()
-            let! funSubst, funType = inferExpr env app.Function
+            let! funSubst, funType =
+                inferExpression env app.Function
             let! argSubst, argType =
                 let env' = TypeEnvironment.apply funSubst env
-                inferExpr env' app.Argument
+                inferExpression env' app.Argument
             let! appSubst =
                 let funType' = Type.apply argSubst funType
                 unify funType' (argType => freshType)
@@ -86,21 +88,26 @@ module TypeInference =
 
     and private inferLet env letb =
         result {
-            let! argSubst, argType = inferExpr env letb.Argument
+            let! argSubst, argType =
+                inferExpression env letb.Argument
             let env' = TypeEnvironment.apply argSubst env
             let argType' = generalize env' argType
             let! bodySubst, bodyType =
                 let env'' =
-                    TypeEnvironment.add letb.Identifier argType' env'
-                inferExpr env'' letb.Body
+                    TypeEnvironment.add
+                        letb.Identifier argType' env'
+                inferExpression env'' letb.Body
             return argSubst ++ bodySubst, bodyType
         }
 
     and private inferIf env iff =
         result {
-            let! condSubst, condType = inferExpr env iff.Condition
-            let! trueSubst, trueType = inferExpr env iff.TrueBranch
-            let! falseSubst, falseType = inferExpr env iff.FalseBranch
+            let! condSubst, condType =
+                inferExpression env iff.Condition
+            let! trueSubst, trueType =
+                inferExpression env iff.TrueBranch
+            let! falseSubst, falseType =
+                inferExpression env iff.FalseBranch
             let! condSubst' = unify condType Type.bool
             let! branchSubst = unify trueType falseType
             return
@@ -111,7 +118,8 @@ module TypeInference =
 
     and private inferFix env expr =
         result {
-            let! exprSubst, exprType = inferExpr env expr
+            let! exprSubst, exprType =
+                inferExpression env expr
             let freshType = fresh ()
             let! arrowSubst =
                 unify (freshType => freshType) exprType
@@ -120,10 +128,12 @@ module TypeInference =
                 Type.apply exprSubst freshType
         }
 
-    and private inferBinOp env bop =
+    and private inferBinaryOperation env bop =
         result {
-            let! leftSubst, leftType = inferExpr env bop.Left
-            let! rightSubst, rightType = inferExpr env bop.Right
+            let! leftSubst, leftType =
+                inferExpression env bop.Left
+            let! rightSubst, rightType =
+                inferExpression env bop.Right
             let freshType = fresh ()
             let! arrowSubst =
                 unify
@@ -134,22 +144,24 @@ module TypeInference =
                 Type.apply arrowSubst freshType
         }
 
-    let private inferDecl env decl =
+    let private inferDeclaration env decl =
         result {
-            let! subst, typ = inferExpr env decl.Body
+            let! subst, typ = inferExpression env decl.Body
             let scheme =
                 Type.apply subst typ
                     |> generalize TypeEnvironment.empty
-            return TypeEnvironment.add decl.Identifier scheme env
+            return TypeEnvironment.add
+                decl.Identifier scheme env
         }
 
     let inferProgram program =
         result {
             let! env =
                 Result.foldM
-                    inferDecl
+                    inferDeclaration
                     TypeEnvironment.empty
                     program.Declarations
-            let! _subst, typ = inferExpr env program.Main
+            let! _subst, typ =
+                inferExpression env program.Main
             return env, typ
         }

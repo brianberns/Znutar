@@ -15,7 +15,7 @@ type TypeInferenceTests() =
                     Ok (Substitution.empty, Type.int)
                         |> Result.map snd
                 let actual =
-                    TypeInference.inferExpr TypeEnvironment.empty expr
+                    TypeInference.inferExpression TypeEnvironment.empty expr
                         |> Result.map snd
                 Assert.AreEqual(expected, actual)
             | Error err -> Assert.Fail(string err)
@@ -52,6 +52,6 @@ type TypeInferenceTests() =
                 let expected =
                     cerror (UnificationFailure (Type.bool, Type.int))
                 let actual =
-                    TypeInference.inferExpr TypeEnvironment.empty expr
+                    TypeInference.inferExpression TypeEnvironment.empty expr
                 Assert.AreEqual(expected, actual)
             | Error err -> Assert.Fail(string err)
