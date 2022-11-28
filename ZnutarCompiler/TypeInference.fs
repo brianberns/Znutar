@@ -104,7 +104,8 @@ module TypeInference =
             let! condSubst' = unify condType Type.bool
             let! branchSubst = unify trueType falseType
             return
-                condSubst ++ trueSubst ++ falseSubst ++ condSubst' ++ branchSubst,
+                condSubst ++ trueSubst ++ falseSubst
+                    ++ condSubst' ++ branchSubst,
                 Type.apply branchSubst trueType
         }
 
@@ -133,20 +134,21 @@ module TypeInference =
                 Type.apply arrowSubst freshType
         }
 
-    let private closeOver sub ty =
-        generalize TypeEnvironment.empty (Type.apply sub ty)
+    let private closeOver subst typ =
+        Type.apply subst typ
+            |> generalize TypeEnvironment.empty
 
-    let private inferExpr env ex =
+    let private inferExpr env expr =
         result {
-            let! sub, ty = infer env ex
-            return closeOver sub ty
+            let! subst, typ = infer env expr
+            return closeOver subst typ
         }
 
     let rec inferTop env = function
         | [] -> Ok env
-        | decl :: xs ->
+        | decl :: decls ->
             result {
-                let! sc = inferExpr env decl.Body
-                let env' = TypeEnvironment.add decl.Identifier sc env
-                return! inferTop env' xs
+                let! scheme = inferExpr env decl.Body
+                let env' = TypeEnvironment.add decl.Identifier scheme env
+                return! inferTop env' decls
             }
