@@ -42,46 +42,64 @@ module TypeInference =
     let rec infer env expr =
         result {
             match expr with
+
                 | VariableExpr var ->
                     let! typ = TypeEnvironment.instantiate var env
                     return Substitution.empty, typ
+
                 | LambdaExpr lam ->
                     let freshType = fresh ()
-                    let scheme = Scheme.create [] freshType
-                    let env' = TypeEnvironment.add lam.Identifier scheme env
-                    let! subst1, type1 = infer env' lam.Body
-                    return subst1, Type.apply subst1 freshType => type1
+                    let env' =
+                        let scheme = Scheme.create [] freshType
+                        TypeEnvironment.add lam.Identifier scheme env
+                    let! bodySubst, bodyType = infer env' lam.Body
+                    let freshType' = Type.apply bodySubst freshType
+                    return bodySubst, freshType' => bodyType
+
                 | ApplicationExpr app ->
                     let freshType = fresh ()
-                    let! subst1, type1 = infer env app.Function
-                    let! subst2, type2 = infer (TypeEnvironment.apply subst1 env) app.Argument
-                    let! subst3 = unify (Type.apply subst2 type1) (type2 => freshType)
-                    return subst3 ++ subst2 ++ subst1, Type.apply subst3 freshType
+                    let! funSubst, funType = infer env app.Function
+                    let! argSubst, argType =
+                        let env' = TypeEnvironment.apply funSubst env
+                        infer env' app.Argument
+                    let! appSubst =
+                        let funType' = Type.apply argSubst funType
+                        unify funType' (argType => freshType)
+                    return
+                        funSubst ++ argSubst ++ appSubst,
+                        Type.apply appSubst freshType
+
                 | LetExpr letb ->
-                    let! subst1, type1 = infer env letb.Argument
-                    let env' = TypeEnvironment.apply subst1 env
-                    let type1' = generalize env' type1
-                    let! subst2, type2 =
-                        infer (TypeEnvironment.add letb.Identifier type1' env') letb.Body
-                    return subst1 ++ subst2, type2
+                    let! argSubst, argType = infer env letb.Argument
+                    let env' = TypeEnvironment.apply argSubst env
+                    let argType' = generalize env' argType
+                    let! bodySubst, bodyType =
+                        let env'' =
+                            TypeEnvironment.add letb.Identifier argType' env'
+                        infer env'' letb.Body
+                    return argSubst ++ bodySubst, bodyType
+
                 | IfExpr iff ->
                     let! subst1, type1 = infer env iff.Condition
                     let! subst2, type2 = infer env iff.TrueBranch
                     let! subst3, type3 = infer env iff.FalseBranch
                     let! subst4 = unify type1 Type.bool
                     let! subst5 = unify type2 type3
-                    return subst5 ++ subst4 ++ subst3 ++ subst2 ++ subst1, Type.apply subst5 type2
+                    return subst1 ++ subst2 ++ subst3 ++ subst4 ++ subst5, Type.apply subst5 type2
+
                 | FixExpr fix ->
                     let! subst1, typ = infer env fix
                     let freshType = fresh ()
                     let! subst2 = unify (freshType => freshType) typ
                     return subst2, Type.apply subst1 freshType
+
                 | BinaryOperationExpr bop ->
                     let! subst1, type1 = infer env bop.Left
                     let! subst2, type2 = infer env bop.Right
                     let freshType = fresh ()
                     let! subst3 = unify (type1 => type2 => freshType) binOpMap[bop.Operator]
                     return subst1 ++ subst2 ++ subst3, Type.apply subst3 freshType
+
                 | LiteralExpr (IntLiteral _) ->
                     return Substitution.empty, Type.int
                 | LiteralExpr (BoolLiteral _) ->
