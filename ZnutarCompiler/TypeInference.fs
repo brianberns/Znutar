@@ -80,25 +80,35 @@ module TypeInference =
                     return argSubst ++ bodySubst, bodyType
 
                 | IfExpr iff ->
-                    let! subst1, type1 = infer env iff.Condition
-                    let! subst2, type2 = infer env iff.TrueBranch
-                    let! subst3, type3 = infer env iff.FalseBranch
-                    let! subst4 = unify type1 Type.bool
-                    let! subst5 = unify type2 type3
-                    return subst1 ++ subst2 ++ subst3 ++ subst4 ++ subst5, Type.apply subst5 type2
+                    let! condSubst, condType = infer env iff.Condition
+                    let! trueSubst, trueType = infer env iff.TrueBranch
+                    let! falseSubst, falseType = infer env iff.FalseBranch
+                    let! condSubst' = unify condType Type.bool
+                    let! branchSubst = unify trueType falseType
+                    return
+                        condSubst ++ trueSubst ++ falseSubst ++ condSubst' ++ branchSubst,
+                        Type.apply branchSubst trueType
 
-                | FixExpr fix ->
-                    let! subst1, typ = infer env fix
+                | FixExpr expr ->
+                    let! exprSubst, exprType = infer env expr
                     let freshType = fresh ()
-                    let! subst2 = unify (freshType => freshType) typ
-                    return subst2, Type.apply subst1 freshType
+                    let! arrowSubst =
+                        unify (freshType => freshType) exprType
+                    return
+                        arrowSubst,
+                        Type.apply exprSubst freshType
 
                 | BinaryOperationExpr bop ->
-                    let! subst1, type1 = infer env bop.Left
-                    let! subst2, type2 = infer env bop.Right
+                    let! leftSubst, leftType = infer env bop.Left
+                    let! rightSubst, rightType = infer env bop.Right
                     let freshType = fresh ()
-                    let! subst3 = unify (type1 => type2 => freshType) binOpMap[bop.Operator]
-                    return subst1 ++ subst2 ++ subst3, Type.apply subst3 freshType
+                    let! arrowSubst =
+                        unify
+                            (leftType => rightType => freshType)
+                            binOpMap[bop.Operator]
+                    return
+                        leftSubst ++ rightSubst ++ arrowSubst,
+                        Type.apply arrowSubst freshType
 
                 | LiteralExpr (IntLiteral _) ->
                     return Substitution.empty, Type.int
