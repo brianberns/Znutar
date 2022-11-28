@@ -21,22 +21,25 @@ type TypeInferenceTests() =
             | Error err -> Assert.Fail(string err)
 
     [<TestMethod>]
-    member this.InferDecl() =
-        let text = "decl id = fun x -> x;"
-        match Parser.run Parser.parseDeclaration text with
-            | Ok decl ->
+    member this.InferProgram() =
+        let text =
+            """
+            decl id = fun x -> x;
+            id true
+            """
+        match Parser.run Parser.parseProgram text with
+            | Ok program ->
                 let expected =
                     let tv = Identifier.create "tv1"
                     let scheme =
                         Scheme.create
                             [tv]
                             (TypeVariable tv => TypeVariable tv)
-                    Ok scheme
+                    Ok (scheme, Type.bool)
                 let actual =
                     result {
-                        let! env =
-                            TypeInference.inferTop TypeEnvironment.empty [decl]
-                        return env[decl.Identifier]
+                        let! env, typ = TypeInference.inferProgram program
+                        return env[Identifier.create "id"], typ
                     }
                 Assert.AreEqual(expected, actual)
             | Error err -> Assert.Fail(string err)

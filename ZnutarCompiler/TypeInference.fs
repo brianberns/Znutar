@@ -134,21 +134,27 @@ module TypeInference =
                 Type.apply arrowSubst freshType
         }
 
-    let private closeOver subst typ =
-        Type.apply subst typ
-            |> generalize TypeEnvironment.empty
-
-    let private inferExpr env expr =
+    let private inferDecl env decl =
         result {
-            let! subst, typ = infer env expr
-            return closeOver subst typ
+            let! subst, typ = infer env decl.Body
+            let scheme =
+                Type.apply subst typ
+                    |> generalize TypeEnvironment.empty
+            return TypeEnvironment.add decl.Identifier scheme env
         }
 
-    let rec inferTop env = function
+    let  rec private inferDecls env = function
         | [] -> Ok env
         | decl :: decls ->
             result {
-                let! scheme = inferExpr env decl.Body
-                let env' = TypeEnvironment.add decl.Identifier scheme env
-                return! inferTop env' decls
+                let! env' = inferDecl env decl
+                return! inferDecls env' decls
             }
+
+    let inferProgram program =
+        result {
+            let! env =
+                inferDecls TypeEnvironment.empty program.Declarations
+            let! _subst, typ = infer env program.Main
+            return env, typ
+        }
