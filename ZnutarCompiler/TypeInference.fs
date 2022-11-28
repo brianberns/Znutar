@@ -150,7 +150,7 @@ module TypeInference =
                 Type.apply arrowSubst freshType
         }
 
-    let private inferDeclaration env decl =
+    let inferDeclaration env decl =
         result {
             let! subst, typ = inferExpression env decl.Body
             let scheme =

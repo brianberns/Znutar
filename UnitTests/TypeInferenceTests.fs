@@ -7,7 +7,7 @@ open Znutar
 type TypeInferenceTests() =
 
     [<TestMethod>]
-    member this.InferExpr() =
+    member this.InferExpression() =
         let text = "let x = 2 in 3 * x"
         match Parser.run Parser.Expression.parse text with
             | Ok expr ->
@@ -18,6 +18,51 @@ type TypeInferenceTests() =
                     TypeInference.inferExpression
                         TypeEnvironment.empty expr
                         |> Result.map snd
+                Assert.AreEqual(expected, actual)
+            | Error err -> Assert.Fail(string err)
+
+    [<TestMethod>]
+    member this.InferDeclaration1() =
+        let text = "decl const = fun x -> fun y -> x;"
+        match Parser.run Parser.parseDeclaration text with
+            | Ok decl ->
+                let expected =
+                    let tvX = Identifier.create "x1"
+                    let tvY = Identifier.create "y2"
+                    let scheme =
+                        Scheme.create
+                            [tvX; tvY]
+                            (TypeVariable tvX
+                                => (TypeVariable tvY
+                                    => TypeVariable tvX))
+                    Ok scheme
+                let actual =
+                    result {
+                        let! env =
+                            TypeInference.inferDeclaration
+                                TypeEnvironment.empty decl
+                        return env[Identifier.create "const"]
+                    }
+                Assert.AreEqual(expected, actual)
+            | Error err -> Assert.Fail(string err)
+
+    [<TestMethod>]
+    member this.InferDeclaration2() =
+        let text = "decl twice = fun x -> x + x;"
+        match Parser.run Parser.parseDeclaration text with
+            | Ok decl ->
+                let expected =
+                    let tv = Identifier.create "x1"
+                    let scheme =
+                        Scheme.create [] (Type.int => Type.int)
+                    Ok scheme
+                let actual =
+                    result {
+                        let! env =
+                            TypeInference.inferDeclaration
+                                TypeEnvironment.empty decl
+                        return env[Identifier.create "twice"]
+                    }
                 Assert.AreEqual(expected, actual)
             | Error err -> Assert.Fail(string err)
 
