@@ -56,7 +56,7 @@ module Env =
     let tryFind ident (env : VariableEnvironment) =
         match Map.tryFind ident env with
             | Some node -> Ok node
-            | None -> Error $"Unbound identifier: {ident.Name}"
+            | None -> cerror (UnboundVariable ident)
 
 module Compiler =
 
@@ -102,25 +102,25 @@ module Compiler =
 
     module private rec Expression =
 
-        let compile env = function
-            | VariableExpr ident -> compileIdentifier env ident
+        let compile venv = function
+            | VariableExpr ident -> compileIdentifier venv ident
             // | LambdaExpr lam -> compileLambda env lam
-            | ApplicationExpr app -> compileApplication env app
-            | LetExpr letb -> compileLet env letb
-            | IfExpr iff -> compileIf env iff
+            | ApplicationExpr app -> compileApplication venv app
+            | LetExpr letb -> compileLet venv letb
+            | IfExpr iff -> compileIf venv iff
             // | FixExpr expr -> compileFix env expr
-            | BinaryOperationExpr bop -> compileBinaryOperation env bop
-            | LiteralExpr lit -> compileLiteral env lit
+            | BinaryOperationExpr bop -> compileBinaryOperation venv bop
+            | LiteralExpr lit -> compileLiteral venv lit
 
-        let private compileIdentifier env ident =
-            Env.tryFind ident env
-                |> Result.map (fun node -> node, env)
+        let private compileIdentifier venv ident =
+            Env.tryFind ident venv
+                |> Result.map (fun node -> node, venv)
 
-        let private compileApplication env (app : Application) =
+        let private compileApplication venv (app : Application) =
             result {
 
-                let! funcNode, _ = compile env app.Function
-                let! argNode, _ = compile env app.Argument
+                let! funcNode, _ = compile venv app.Function
+                let! argNode, _ = compile venv app.Argument
 
                 let node =
                     InvocationExpression(funcNode)
@@ -129,10 +129,10 @@ module Compiler =
                                 SingletonSeparatedList(
                                     Argument(argNode))))
 
-                return node, env
+                return node, venv
             }
 
-        let private compileLiteral env (lit : Literal) =
+        let private compileLiteral venv (lit : Literal) =
             let node =
                 match lit with
                     | IntLiteral n ->
@@ -140,16 +140,16 @@ module Compiler =
                             :> Syntax.ExpressionSyntax
                     | BoolLiteral b ->
                         Syntax.boolLiteral b
-            Ok (node, env)
+            Ok (node, venv)
 
-        let private compileLet env (letb : LetBinding) =
+        let private compileLet venv (letb : LetBinding) =
             result {
-                let! node, env' = compile env letb.Body
+                let! node, env' = compile venv letb.Body
                 let env'' = Map.add letb.Identifier node env'
                 return node, env''
             }
 
-        let private compileBinaryOperation env (bop : BinaryOperation) =
+        let private compileBinaryOperation venv (bop : BinaryOperation) =
             let kind =
                 match bop.Operator with
                     | Plus -> SyntaxKind.AddExpression
@@ -157,28 +157,28 @@ module Compiler =
                     | Times -> SyntaxKind.MultiplyExpression
                     | Equals -> SyntaxKind.EqualsExpression
             result {
-                let! leftNode, _ = compile env bop.Left
-                let! rightNode, _ = compile env bop.Right
+                let! leftNode, _ = compile venv bop.Left
+                let! rightNode, _ = compile venv bop.Right
                 let node =
                     BinaryExpression(
                         kind,
                         leftNode,
                         rightNode)
-                return node, env
+                return node, venv
             }
 
-        let private compileIf env (iff : If) =
+        let private compileIf venv (iff : If) =
             result {
 
-                let! condNode, _ = compile env iff.Condition
-                let! trueNode, _ = compile env iff.TrueBranch
-                let! falseNode, _ = compile env iff.FalseBranch
+                let! condNode, _ = compile venv iff.Condition
+                let! trueNode, _ = compile venv iff.TrueBranch
+                let! falseNode, _ = compile venv iff.FalseBranch
 
                 let node =
                     ConditionalExpression(
                         condNode, trueNode, falseNode)
 
-                return node, env
+                return node, venv
             }
 
     type Syntax.MethodDeclarationSyntax with
@@ -215,10 +215,11 @@ module Compiler =
                         .WithType(typeNode)
             }
 
-        let compile decl =
+        let compile tenv decl =
             result {
 
-                let! typedParms, outputType = Decl.getSignature decl
+                let! typ =
+                    TypeInference.TypeEnvironment.instantiate decl.Identifier tenv
                 let! returnType = compileType outputType
                 let typeParmNodes =
                     decl.Scheme.TypeVariableIdents

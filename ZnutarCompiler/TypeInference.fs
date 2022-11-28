@@ -26,14 +26,14 @@ module TypeInference =
                     - TypeEnvironment.freeTypeVariables env)
         Scheme.create tvs typ
 
-    module private TypeEnvironment =
+    module TypeEnvironment =
 
         let instantiate ident (env : TypeEnvironment) =
             match Map.tryFind ident env with
-                | None ->
-                    cerror (UnboundVariable ident)
                 | Some scheme ->
                     Ok (instantiate scheme)
+                | None ->
+                    cerror (UnboundVariable ident)
 
     let private binOpMap =
         Map [
