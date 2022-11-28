@@ -27,7 +27,10 @@ type TypeInferenceTests() =
             | Ok decl ->
                 let expected =
                     let tv = Identifier.create "tv1"
-                    let scheme = { TypeVariables = [tv]; Type = TypeVariable tv => TypeVariable tv }
+                    let scheme =
+                        Scheme.create
+                            [tv]
+                            (TypeVariable tv => TypeVariable tv)
                     Ok scheme
                 let actual =
                     result {

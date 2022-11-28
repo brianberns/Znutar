@@ -2,14 +2,7 @@ namespace Znutar
 
 module Program =
     result {
-        let text =
-            """
-            decl fact = fix (fun fact -> fun n ->
-                if (n = 0) then 1
-                else (n * (fact (n - 1))));
-
-            fact 6
-            """
-        let! program = Parser.run Parser.parseProgram text
-        return! Interpreter.evalProgram program
+        let text = "let x = 1 in x"
+        let! expr = Parser.run Parser.Expression.parse text
+        return! TypeInference.infer TypeEnvironment.empty expr
     } |> printfn "%A"

@@ -46,6 +46,14 @@ type Scheme =
         Type : Type
     }
 
+module Scheme =
+
+    let create typeVars typ =
+        {
+            TypeVariables = typeVars
+            Type = typ
+        }
+
 type TypeEnvironment = Map<Variable, Scheme>
 
 module TypeEnvironment =

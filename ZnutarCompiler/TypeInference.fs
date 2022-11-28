@@ -20,10 +20,7 @@ module TypeInference =
             Set.toList (
                 Type.freeTypeVariables typ
                     - TypeEnvironment.freeTypeVariables env)
-        {
-            TypeVariables = tvs
-            Type = typ
-        }
+        Scheme.create tvs typ
 
     module private TypeEnvironment =
 
@@ -50,7 +47,7 @@ module TypeInference =
                     return Substitution.empty, typ
                 | LambdaExpr lam ->
                     let freshType = fresh ()
-                    let scheme = { TypeVariables = []; Type = freshType }
+                    let scheme = Scheme.create [] freshType
                     let env' = TypeEnvironment.add lam.Identifier scheme env
                     let! subst1, type1 = infer env' lam.Body
                     return subst1, Type.apply subst1 freshType => type1
