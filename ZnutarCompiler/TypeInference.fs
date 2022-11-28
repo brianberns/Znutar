@@ -6,12 +6,16 @@ module TypeInference =
 
     let mutable count = 0
 
-    let private createFreshTypeVariable _ =
+    let private createFreshTypeVariable () =
         count <- count + 1
-        Identifier.create $"tv{count}" |> TypeVariable
+        let typ = Identifier.create $"tv{count}" |> TypeVariable
+        typ
 
     let private instantiate scheme =
-        let types = List.map createFreshTypeVariable scheme.TypeVariables
+        let types =
+            List.init
+                scheme.TypeVariables.Length (fun _ ->
+                    createFreshTypeVariable ())
         let subst = Map (List.zip scheme.TypeVariables types)
         Type.apply subst scheme.Type
 
