@@ -4,7 +4,7 @@ module TypeInference =
 
     open Substitution
 
-    let mutable count = 0
+    let mutable private count = 0
 
     let private createFreshTypeVariable (prefix : string) =
         count <- count + 1
@@ -162,6 +162,7 @@ module TypeInference =
 
     let inferProgram program =
         result {
+            count <- 0   // reset for deterministic result
             let! env =
                 Result.foldM
                     inferDeclaration
