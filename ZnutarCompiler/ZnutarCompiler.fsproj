@@ -14,10 +14,14 @@
     <Compile Include="Substitution.fs" />
     <Compile Include="TypeInference.fs" />
     <Compile Include="Program.fs" />
+    <Compile Include="CompilationUnit.fs" />
+    <Compile Include="Compiler.fs" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Basic.Reference.Assemblies.Net60" Version="1.4.1" />
     <PackageReference Include="FParsec" Version="1.1.1" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.4.0" />
   </ItemGroup>
 
 </Project>
