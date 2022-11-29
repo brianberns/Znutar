@@ -170,7 +170,9 @@ module Parser =
                     Expression = expr
                     Type = typ
                 }
-            } |> parseParens
+            }
+                |> parseParens
+                |> attempt
 
         let private parseParenExpression =
             parseParens parseExpression
