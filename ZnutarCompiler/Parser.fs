@@ -70,18 +70,14 @@ module Parser =
             parseVariableIdentifier
                 |>> TypeVariable
 
-        let private parseArrow =
-            parse {
-                let! inpType = parseType
-                do! spaces >>. skipString "->" >>. spaces
-                let! outType = parseType
-                return inpType => outType
-            } |> attempt
+        let private parseParenType =
+            parseParens parseType
 
         let private parseSimpleType =
             choice [
                 parseConstant
                 parseVariable
+                parseParenType
             ]
 
         let private parseTypeImpl =
