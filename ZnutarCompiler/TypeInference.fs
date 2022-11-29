@@ -34,24 +34,36 @@ module TypeInference =
             Equals, Type.int => Type.int => Type.bool   // to-do: make polymorphic
         ]
 
-    let rec inferExpression env = function
-        | VariableExpr ident -> inferVariable env ident
-        | LambdaExpr lam -> inferLambda env lam
-        | ApplicationExpr app -> inferApplication env app
-        | LetExpr letb -> inferLet env letb
-        | IfExpr iff -> inferIf env iff
-        | FixExpr expr -> inferFix env expr
-        | BinaryOperationExpr bop -> inferBinaryOperation env bop
-        | LiteralExpr (IntLiteral _) ->
-            Ok (Substitution.empty, Type.int)
-        | LiteralExpr (BoolLiteral _) ->
-            Ok (Substitution.empty, Type.bool)
-        | AnnotationExpr ann -> inferAnnotation env ann
+    let rec inferExpression env expr =
+        result {
+            let! subst, typ, expr' =
+                match expr with
+                    | VariableExpr ident -> inferVariable env ident
+                    | LambdaExpr lam -> inferLambda env lam
+                    | ApplicationExpr app -> inferApplication env app
+                    | LetExpr letb -> inferLet env letb
+                    | IfExpr iff -> inferIf env iff
+                    | FixExpr expr -> inferFix env expr
+                    | BinaryOperationExpr bop -> inferBinaryOperation env bop
+                    | LiteralExpr (IntLiteral _) ->
+                        Ok (Substitution.empty, Type.int)
+                    | LiteralExpr (BoolLiteral _) ->
+                        Ok (Substitution.empty, Type.bool)
+                    | AnnotationExpr ann -> inferAnnotation env ann
+            let expr'' =
+                AnnotationExpr {
+                    Expression = expr'
+                    Type = typ
+                }
+            return subst, typ, expr''
+        }
 
     and private inferVariable env ident =
         result {
             let! scheme = TypeEnvironment.tryFind ident env
-            return Substitution.empty, instantiate scheme
+            let typ = instantiate scheme
+            let expr = VariableExpr ident
+            return Substitution.empty, typ, expr
         }
 
     and private inferLambda env lam =
@@ -61,41 +73,60 @@ module TypeInference =
             let env' =
                 let scheme = Scheme.create [] freshType
                 TypeEnvironment.add lam.Identifier scheme env
-            let! bodySubst, bodyType =
+            let! bodySubst, bodyType, bodyExpr =
                 inferExpression env' lam.Body
             let freshType' = Type.apply bodySubst freshType
-            return bodySubst, freshType' => bodyType
+            let typ = freshType' => bodyType
+            let expr =
+                LambdaExpr { lam with Body = bodyExpr }
+            return bodySubst, typ, expr
         }
 
     and private inferApplication env app =
         result {
             let freshType =
                 createFreshTypeVariable "app"
-            let! funSubst, funType =
+            let! funSubst, funType, funExpr =
                 inferExpression env app.Function
-            let! argSubst, argType =
+            let! argSubst, argType, argExpr =
                 let env' = TypeEnvironment.apply funSubst env
                 inferExpression env' app.Argument
             let! appSubst =
                 let funType' = Type.apply argSubst funType
                 unify funType' (argType => freshType)
+            let typ = Type.apply appSubst freshType
+            let expr =
+                ApplicationExpr {
+                    Function = funExpr
+                    Argument = argExpr
+                }
             return
                 funSubst ++ argSubst ++ appSubst,
-                Type.apply appSubst freshType
+                typ,
+                expr
         }
 
     and private inferLet env letb =
         result {
-            let! argSubst, argType =
+            let! argSubst, argType, argExpr =
                 inferExpression env letb.Argument
             let env' = TypeEnvironment.apply argSubst env
             let argType' = generalize env' argType
-            let! bodySubst, bodyType =
+            let! bodySubst, bodyType, bodyExpr =
                 let env'' =
                     TypeEnvironment.add
                         letb.Identifier argType' env'
                 inferExpression env'' letb.Body
-            return argSubst ++ bodySubst, bodyType
+            let expr =
+                LetExpr {
+                    letb with
+                        Argument = argExpr
+                        Body = bodyExpr
+                }
+            return
+                argSubst ++ bodySubst,
+                bodyType,
+                expr
         }
 
     and private inferIf env iff =
