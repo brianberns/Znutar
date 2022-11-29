@@ -49,5 +49,5 @@ module Type =
     let unparse (typ : Type) =
         typ.Unparse()
 
-    let int = TypeConstant (Identifier.create "Int")
-    let bool = TypeConstant (Identifier.create "Bool")
+    let int = TypeConstant (Identifier.create "int")
+    let bool = TypeConstant (Identifier.create "bool")

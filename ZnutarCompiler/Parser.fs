@@ -1,5 +1,6 @@
 ﻿namespace Znutar
 
+open System
 open FParsec
 
 type ParserError = ParserError of string
@@ -45,12 +46,13 @@ module Parser =
         ]
             |> List.map pstring
             |> choice
+            .>> notFollowedBy (satisfy Char.IsLetterOrDigit)   // to-do: refine
 
     let private parseIdentifier : Parser<_, unit> =
         parse {
             let! name =
-                notFollowedBy (lookAhead parseKeyword)
-                    >>. identifier (IdentifierOptions ())
+                notFollowedBy parseKeyword
+                    >>. identifier (IdentifierOptions ())      // to-do: refine
             return Identifier.create name
         }
 
