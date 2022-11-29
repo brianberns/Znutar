@@ -229,5 +229,10 @@ module TypeInference =
                         })
             let! _subst, typ, main =
                 inferExpression env program.Main
-            return env, typ
+            let program' =
+                {
+                    Declarations = List.rev decls
+                    Main = main
+                }
+            return env, typ, program'
         }

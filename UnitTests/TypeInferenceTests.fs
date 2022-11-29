@@ -11,13 +11,11 @@ type TypeInferenceTests() =
         let text = "let x = 2 in 3 * x"
         match Parser.run Parser.Expression.parse text with
             | Ok expr ->
-                let expected =
-                    Ok (Substitution.empty, Type.int)
-                        |> Result.map snd
+                let expected = Ok Type.int
                 let actual =
                     TypeInference.inferExpression
                         TypeEnvironment.empty expr
-                        |> Result.map snd
+                        |> Result.map (fun (_, typ, _) -> typ)
                 Assert.AreEqual(expected, actual)
             | Error err -> Assert.Fail(string err)
 
@@ -38,7 +36,7 @@ type TypeInferenceTests() =
                     Ok scheme
                 let actual =
                     result {
-                        let! env =
+                        let! env, _ =
                             TypeInference.inferDeclaration
                                 TypeEnvironment.empty decl
                         return env[Identifier.create "const"]
@@ -58,7 +56,7 @@ type TypeInferenceTests() =
                     Ok scheme
                 let actual =
                     result {
-                        let! env =
+                        let! env, _ =
                             TypeInference.inferDeclaration
                                 TypeEnvironment.empty decl
                         return env[Identifier.create "twice"]
@@ -84,7 +82,7 @@ type TypeInferenceTests() =
                     Ok (scheme, Type.bool)
                 let actual =
                     result {
-                        let! env, typ =
+                        let! env, typ, _ =
                             TypeInference.inferProgram program
                         return env[Identifier.create "id"], typ
                     }
