@@ -109,7 +109,7 @@ module Compiler =
 
         let compile venv = function
             | VariableExpr ident -> compileIdentifier venv ident
-            | LambdaExpr lam -> compileLambda venv lam
+            // | LambdaExpr lam -> compileLambda venv lam
             | ApplicationExpr app -> compileApplication venv app
             | LetExpr letb -> compileLet venv letb
             | IfExpr iff -> compileIf venv iff
@@ -121,8 +121,10 @@ module Compiler =
             VariableEnvironment.tryFind ident venv
                 |> Result.map (fun node -> node, venv)
 
+        (*
         let private compileLambda venv (lam : LambdaAbstraction) =
             ()
+        *)
 
         let private compileApplication venv (app : Application) =
             result {

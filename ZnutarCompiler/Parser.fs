@@ -54,6 +54,53 @@ module Parser =
             return Identifier.create name
         }
 
+    module Type =
+
+        let private parseType, private parseTypeRef =
+            createParserForwardedToRef ()
+
+        let private parseConstant =
+            parseIdentifier |>> TypeConstant
+
+        let private parseVariableIdentifier =
+            skipChar '\''
+                >>. parseIdentifier   // don't include apostrophe
+
+        let private parseVariable =
+            parseVariableIdentifier
+                |>> TypeVariable
+
+        let private parseArrow =
+            parse {
+                let! inpType = parseType
+                do! spaces >>. skipString "->" >>. spaces
+                let! outType = parseType
+                return inpType => outType
+            } |> attempt
+
+        let private parseSimpleType =
+            choice [
+                parseConstant
+                parseVariable
+            ]
+
+        let private parseTypeImpl =
+
+            let create =
+                parse {
+                    do! skipString "->" >>. spaces
+                    return (fun inpType outType ->
+                            inpType => outType)
+                }
+
+            chainl1
+                (parseSimpleType .>> spaces)
+                (create .>> spaces)
+
+        let parse = parseType
+
+        do parseTypeRef.Value <- parseTypeImpl
+
     module Expression =
 
         let private parseExpression, private parseExpressionRef =
@@ -114,6 +161,17 @@ module Parser =
                 return! parseExpression
             }
 
+        let private parseAnnotation =
+            parse {
+                let! expr = parseExpression
+                do! spaces >>. skipChar ':' >>. spaces
+                let! typ = Type.parse
+                return {
+                    Expression = expr
+                    Type = typ
+                }
+            } |> parseParens
+
         let private parseParenExpression =
             parseParens parseExpression
 
@@ -125,6 +183,7 @@ module Parser =
                 parseLiteral |>> LiteralExpr
                 parseIf |>> IfExpr
                 parseFix |>> FixExpr
+                parseAnnotation |>> AnnotationExpr
                 parseParenExpression
             ]
 

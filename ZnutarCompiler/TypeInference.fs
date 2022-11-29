@@ -46,6 +46,7 @@ module TypeInference =
             Ok (Substitution.empty, Type.int)
         | LiteralExpr (BoolLiteral _) ->
             Ok (Substitution.empty, Type.bool)
+        | AnnotationExpr ann -> inferAnnotation env ann
 
     and private inferVariable env ident =
         result {
@@ -139,6 +140,16 @@ module TypeInference =
             return
                 leftSubst ++ rightSubst ++ arrowSubst,
                 Type.apply arrowSubst freshType
+        }
+
+    and private inferAnnotation env ann =
+        result {
+            let! exprSubst, exprType =
+                inferExpression env ann.Expression
+            let! typeSubst = unify exprType ann.Type
+            return
+                exprSubst ++ typeSubst,
+                Type.apply typeSubst exprType
         }
 
     let inferDeclaration env decl =

@@ -1,18 +1,5 @@
 ﻿namespace Znutar
 
-type Identifier =
-    {
-        Name : string
-    }
-
-module Identifier =
-
-    let create name =
-        { Name = name }
-
-    let unparse ident =
-        ident.Name
-
 type Literal =
     | IntLiteral of int
     | BoolLiteral of bool
@@ -38,6 +25,7 @@ type Expression =
     | IfExpr of If
     | FixExpr of Expression
     | BinaryOperationExpr of BinaryOperation
+    | AnnotationExpr of Annotation
 
     with
     member expr.Unparse() =
@@ -66,6 +54,8 @@ type Expression =
                 $"({bop.Left.Unparse()} \
                     {BinaryOperator.unparse bop.Operator} \
                     {bop.Right.Unparse()})"
+            | AnnotationExpr ann ->
+                $"({ann.Expression.Unparse()} : {ann.Type.Unparse()})"
 
 and Application =
     {
@@ -98,6 +88,12 @@ and BinaryOperation =
         Operator : BinaryOperator
         Left : Expression
         Right : Expression
+    }
+
+and Annotation =
+    {
+        Expression : Expression
+        Type : Type
     }
 
 module Expression =

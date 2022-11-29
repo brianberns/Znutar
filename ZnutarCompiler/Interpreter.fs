@@ -117,6 +117,9 @@ module Interpreter =
                                 }
                         }
                     return! evalExpr env lamExpr
+
+                | AnnotationExpr ann ->
+                    return! evalExpr env ann.Expression
         }
 
     let private evalDecl env decl =
