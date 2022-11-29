@@ -119,9 +119,10 @@ module Compiler =
             | ApplicationExpr app -> compileApplication venv app
             | LetExpr letb -> compileLet venv letb
             | IfExpr iff -> compileIf venv iff
-            // | FixExpr expr -> compileFix env expr
+            | FixExpr expr -> compile venv expr
             | BinaryOperationExpr bop -> compileBinaryOperation venv bop
             | LiteralExpr lit -> compileLiteral venv lit
+            | AnnotationExpr ann -> compile venv ann.Expression
 
         let private compileIdentifier venv ident =
             VariableEnvironment.tryFind ident venv
@@ -129,9 +130,10 @@ module Compiler =
 
         let private compileLambda venv (lam : LambdaAbstraction) =
             result {
-                let identNode : Syntax.ExpressionSyntax =
-                    SyntaxFactory.IdentifierName(lam.Identifier.Name)
-                let venv' = Map.add lam.Identifier identNode venv
+                let venv' =
+                    let identNode : Syntax.ExpressionSyntax =
+                        SyntaxFactory.IdentifierName(lam.Identifier.Name)
+                    Map.add lam.Identifier identNode venv
                 let! bodyNode, _ = compile venv' lam.Body
                 let node =
                     SyntaxFactory.SimpleLambdaExpression(
