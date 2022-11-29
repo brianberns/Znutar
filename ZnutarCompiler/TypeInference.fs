@@ -46,9 +46,9 @@ module TypeInference =
                     | FixExpr expr -> inferFix env expr
                     | BinaryOperationExpr bop -> inferBinaryOperation env bop
                     | LiteralExpr (IntLiteral _) ->
-                        Ok (Substitution.empty, Type.int)
+                        Ok (Substitution.empty, Type.int, expr)
                     | LiteralExpr (BoolLiteral _) ->
-                        Ok (Substitution.empty, Type.bool)
+                        Ok (Substitution.empty, Type.bool, expr)
                     | AnnotationExpr ann -> inferAnnotation env ann
             let expr'' =
                 AnnotationExpr {
@@ -131,77 +131,103 @@ module TypeInference =
 
     and private inferIf env iff =
         result {
-            let! condSubst, condType =
+            let! condSubst, condType, condExpr =
                 inferExpression env iff.Condition
-            let! trueSubst, trueType =
+            let! trueSubst, trueType, trueExpr =
                 inferExpression env iff.TrueBranch
-            let! falseSubst, falseType =
+            let! falseSubst, falseType, falseExpr =
                 inferExpression env iff.FalseBranch
             let! condSubst' = unify condType Type.bool
             let! branchSubst = unify trueType falseType
+            let typ = Type.apply branchSubst trueType
+            let expr =
+                IfExpr {
+                    Condition = condExpr
+                    TrueBranch = trueExpr
+                    FalseBranch = falseExpr
+                }
             return
                 condSubst ++ trueSubst ++ falseSubst
                     ++ condSubst' ++ branchSubst,
-                Type.apply branchSubst trueType
+                typ,
+                expr
         }
 
     and private inferFix env expr =
         result {
-            let! exprSubst, exprType =
+            let! exprSubst, exprType, exprExpr =
                 inferExpression env expr
             let freshType = createFreshTypeVariable "fix"
             let! arrowSubst =
                 unify (freshType => freshType) exprType
+            let typ = Type.apply exprSubst freshType
+            let expr = FixExpr exprExpr
             return
                 arrowSubst,
-                Type.apply exprSubst freshType
+                typ,
+                expr
         }
 
     and private inferBinaryOperation env bop =
         result {
-            let! leftSubst, leftType =
+            let! leftSubst, leftType, leftExpr =
                 inferExpression env bop.Left
-            let! rightSubst, rightType =
+            let! rightSubst, rightType, rightExpr =
                 inferExpression env bop.Right
             let freshType = createFreshTypeVariable "bop"
             let! arrowSubst =
                 unify
                     (leftType => rightType => freshType)
                     binOpMap[bop.Operator]
+            let typ = Type.apply arrowSubst freshType
+            let expr =
+                BinaryOperationExpr {
+                    bop with
+                        Left = leftExpr
+                        Right = rightExpr
+                }
             return
                 leftSubst ++ rightSubst ++ arrowSubst,
-                Type.apply arrowSubst freshType
+                typ,
+                expr
         }
 
     and private inferAnnotation env ann =
         result {
-            let! exprSubst, exprType =
+            let! exprSubst, exprType, exprExpr =
                 inferExpression env ann.Expression
             let! typeSubst = unify exprType ann.Type
+            let typ = Type.apply typeSubst exprType
             return
                 exprSubst ++ typeSubst,
-                Type.apply typeSubst exprType
+                typ,
+                exprExpr
         }
 
     let inferDeclaration env decl =
         result {
-            let! subst, typ = inferExpression env decl.Body
+            let! subst, typ, body = inferExpression env decl.Body
             let scheme =
                 Type.apply subst typ
                     |> generalize TypeEnvironment.empty
-            return TypeEnvironment.add
-                decl.Identifier scheme env
+            let env' =
+                TypeEnvironment.add
+                    decl.Identifier scheme env
+            let decl' = { decl with Body = body }
+            return env', decl'
         }
 
     let inferProgram program =
         result {
             count <- 0   // reset for deterministic result
-            let! env =
-                Result.foldM
-                    inferDeclaration
-                    TypeEnvironment.empty
-                    program.Declarations
-            let! _subst, typ =
+            let! env, decls =
+                ((TypeEnvironment.empty, []), program.Declarations)
+                    ||> Result.foldM (fun (accEnv, accDecls) decl ->
+                        result {
+                            let! accEnv', decl' = inferDeclaration accEnv decl
+                            return accEnv', (decl' :: accDecls)
+                        })
+            let! _subst, typ, main =
                 inferExpression env program.Main
             return env, typ
         }
