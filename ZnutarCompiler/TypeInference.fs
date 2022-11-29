@@ -81,8 +81,9 @@ module TypeInference =
                 TypeEnvironment.add lam.Identifier scheme env
             let! bodySubst, bodyType, bodyExpr =
                 inferExpression env' lam.Body
-            let freshType' = Type.apply bodySubst freshType
-            let typ = freshType' => bodyType
+            let typ =
+                let freshType' = Type.apply bodySubst freshType
+                freshType' => bodyType
             let expr =
                 LambdaExpr { lam with Body = bodyExpr }
             return bodySubst, typ, expr
@@ -108,8 +109,7 @@ module TypeInference =
                 }
             return
                 funSubst ++ argSubst ++ appSubst,
-                typ,
-                expr
+                typ, expr
         }
 
     and private inferLet env letb =
@@ -131,8 +131,7 @@ module TypeInference =
                 }
             return
                 argSubst ++ bodySubst,
-                bodyType,
-                expr
+                bodyType, expr
         }
 
     and private inferIf env iff =
@@ -155,8 +154,7 @@ module TypeInference =
             return
                 condSubst ++ trueSubst ++ falseSubst
                     ++ condSubst' ++ branchSubst,
-                typ,
-                expr
+                typ, expr
         }
 
     and private inferFix env expr =
@@ -168,10 +166,7 @@ module TypeInference =
                 unify (freshType => freshType) exprType
             let typ = Type.apply exprSubst freshType
             let expr = FixExpr exprExpr
-            return
-                arrowSubst,
-                typ,
-                expr
+            return arrowSubst, typ, expr
         }
 
     and private inferBinaryOperation env bop =
@@ -194,8 +189,7 @@ module TypeInference =
                 }
             return
                 leftSubst ++ rightSubst ++ arrowSubst,
-                typ,
-                expr
+                typ, expr
         }
 
     and private inferAnnotation env ann =
@@ -206,8 +200,7 @@ module TypeInference =
             let typ = Type.apply typeSubst exprType
             return
                 exprSubst ++ typeSubst,
-                typ,
-                exprExpr
+                typ, exprExpr
         }
 
     let inferDeclaration env decl =
@@ -230,7 +223,8 @@ module TypeInference =
                 ((TypeEnvironment.empty, []), program.Declarations)
                     ||> Result.foldM (fun (accEnv, accDecls) decl ->
                         result {
-                            let! accEnv', decl' = inferDeclaration accEnv decl
+                            let! accEnv', decl' =
+                                inferDeclaration accEnv decl
                             return accEnv', (decl' :: accDecls)
                         })
             let! _subst, typ, main =
