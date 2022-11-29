@@ -32,8 +32,8 @@ module Parser =
     let private parseAngles parser =
         parseBrackets '<' '>' parser
 
-    let private parseKeyword =
-        [
+    let private keywords =
+        set [
             "fun"
             "let"
             "in"
@@ -44,17 +44,14 @@ module Parser =
             "else"
             "fix"
         ]
-            |> List.map pstring
-            |> choice
-            .>> notFollowedBy (satisfy Char.IsLetterOrDigit)   // to-do: refine
 
     let private parseIdentifier : Parser<_, unit> =
         parse {
             let! name =
-                notFollowedBy parseKeyword
-                    >>. identifier (IdentifierOptions ())      // to-do: refine
-            return Identifier.create name
-        }
+                identifier (IdentifierOptions ())      // to-do: refine
+            if keywords |> Set.contains name |> not then
+                return Identifier.create name
+        } |> attempt
 
     module Type =
 
