@@ -107,9 +107,15 @@ module Compiler =
 
     module private rec Expression =
 
+        let private getType = function
+            | AnnotationExpr ann -> Ok ann.Type
+            | expr ->
+                cerror (Unsupported
+                    $"Unannotated type: {expr.Unparse()}")
+
         let compile venv = function
             | VariableExpr ident -> compileIdentifier venv ident
-            // | LambdaExpr lam -> compileLambda venv lam
+            | LambdaExpr lam -> compileLambda venv lam
             | ApplicationExpr app -> compileApplication venv app
             | LetExpr letb -> compileLet venv letb
             | IfExpr iff -> compileIf venv iff
@@ -121,10 +127,19 @@ module Compiler =
             VariableEnvironment.tryFind ident venv
                 |> Result.map (fun node -> node, venv)
 
-        (*
         let private compileLambda venv (lam : LambdaAbstraction) =
-            ()
-        *)
+            result {
+                let identNode : Syntax.ExpressionSyntax =
+                    SyntaxFactory.IdentifierName(lam.Identifier.Name)
+                let venv' = Map.add lam.Identifier identNode venv
+                let! bodyNode, _ = compile venv' lam.Body
+                let node =
+                    SyntaxFactory.SimpleLambdaExpression(
+                        SyntaxFactory.Parameter(
+                            SyntaxFactory.Identifier(lam.Identifier.Name)))
+                        .WithExpressionBody(bodyNode)
+                return node, venv
+            }
 
         let private compileApplication venv (app : Application) =
             result {
