@@ -7,7 +7,7 @@ module Gen =
 
     let from<'t> = Arb.from<'t>.Generator   // to-do: is there a better way to get this?
 
-    let rec pick chooser gn =               // to-do: is there a better way to do this?
+    let rec pick chooser gn =               // https://github.com/fscheck/FsCheck/issues/625
         gen {
             let! value = gn
             match chooser value with
