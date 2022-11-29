@@ -34,6 +34,16 @@ module TypeInference =
             Equals, Type.int => Type.int => Type.bool   // to-do: make polymorphic
         ]
 
+    let private annotate typ = function
+        | AnnotationExpr inner as expr ->
+            assert(inner.Type = typ)
+            expr
+        | expr ->
+            AnnotationExpr {
+                Expression = expr
+                Type = typ
+            }
+
     let rec inferExpression env expr =
         result {
             let! subst, typ, expr' =
@@ -50,11 +60,7 @@ module TypeInference =
                     | LiteralExpr (BoolLiteral _) ->
                         Ok (Substitution.empty, Type.bool, expr)
                     | AnnotationExpr ann -> inferAnnotation env ann
-            let expr'' =
-                AnnotationExpr {
-                    Expression = expr'
-                    Type = typ
-                }
+            let expr'' = annotate typ expr'
             return subst, typ, expr''
         }
 
