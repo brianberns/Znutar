@@ -270,15 +270,33 @@ module Compiler =
                 return methodNode :> Syntax.MemberDeclarationSyntax
             }
 
+    let private compileMemberAccess decl =
+        MemberAccessExpression(
+            SyntaxKind.SimpleMemberAccessExpression,
+            InvocationExpression(
+                GenericName(
+                    Identifier("id"))
+                    .WithTypeArgumentList(
+                        TypeArgumentList(
+                            SingletonSeparatedList(
+                                PredefinedType(
+                                    Token(SyntaxKind.BoolKeyword)))))),
+            IdentifierName("Invoke"))
+
     let private compileProgam tenv program =
         result {
             let! declNodes =
                 program.Declarations
                     |> Result.traverse (fun decl ->
                         Decl.compile tenv decl)
+            let venv =
+                (VariableEnvironment.empty, program.Declarations)
+                    ||> List.fold (fun acc decl ->
+                        let node = compileMemberAccess decl
+                        acc |> Map.add decl.Identifier node)
             let! mainNode, _ =
                 program.Main
-                    |> Expression.compile VariableEnvironment.empty
+                    |> Expression.compile venv
             return declNodes, mainNode
         }
 
