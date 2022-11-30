@@ -16,10 +16,13 @@ type TypeInferenceTests() =
         result {
             let! expr = Parser.run Parser.Expression.parse text
             let expected = Type.int
-            let! _, actual, _ =
+            let! _, actual, expr' =
                 TypeInference.inferExpression
                     TypeEnvironment.empty expr
             Assert.AreEqual(expected, actual)
+            Assert.AreEqual(
+                Set.empty,
+                Substitution.Expression.freeTypeVariables expr')
         } |> assertOk
 
     [<TestMethod>]
@@ -31,8 +34,10 @@ type TypeInferenceTests() =
             let! _, actual, expr' =
                 TypeInference.inferExpression
                     TypeEnvironment.empty expr
-            printfn "%s" (expr'.Unparse())
             Assert.AreEqual(expected, actual)
+            Assert.AreEqual(
+                Set.empty,
+                Substitution.Expression.freeTypeVariables expr')
         } |> assertOk
 
     [<TestMethod>]

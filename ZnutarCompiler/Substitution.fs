@@ -85,6 +85,30 @@ module Substitution =
                 Ok empty
             | _ -> cerror (UnificationFailure (type1, type2))
 
+    module Expression =
+
+        let rec freeTypeVariables = function
+            | VariableExpr _
+            | LiteralExpr _ -> Set.empty
+            | ApplicationExpr app ->
+                freeTypeVariables app.Function
+                    + freeTypeVariables app.Argument
+            | LambdaExpr lam -> freeTypeVariables lam.Body
+            | LetExpr letb ->
+                freeTypeVariables letb.Argument
+                    + freeTypeVariables letb.Body
+            | IfExpr iff ->
+                freeTypeVariables iff.Condition
+                    + freeTypeVariables iff.TrueBranch
+                    + freeTypeVariables iff.FalseBranch
+            | FixExpr expr -> freeTypeVariables expr
+            | BinaryOperationExpr bop ->
+                freeTypeVariables bop.Left
+                    + freeTypeVariables bop.Right
+            | AnnotationExpr ann ->
+                Type.freeTypeVariables ann.Type
+                    + freeTypeVariables ann.Expression
+
     module Scheme =
 
         /// Applies the given substitution to the given scheme.
