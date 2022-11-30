@@ -1,6 +1,6 @@
 ﻿namespace Znutar
 
-module TypeInference =
+module TypeInference =   // to-do: replace with constraint-based inference
 
     open Substitution
 
@@ -79,7 +79,10 @@ module TypeInference =
                     | AnnotationExpr ann -> inferAnnotation env ann
 
                 // annotate expression with inferred type
-            let expr'' = annotate typ expr'
+            let expr'' =
+                expr'
+                    |> Expression.apply subst   // to-do: apply final substitution once at the end, instead of every step
+                    |> annotate typ
             return subst, typ, expr''
         }
 
