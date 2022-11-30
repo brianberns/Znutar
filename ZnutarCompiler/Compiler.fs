@@ -271,17 +271,19 @@ module Compiler =
             }
 
     let private compileMemberAccess decl =
-        MemberAccessExpression(
-            SyntaxKind.SimpleMemberAccessExpression,
-            InvocationExpression(
-                GenericName(
-                    Identifier("id"))
-                    .WithTypeArgumentList(
-                        TypeArgumentList(
-                            SingletonSeparatedList(
-                                PredefinedType(
-                                    Token(SyntaxKind.BoolKeyword)))))),
-            IdentifierName("Invoke"))
+        result {
+            return MemberAccessExpression(
+                SyntaxKind.SimpleMemberAccessExpression,
+                InvocationExpression(
+                    GenericName(
+                        Identifier(decl.Identifier.Name))
+                        .WithTypeArgumentList(
+                            TypeArgumentList(
+                                SingletonSeparatedList(
+                                    PredefinedType(
+                                        Token(SyntaxKind.BoolKeyword)))))),
+                IdentifierName("Invoke"))
+        }
 
     let private compileProgam tenv program =
         result {
@@ -289,11 +291,13 @@ module Compiler =
                 program.Declarations
                     |> Result.traverse (fun decl ->
                         Decl.compile tenv decl)
-            let venv =
+            let! venv =
                 (VariableEnvironment.empty, program.Declarations)
-                    ||> List.fold (fun acc decl ->
-                        let node = compileMemberAccess decl
-                        acc |> Map.add decl.Identifier node)
+                    ||> Result.foldM (fun acc decl ->
+                        result {
+                            let! node = compileMemberAccess decl
+                            return acc |> Map.add decl.Identifier node
+                        })
             let! mainNode, _ =
                 program.Main
                     |> Expression.compile venv
