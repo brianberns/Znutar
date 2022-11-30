@@ -41,7 +41,7 @@ module private CompilationUnit =
             ClassDeclaration($"{assemblyName}Type")
                 .AddModifiers(
                     Token(SyntaxKind.StaticKeyword))
-                .AddMembers(memberNodes)
+                .AddMembers(Seq.toArray memberNodes)
                 .AddMembers(mainMethod mainNode)
         let namespaceNode =
             NamespaceDeclaration(

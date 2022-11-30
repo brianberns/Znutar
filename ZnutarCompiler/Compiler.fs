@@ -64,7 +64,7 @@ type Unsupported =
 
 module Compiler =
 
-    let private compileWithMembers assemblyName mainNode memberNodes =
+    let private compileWithMembers assemblyName memberNodes mainNode =
 
         let emitResult =
 
@@ -246,33 +246,50 @@ module Compiler =
                                         SyntaxNodeOrToken.op_Implicit(outNode)
                                     |]))))
 
-        (*
-        let private compileDecl tenv venv (decl : Declaration) =
+        let compile tenv (decl : Declaration) =
             result {
                 let! scheme =
                     TypeEnvironment.tryFind decl.Identifier tenv
-                let! returnType = compileType scheme.Type
-                return MethodDeclaration(
-                    returnType = returnType,
-                    identifier = decl.Identifier.Name)
-                    .AddModifiers(
-                        Token(SyntaxKind.StaticKeyword))
-                    .MaybeWithTypeParameterList(
-                        TypeParameterList(SeparatedList(typeParmNodes)))
-                    .WithParameterList(
-                        ParameterList(SeparatedList(parmNodes)))
-                    .WithBody(
-                        Block(ReturnStatement(bodyNode)))
+                let returnType = compileType scheme.Type
+                let typeParmNodes =
+                    scheme.TypeVariables
+                        |> Seq.map (fun tv ->
+                            TypeParameter(Identifier(tv.Name)))
+                let! bodyNode, _ =
+                    Expression.compile VariableEnvironment.empty decl.Body
+                let methodNode =
+                    MethodDeclaration(
+                        returnType = returnType,
+                        identifier = decl.Identifier.Name)
+                        .AddModifiers(
+                            Token(SyntaxKind.StaticKeyword))
+                        .MaybeWithTypeParameterList(
+                            TypeParameterList(SeparatedList(typeParmNodes)))
+                        .WithBody(
+                            Block(ReturnStatement(bodyNode)))
+                return methodNode :> Syntax.MemberDeclarationSyntax
             }
-        *)
+
+    let private compileProgam tenv program =
+        result {
+            let! declNodes =
+                program.Declarations
+                    |> Result.traverse (fun decl ->
+                        Decl.compile tenv decl)
+            let! mainNode, _ =
+                program.Main
+                    |> Expression.compile VariableEnvironment.empty
+            return declNodes, mainNode
+        }
 
     let compile assemblyName text =
         result {
             let! program = Parser.run Parser.parseProgram text
-            let! mainNode, _ = Expression.compile VariableEnvironment.empty program.Main
+            let! tenv, _, program' = TypeInference.inferProgram program
+            let! declNodes, mainNode = compileProgam tenv program'
             do!
                 compileWithMembers
                     assemblyName
+                    declNodes
                     mainNode
-                    Array.empty
         }
