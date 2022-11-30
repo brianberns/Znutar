@@ -107,7 +107,7 @@ module Compiler =
 
     module private rec Expression =
 
-        let private getType = function
+        let getType = function
             | AnnotationExpr ann -> Ok ann.Type
             | expr ->
                 cerror (Unsupported
@@ -132,13 +132,13 @@ module Compiler =
             result {
                 let venv' =
                     let identNode : Syntax.ExpressionSyntax =
-                        SyntaxFactory.IdentifierName(lam.Identifier.Name)
+                        IdentifierName(lam.Identifier.Name)
                     Map.add lam.Identifier identNode venv
                 let! bodyNode, _ = compile venv' lam.Body
                 let node =
-                    SyntaxFactory.SimpleLambdaExpression(
-                        SyntaxFactory.Parameter(
-                            SyntaxFactory.Identifier(lam.Identifier.Name)))
+                    SimpleLambdaExpression(
+                        Parameter(
+                            Identifier(lam.Identifier.Name)))
                         .WithExpressionBody(bodyNode)
                 return node, venv
             }
@@ -214,6 +214,57 @@ module Compiler =
             if typeParameterList.Parameters.Count > 0 then
                 node.WithTypeParameterList(typeParameterList)
             else node
+
+    module private Decl =
+
+        let private predefinedTypeMap =
+            Map [
+                Type.int, SyntaxKind.IntKeyword
+                Type.bool, SyntaxKind.BoolKeyword
+            ]
+
+        let rec private compileType = function
+            | TypeConstant _ as typ ->
+                let kind = predefinedTypeMap[typ]
+                PredefinedType(Token(kind))
+                    : Syntax.TypeSyntax
+            | TypeVariable tv ->
+                IdentifierName(tv.Name)
+            | TypeArrow (inpType, outType) ->
+                let inpNode = compileType inpType
+                let outNode = compileType outType
+                QualifiedName(
+                    IdentifierName("System"),
+                    GenericName(
+                        Identifier("Func"))
+                        .WithTypeArgumentList(
+                            TypeArgumentList(
+                                SeparatedList(
+                                    [|
+                                        SyntaxNodeOrToken.op_Implicit(inpNode)
+                                        SyntaxNodeOrToken.op_Implicit(Token(SyntaxKind.CommaToken))
+                                        SyntaxNodeOrToken.op_Implicit(outNode)
+                                    |]))))
+
+        (*
+        let private compileDecl tenv venv (decl : Declaration) =
+            result {
+                let! scheme =
+                    TypeEnvironment.tryFind decl.Identifier tenv
+                let! returnType = compileType scheme.Type
+                return MethodDeclaration(
+                    returnType = returnType,
+                    identifier = decl.Identifier.Name)
+                    .AddModifiers(
+                        Token(SyntaxKind.StaticKeyword))
+                    .MaybeWithTypeParameterList(
+                        TypeParameterList(SeparatedList(typeParmNodes)))
+                    .WithParameterList(
+                        ParameterList(SeparatedList(parmNodes)))
+                    .WithBody(
+                        Block(ReturnStatement(bodyNode)))
+            }
+        *)
 
     let compile assemblyName text =
         result {
