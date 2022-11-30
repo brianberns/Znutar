@@ -24,8 +24,8 @@ module Program =
     result {
         let text =
             """
-            let x = 2
-            in x + 1
+            let plus1 = fun x -> x + 1
+            in plus1 5
             """
         let assemblyName = "Test"
         do! Compiler.compile assemblyName text

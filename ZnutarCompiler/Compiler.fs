@@ -105,6 +105,37 @@ module Compiler =
                     |> cerror
         }
 
+    module private Type =
+
+        let private predefinedTypeMap =
+            Map [
+                Type.int, SyntaxKind.IntKeyword
+                Type.bool, SyntaxKind.BoolKeyword
+            ]
+
+        let rec compile = function
+            | TypeConstant _ as typ ->
+                let kind = predefinedTypeMap[typ]
+                PredefinedType(Token(kind))
+                    : Syntax.TypeSyntax
+            | TypeVariable tv ->
+                IdentifierName(tv.Name)
+            | TypeArrow (inpType, outType) ->
+                let inpNode = compile inpType
+                let outNode = compile outType
+                QualifiedName(
+                    IdentifierName("System"),
+                    GenericName(
+                        Identifier("Func"))
+                        .WithTypeArgumentList(
+                            TypeArgumentList(
+                                SeparatedList(
+                                    [|
+                                        SyntaxNodeOrToken.op_Implicit(inpNode)
+                                        SyntaxNodeOrToken.op_Implicit(Token(SyntaxKind.CommaToken))
+                                        SyntaxNodeOrToken.op_Implicit(outNode)
+                                    |]))))
+
     module private rec Expression =
 
         let getType = function
@@ -134,12 +165,17 @@ module Compiler =
                     let identNode : Syntax.ExpressionSyntax =
                         IdentifierName(lam.Identifier.Name)
                     Map.add lam.Identifier identNode venv
+                let! typ = getType (LambdaExpr lam)
                 let! bodyNode, _ = compile venv' lam.Body
                 let node =
-                    SimpleLambdaExpression(
-                        Parameter(
-                            Identifier(lam.Identifier.Name)))
-                        .WithExpressionBody(bodyNode)
+                    ParenthesizedExpression(
+                        CastExpression(
+                            Type.compile typ,
+                            ParenthesizedExpression(
+                                SimpleLambdaExpression(
+                                    Parameter(
+                                        Identifier(lam.Identifier.Name)))
+                                    .WithExpressionBody(bodyNode))))
                 return node, venv
             }
 
@@ -219,40 +255,11 @@ module Compiler =
 
     module private Decl =
 
-        let private predefinedTypeMap =
-            Map [
-                Type.int, SyntaxKind.IntKeyword
-                Type.bool, SyntaxKind.BoolKeyword
-            ]
-
-        let rec private compileType = function
-            | TypeConstant _ as typ ->
-                let kind = predefinedTypeMap[typ]
-                PredefinedType(Token(kind))
-                    : Syntax.TypeSyntax
-            | TypeVariable tv ->
-                IdentifierName(tv.Name)
-            | TypeArrow (inpType, outType) ->
-                let inpNode = compileType inpType
-                let outNode = compileType outType
-                QualifiedName(
-                    IdentifierName("System"),
-                    GenericName(
-                        Identifier("Func"))
-                        .WithTypeArgumentList(
-                            TypeArgumentList(
-                                SeparatedList(
-                                    [|
-                                        SyntaxNodeOrToken.op_Implicit(inpNode)
-                                        SyntaxNodeOrToken.op_Implicit(Token(SyntaxKind.CommaToken))
-                                        SyntaxNodeOrToken.op_Implicit(outNode)
-                                    |]))))
-
         let compile tenv (decl : Declaration) =
             result {
                 let! scheme =
                     TypeEnvironment.tryFind decl.Identifier tenv
-                let returnType = compileType scheme.Type
+                let returnType = Type.compile scheme.Type
                 let typeParmNodes =
                     scheme.TypeVariables
                         |> Seq.map (fun tv ->
