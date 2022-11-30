@@ -57,18 +57,21 @@ type Expression =
             | AnnotationExpr ann ->
                 $"({ann.Expression.Unparse()} : {ann.Type.Unparse()})"
 
+/// fun arg
 and Application =
     {
         Function : Expression
         Argument : Expression
     }
 
+/// fun ident -> body
 and LambdaAbstraction =
     {
         Identifier : Identifier
         Body : Expression
     }
 
+/// let ident = arg in body
 and LetBinding =
     {
         Identifier : Identifier
@@ -76,6 +79,7 @@ and LetBinding =
         Body : Expression
     }
 
+/// if cond then t-branch else f-branch
 and If =
     {
         Condition : Expression
@@ -83,6 +87,7 @@ and If =
         FalseBranch : Expression
     }
 
+/// left op right
 and BinaryOperation =
     {
         Operator : BinaryOperator
@@ -90,6 +95,7 @@ and BinaryOperation =
         Right : Expression
     }
 
+/// expr : type
 and Annotation =
     {
         Expression : Expression

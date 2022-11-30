@@ -34,18 +34,34 @@ module TypeInference =
             Equals, Type.int => Type.int => Type.bool   // to-do: make polymorphic
         ]
 
+    /// Annotates the given expression with the given type.
     let private annotate typ = function
+
+            // annotation not needed
+        | LiteralExpr (IntLiteral _) as expr ->
+            assert(typ = Type.int)
+            expr
+        | LiteralExpr (BoolLiteral _) as expr ->
+            assert(typ = Type.bool)
+            expr
         | AnnotationExpr inner as expr ->
             assert(inner.Type = typ)
             expr
+
+            // create annotation
         | expr ->
             AnnotationExpr {
                 Expression = expr
                 Type = typ
             }
 
+    /// Infers the type of the given expression. Returns:
+    /// * Substitution used to infer the type
+    /// * The inferred type
+    /// * Equivalent expression fully annotated with inferred types
     let rec inferExpression env expr =
         result {
+                // infer expression type
             let! subst, typ, expr' =
                 match expr with
                     | VariableExpr ident -> inferVariable env ident
@@ -54,16 +70,21 @@ module TypeInference =
                     | LetExpr letb -> inferLet env letb
                     | IfExpr iff -> inferIf env iff
                     | FixExpr expr -> inferFix env expr
-                    | BinaryOperationExpr bop -> inferBinaryOperation env bop
+                    | BinaryOperationExpr bop ->
+                        inferBinaryOperation env bop
                     | LiteralExpr (IntLiteral _) ->
                         Ok (Substitution.empty, Type.int, expr)
                     | LiteralExpr (BoolLiteral _) ->
                         Ok (Substitution.empty, Type.bool, expr)
                     | AnnotationExpr ann -> inferAnnotation env ann
+
+                // annotate expression with inferred type
             let expr'' = annotate typ expr'
             return subst, typ, expr''
         }
 
+    /// Infers the type of a variable by looking it up in the
+    /// given environment.
     and private inferVariable env ident =
         result {
             let! scheme = TypeEnvironment.tryFind ident env
@@ -72,46 +93,59 @@ module TypeInference =
             return Substitution.empty, typ, expr
         }
 
+    /// Infers the type of a lambda abstraction.
     and private inferLambda env lam =
         result {
-            let freshType =
+                // create an input type
+            let identType =
                 createFreshTypeVariable lam.Identifier.Name
             let env' =
-                let scheme = Scheme.create [] freshType
+                let scheme = Scheme.create [] identType
                 TypeEnvironment.add lam.Identifier scheme env
+
+                // infer the output type using the input type
             let! bodySubst, bodyType, bodyExpr =
                 inferExpression env' lam.Body
+
+                // gather results
             let typ =
-                let freshType' = Type.apply bodySubst freshType
-                freshType' => bodyType
+                let identType' = Type.apply bodySubst identType
+                identType' => bodyType
             let expr =
                 LambdaExpr { lam with Body = bodyExpr }
             return bodySubst, typ, expr
         }
 
+    /// Infers the type of a function application.
     and private inferApplication env app =
         result {
-            let freshType =
-                createFreshTypeVariable "app"
+                // infer the function type (must be an arrow)
             let! funSubst, funType, funExpr =
                 inferExpression env app.Function
+
+                // infer the input type
             let! argSubst, argType, argExpr =
                 let env' = TypeEnvironment.apply funSubst env
                 inferExpression env' app.Argument
+
+                // unify (input => output) with function type
+            let outType = createFreshTypeVariable "app"
             let! appSubst =
                 let funType' = Type.apply argSubst funType
-                unify funType' (argType => freshType)
-            let typ = Type.apply appSubst freshType
+                unify funType' (argType => outType)
+
+                // gather results
+            let subst = funSubst ++ argSubst ++ appSubst
+            let typ = Type.apply appSubst outType
             let expr =
                 ApplicationExpr {
                     Function = funExpr
                     Argument = argExpr
                 }
-            return
-                funSubst ++ argSubst ++ appSubst,
-                typ, expr
+            return subst, typ, expr
         }
 
+    /// Infers the type of a let binding.
     and private inferLet env letb =
         result {
             let! argSubst, argType, argExpr =
