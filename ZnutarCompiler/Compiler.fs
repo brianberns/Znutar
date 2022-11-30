@@ -172,8 +172,9 @@ module Compiler =
         let private compileLet venv (letb : LetBinding) =
             result {
                 let! argNode, _ = compile venv letb.Argument
-                let venv' = Map.add letb.Identifier argNode venv
-                let! node, _ = compile venv' letb.Body
+                let! node, _ =
+                    let venv' = Map.add letb.Identifier argNode venv
+                    compile venv' letb.Body
                 return node, venv
             }
 
