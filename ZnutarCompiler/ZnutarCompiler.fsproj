@@ -6,6 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="App.runtimeconfig.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Compile Include="Result.fs" />
     <Compile Include="Type.fs" />
     <Compile Include="Syntax.fs" />
@@ -18,6 +21,8 @@
     <Compile Include="Compiler.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
+
+  <ItemGroup />
 
   <ItemGroup>
     <PackageReference Include="Basic.Reference.Assemblies.Net60" Version="1.4.1" />
