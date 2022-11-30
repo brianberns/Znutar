@@ -87,6 +87,42 @@ module Substitution =
 
     module Expression =
 
+        let rec apply (subst : Substitution) = function
+            | VariableExpr _
+            | LiteralExpr _ as expr -> expr
+            | ApplicationExpr app ->
+                ApplicationExpr {
+                    Function = apply subst app.Function
+                    Argument = apply subst app.Argument
+                }
+            | LambdaExpr lam ->
+                LambdaExpr {
+                    lam with Body = apply subst lam.Body }
+            | LetExpr letb ->
+                LetExpr {
+                    letb with
+                        Argument = apply subst letb.Argument
+                        Body= apply subst letb.Body
+                }
+            | IfExpr iff ->
+                IfExpr {
+                    Condition = apply subst iff.Condition
+                    TrueBranch = apply subst iff.TrueBranch
+                    FalseBranch = apply subst iff.FalseBranch
+                }
+            | FixExpr expr -> FixExpr (apply subst expr)
+            | BinaryOperationExpr bop ->
+                BinaryOperationExpr {
+                    bop with
+                        Left = apply subst bop.Left
+                        Right = apply subst bop.Right
+                }
+            | AnnotationExpr ann ->
+                AnnotationExpr {
+                    Type = Type.apply subst ann.Type
+                    Expression = apply subst ann.Expression
+                }
+
         let rec freeTypeVariables = function
             | VariableExpr _
             | LiteralExpr _ -> Set.empty
