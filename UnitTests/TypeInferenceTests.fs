@@ -62,10 +62,7 @@ type TypeInferenceTests() =
         result {
             let! decl = Parser.run Parser.parseDeclaration text
             let expected =
-                let tv = Identifier.create "x1"
-                let scheme =
-                    Scheme.create [] (Type.int => Type.int)
-                scheme
+                Scheme.create [] (Type.int => Type.int)
             let! env, _ =
                 TypeInference.inferDeclaration
                     TypeEnvironment.empty decl
