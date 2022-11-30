@@ -171,9 +171,10 @@ module Compiler =
 
         let private compileLet venv (letb : LetBinding) =
             result {
-                let! node, env' = compile venv letb.Body
-                let env'' = Map.add letb.Identifier node env'
-                return node, env''
+                let! argNode, _ = compile venv letb.Argument
+                let venv' = Map.add letb.Identifier argNode venv
+                let! node, _ = compile venv' letb.Body
+                return node, venv
             }
 
         let private compileBinaryOperation venv (bop : BinaryOperation) =

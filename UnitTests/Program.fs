@@ -24,8 +24,8 @@ module Program =
     result {
         let text =
             """
-            decl id = fun x -> x;
-            id true
+            let x = 2
+            in x + 1
             """
         let assemblyName = "Test"
         do! Compiler.compile assemblyName text
