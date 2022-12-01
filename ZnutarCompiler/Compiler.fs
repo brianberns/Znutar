@@ -138,34 +138,30 @@ module Compiler =
 
     module private rec Expression =
 
-        let getType = function
-            | AnnotationExpr ann -> Ok ann.Type
-            | expr ->
-                cerror (Unsupported
-                    $"Unannotated type: {expr.Unparse()}")
-
         let compile venv = function
             | VariableExpr ident -> compileIdentifier venv ident
-            | LambdaExpr lam -> compileLambda venv lam
             | ApplicationExpr app -> compileApplication venv app
             | LetExpr letb -> compileLet venv letb
             | IfExpr iff -> compileIf venv iff
             | FixExpr expr -> compile venv expr
             | BinaryOperationExpr bop -> compileBinaryOperation venv bop
             | LiteralExpr lit -> compileLiteral venv lit
-            | AnnotationExpr ann -> compile venv ann.Expression
+            | AnnotationExpr ann ->
+                match ann.Expression with
+                    | LambdaExpr lam -> compileLambda venv ann.Type lam
+                    | expr -> compile venv expr
+            | LambdaExpr lam -> cerror (Unsupported "Unannotated lambda")
 
         let private compileIdentifier venv ident =
             VariableEnvironment.tryFind ident venv
                 |> Result.map (fun node -> node, venv)
 
-        let private compileLambda venv (lam : LambdaAbstraction) =
+        let private compileLambda venv typ (lam : LambdaAbstraction) =
             result {
                 let venv' =
                     let identNode : Syntax.ExpressionSyntax =
                         IdentifierName(lam.Identifier.Name)
                     Map.add lam.Identifier identNode venv
-                let! typ = getType (LambdaExpr lam)
                 let! bodyNode, _ = compile venv' lam.Body
                 let node =
                     ParenthesizedExpression(
