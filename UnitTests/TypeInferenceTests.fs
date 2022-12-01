@@ -22,7 +22,7 @@ type TypeInferenceTests() =
             Assert.AreEqual(expected, actual)
             Assert.AreEqual(
                 Set.empty,
-                Substitution.Expression.freeTypeVariables expr')
+                Expression.freeTypeVariables expr')
         } |> assertOk
 
     [<TestMethod>]
@@ -37,7 +37,7 @@ type TypeInferenceTests() =
             Assert.AreEqual(expected, actual)
             Assert.AreEqual(
                 Set.empty,
-                Substitution.Expression.freeTypeVariables expr')
+                Expression.freeTypeVariables expr')
         } |> assertOk
 
     [<TestMethod>]

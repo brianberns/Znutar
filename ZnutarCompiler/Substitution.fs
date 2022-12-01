@@ -39,13 +39,6 @@ module Substitution =
             | TypeArrow (type1, type2) ->
                 apply subst type1 => apply subst type2
 
-        /// Free type variables in the given type.
-        let rec freeTypeVariables = function
-            | TypeConstant _ -> Set.empty
-            | TypeVariable tv -> set [tv]
-            | TypeArrow (type1, type2) ->
-                freeTypeVariables type1 + freeTypeVariables type2
-
     /// Composition of substitutions.
     let compose (subst1 : Substitution) (subst2 : Substitution) : Substitution =
         subst2
@@ -123,28 +116,6 @@ module Substitution =
                     Expression = apply subst ann.Expression
                 }
 
-        let rec freeTypeVariables = function
-            | VariableExpr _
-            | LiteralExpr _ -> Set.empty
-            | ApplicationExpr app ->
-                freeTypeVariables app.Function
-                    + freeTypeVariables app.Argument
-            | LambdaExpr lam -> freeTypeVariables lam.Body
-            | LetExpr letb ->
-                freeTypeVariables letb.Argument
-                    + freeTypeVariables letb.Body
-            | IfExpr iff ->
-                freeTypeVariables iff.Condition
-                    + freeTypeVariables iff.TrueBranch
-                    + freeTypeVariables iff.FalseBranch
-            | FixExpr expr -> freeTypeVariables expr
-            | BinaryOperationExpr bop ->
-                freeTypeVariables bop.Left
-                    + freeTypeVariables bop.Right
-            | AnnotationExpr ann ->
-                Type.freeTypeVariables ann.Type
-                    + freeTypeVariables ann.Expression
-
     module Scheme =
 
         /// Applies the given substitution to the given scheme.
@@ -156,21 +127,9 @@ module Substitution =
                     Type = Type.apply subst' scheme.Type
             }
 
-        /// Free type variables in the given scheme.
-        let freeTypeVariables scheme =
-            Type.freeTypeVariables scheme.Type
-                - set scheme.TypeVariables
-
     module TypeEnvironment =
 
         /// Applies the given substitution to the given environment.
         let apply subst (env : TypeEnvironment) : TypeEnvironment =
             Map.map (fun _ value ->
                 Scheme.apply subst value) env
-
-        /// Free type variables in the given environment.
-        let freeTypeVariables (env : TypeEnvironment) =
-            Seq.collect
-                Scheme.freeTypeVariables
-                (Map.values env)
-                |> set

@@ -15,6 +15,11 @@ module Scheme =
             Type = typ
         }
 
+    /// Free type variables in the given scheme.
+    let freeTypeVariables scheme =
+        Type.freeTypeVariables scheme.Type
+            - set scheme.TypeVariables
+
 type TypeEnvironment = Map<Identifier, Scheme>
 
 module TypeEnvironment =
@@ -30,3 +35,10 @@ module TypeEnvironment =
                 Ok scheme
             | None ->
                 cerror (UnboundVariable ident)
+
+    /// Free type variables in the given environment.
+    let freeTypeVariables (env : TypeEnvironment) =
+        Seq.collect
+            Scheme.freeTypeVariables
+            (Map.values env)
+            |> set

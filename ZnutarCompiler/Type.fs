@@ -51,3 +51,10 @@ module Type =
 
     let int = TypeConstant (Identifier.create "int")
     let bool = TypeConstant (Identifier.create "bool")
+
+    /// Free type variables in the given type.
+    let rec freeTypeVariables = function
+        | TypeConstant _ -> Set.empty
+        | TypeVariable tv -> set [tv]
+        | TypeArrow (type1, type2) ->
+            freeTypeVariables type1 + freeTypeVariables type2

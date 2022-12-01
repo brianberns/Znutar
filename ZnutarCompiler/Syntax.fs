@@ -107,6 +107,28 @@ module Expression =
     let rec unparse (expr : Expression) =
         expr.Unparse()
 
+    let rec freeTypeVariables = function
+        | VariableExpr _
+        | LiteralExpr _ -> Set.empty
+        | ApplicationExpr app ->
+            freeTypeVariables app.Function
+                + freeTypeVariables app.Argument
+        | LambdaExpr lam -> freeTypeVariables lam.Body
+        | LetExpr letb ->
+            freeTypeVariables letb.Argument
+                + freeTypeVariables letb.Body
+        | IfExpr iff ->
+            freeTypeVariables iff.Condition
+                + freeTypeVariables iff.TrueBranch
+                + freeTypeVariables iff.FalseBranch
+        | FixExpr expr -> freeTypeVariables expr
+        | BinaryOperationExpr bop ->
+            freeTypeVariables bop.Left
+                + freeTypeVariables bop.Right
+        | AnnotationExpr ann ->
+            Type.freeTypeVariables ann.Type
+                + freeTypeVariables ann.Expression
+
 /// Top-level declaration.
 /// E.g. let add x y = x + y => let add = \x -> \y -> x + y
 type Declaration =
