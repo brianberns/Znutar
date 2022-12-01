@@ -250,6 +250,7 @@ module TypeInference =   // to-do: replace with constraint-based inference
         }
 
     let inferDeclaration env decl =
+        count <- 0   // reset for deterministic result
         result {
             let! subst, typ, body = inferExpression env decl.Body
             let scheme =
@@ -263,8 +264,8 @@ module TypeInference =   // to-do: replace with constraint-based inference
         }
 
     let inferProgram program =
+        count <- 0   // reset for deterministic result
         result {
-            count <- 0   // reset for deterministic result
             let! env, decls =
                 ((TypeEnvironment.empty, []), program.Declarations)
                     ||> Result.foldM (fun (accEnv, accDecls) decl ->
