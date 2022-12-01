@@ -16,10 +16,6 @@ type TypeInferenceTests() =
                 TypeInference.inferExpression
                     TypeEnvironment.empty expr
             Assert.AreEqual(expected, actual, actual.Unparse())
-            Assert.AreEqual(
-                Set.empty,
-                Expression.freeTypeVariables expr',
-                expr'.Unparse())
         } |> Assert.Ok
 
     [<TestMethod>]
@@ -32,10 +28,6 @@ type TypeInferenceTests() =
                 TypeInference.inferExpression
                     TypeEnvironment.empty expr
             Assert.AreEqual(expected, actual, actual.Unparse())
-            Assert.AreEqual(
-                Set.empty,
-                Expression.freeTypeVariables expr',
-                expr'.Unparse())
         } |> Assert.Ok
 
     // https://courses.cs.cornell.edu/cs3110/2021sp/textbook/interp/letpoly.html
@@ -54,10 +46,6 @@ type TypeInferenceTests() =
                 TypeInference.inferExpression
                     TypeEnvironment.empty expr
             Assert.AreEqual(expected, actual, actual.Unparse())
-            Assert.AreEqual(
-                Set.empty,
-                Expression.freeTypeVariables expr',
-                expr'.Unparse())
         } |> Assert.Ok
 
     // https://courses.cs.cornell.edu/cs3110/2021sp/textbook/interp/reconstruction.html
