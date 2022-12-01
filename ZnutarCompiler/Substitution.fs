@@ -80,7 +80,7 @@ module Substitution =
 
     module Expression =
 
-        let rec apply (subst : Substitution) = function
+        let rec apply subst = function
             | VariableExpr _
             | LiteralExpr _ as expr -> expr
             | ApplicationExpr app ->

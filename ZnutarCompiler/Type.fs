@@ -1,5 +1,6 @@
 ﻿namespace Znutar
 
+/// Name of a value or type.
 type Identifier =
     {
         Name : string
@@ -9,9 +10,6 @@ module Identifier =
 
     let create name =
         { Name = name }
-
-    let unparse ident =
-        ident.Name
 
 type TypeVariable = Identifier
 

@@ -31,14 +31,14 @@ type Expression =
     member expr.Unparse() =
         match expr with
             | VariableExpr ident ->
-                Identifier.unparse ident
+                ident.Name
             | ApplicationExpr app ->
                 $"({app.Function.Unparse()} {app.Argument.Unparse()})"
             | LambdaExpr lam ->
-                $"(fun {Identifier.unparse lam.Identifier} -> \
+                $"(fun {lam.Identifier.Name} -> \
                     {lam.Body.Unparse()})"
             | LetExpr letb ->
-                $"(let {Identifier.unparse letb.Identifier} = \
+                $"(let {letb.Identifier.Name} = \
                     {letb.Argument.Unparse()} in \
                     {letb.Body.Unparse()})"
             | LiteralExpr (IntLiteral n) -> string n
@@ -140,7 +140,7 @@ type Declaration =
 module Declaration =
 
     let unparse decl =
-        let ident = Identifier.unparse decl.Identifier
+        let ident = decl.Identifier.Name
         let body = Expression.unparse decl.Body
         $"decl {ident} = {body};"
 
