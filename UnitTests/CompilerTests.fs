@@ -21,3 +21,15 @@ type CompilerTests() =
             plus1 5
             """
         Assert.AreEqual(Ok "6", run text)
+
+    [<TestMethod>]
+    member _.Factorial() =
+        let text =
+            """
+            decl factorial = fix (fun fact -> fun n ->
+                if n = 0 then 1
+                else n * fact (n - 1));
+
+            factorial 6
+            """
+        Assert.AreEqual(Ok "720", run text)
