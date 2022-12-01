@@ -44,7 +44,7 @@ type TypeInferenceTests() =
     [<TestMethod>]
     member this.InferExpression3() =
         let text = "fun f -> fun x -> f (x + 1)"
-        (*let sType = "(int -> 'a) -> (int -> 'a)"*)   // to-do: support type normalization
+        (*let sType = "(int -> 'a) -> int -> 'a"*)   // to-do: support type normalization
         let sType = "(int -> 'a) -> (int -> 'a)"
         result {
             let! expr = Parser.run Parser.Expression.parse text
