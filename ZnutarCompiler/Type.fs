@@ -44,6 +44,7 @@ type Type =
                 $"({inpType.Unparse()} -> {outType.Unparse()})"
 
     /// Constructs a type arrow. Right associative.
+    // https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/symbol-and-operator-reference/#operator-precedence
     static member (^=>) (type1, type2) =
         TypeArrow (type1, type2)
 
