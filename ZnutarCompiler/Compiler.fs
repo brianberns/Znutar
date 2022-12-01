@@ -155,10 +155,15 @@ module Compiler =
             let node =
                 match lit with
                     | IntLiteral n ->
-                        Syntax.numericLiteral n
+                        LiteralExpression(
+                            SyntaxKind.NumericLiteralExpression,
+                            Literal(n))
                             :> Syntax.ExpressionSyntax
                     | BoolLiteral b ->
-                        Syntax.boolLiteral b
+                        let kind =
+                            if b then SyntaxKind.TrueLiteralExpression
+                            else SyntaxKind.FalseLiteralExpression
+                        LiteralExpression(kind)
             Ok (node, venv)
 
         let private compileLet venv (letb : LetBinding) =

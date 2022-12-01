@@ -6,22 +6,6 @@ open type SyntaxFactory
 
 module private Syntax =
 
-    let numericLiteral (n : int) =
-        LiteralExpression(
-            SyntaxKind.NumericLiteralExpression,
-            Literal(n))
-
-    let boolLiteral flag =
-        let kind =
-            if flag then SyntaxKind.TrueLiteralExpression
-            else SyntaxKind.FalseLiteralExpression
-        LiteralExpression(kind)
-
-    let not node =
-        PrefixUnaryExpression(
-            SyntaxKind.LogicalNotExpression,
-            node)
-
     let separatedList nodes =
         let comma =
             SyntaxNodeOrToken.op_Implicit(
@@ -60,7 +44,6 @@ module CompilationUnit =
             .WithModifiers(
                 TokenList(
                     Token(SyntaxKind.StaticKeyword)))
-
             .WithTypeParameterList(
                 TypeParameterList(
                     Syntax.separatedList
