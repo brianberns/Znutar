@@ -102,7 +102,7 @@ module Compiler =
             | ApplicationExpr app -> compileApplication venv app
             | LetExpr letb -> compileLet venv letb
             | IfExpr iff -> compileIf venv iff
-            | FixExpr expr -> compile venv expr
+            | FixExpr expr -> compileFix venv expr
             | BinaryOperationExpr bop -> compileBinaryOperation venv bop
             | LiteralExpr lit -> compileLiteral venv lit
             | AnnotationExpr ann ->
@@ -175,6 +175,36 @@ module Compiler =
                 return node, venv
             }
 
+        let private compileIf venv (iff : If) =
+            result {
+
+                let! condNode, _ = compile venv iff.Condition
+                let! trueNode, _ = compile venv iff.TrueBranch
+                let! falseNode, _ = compile venv iff.FalseBranch
+
+                let node =
+                    ConditionalExpression(
+                        condNode, trueNode, falseNode)
+
+                return node, venv
+            }
+
+        let private compileFix venv expr =
+            result {
+
+                let! exprNode, _ = compile venv expr
+
+                let node =
+                    InvocationExpression(
+                        IdentifierName("Fix"))
+                        .WithArgumentList(
+                            ArgumentList(
+                                SingletonSeparatedList(
+                                    Argument(exprNode))))
+
+                return node, venv
+            }
+
         let private compileBinaryOperation venv (bop : BinaryOperation) =
             let kind =
                 match bop.Operator with
@@ -190,20 +220,6 @@ module Compiler =
                         kind,
                         leftNode,
                         rightNode)
-                return node, venv
-            }
-
-        let private compileIf venv (iff : If) =
-            result {
-
-                let! condNode, _ = compile venv iff.Condition
-                let! trueNode, _ = compile venv iff.TrueBranch
-                let! falseNode, _ = compile venv iff.FalseBranch
-
-                let node =
-                    ConditionalExpression(
-                        condNode, trueNode, falseNode)
-
                 return node, venv
             }
 

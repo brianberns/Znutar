@@ -21,6 +21,7 @@ module private Syntax =
 
 module CompilationUnit =
 
+    /// Z-combinator.
     (*
         static System.Func<A, B> Fix<A, B>(System.Func<System.Func<A, B>, System.Func<A, B>> f)
         {
@@ -158,10 +159,13 @@ module CompilationUnit =
             ClassDeclaration($"{assemblyName}Type")
                 .AddModifiers(
                     Token(SyntaxKind.StaticKeyword))
-                .AddMembers(Seq.toArray memberNodes)
                 .AddMembers(
-                    fixMethod,
-                    mainMethod mainNode)
+                    [|
+                        mainMethod mainNode
+                            :> Syntax.MemberDeclarationSyntax
+                        fixMethod
+                        yield! memberNodes
+                    |])
         let namespaceNode =
             NamespaceDeclaration(
                 IdentifierName(assemblyName : string))
