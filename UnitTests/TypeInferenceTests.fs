@@ -64,14 +64,14 @@ type TypeInferenceTests() =
         result {
             let! decl = Parser.run Parser.parseDeclaration text
             let expected =
-                let tvX = Identifier.create "x1"
-                let tvY = Identifier.create "y2"
+                let tvX = TypeVariable.create "x1"
+                let tvY = TypeVariable.create "y2"
                 let scheme =
                     Scheme.create
                         [tvX; tvY]
                         (TypeVariable tvX
-                            ^=> (TypeVariable tvY
-                                ^=> TypeVariable tvX))
+                            ^=> TypeVariable tvY
+                                ^=> TypeVariable tvX)
                 scheme
             let! env, _ =
                 TypeInference.inferDeclaration
@@ -104,7 +104,7 @@ type TypeInferenceTests() =
         result {
             let! program = Parser.run Parser.parseProgram text
             let expected =
-                let tv = Identifier.create "x1"
+                let tv = TypeVariable.create "x1"
                 let scheme =
                     Scheme.create
                         [tv]

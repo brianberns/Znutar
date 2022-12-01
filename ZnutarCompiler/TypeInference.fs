@@ -8,8 +8,7 @@ module TypeInference =   // to-do: replace with constraint-based inference
 
     let private createFreshTypeVariable (prefix : string) =
         count <- count + 1
-        Identifier.create $"{prefix}{count}"
-            |> TypeVariable
+        Type.variable $"{prefix}{count}"
 
     let private instantiate scheme =
         let subst =

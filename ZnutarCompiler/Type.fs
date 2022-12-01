@@ -16,6 +16,9 @@ type TypeVariable = Identifier
 
 module TypeVariable =
 
+    let create name : TypeVariable =
+        { Name = name }
+
     let unparse tv =
         $"'{tv.Name}"   // apostrophe is implicit
 
@@ -49,8 +52,11 @@ module Type =
     let unparse (typ : Type) =
         typ.Unparse()
 
-    let int = TypeConstant (Identifier.create "int")
-    let bool = TypeConstant (Identifier.create "bool")
+    let variable = Identifier.create >> TypeVariable
+    let constant = Identifier.create >> TypeConstant
+
+    let int = constant "int"
+    let bool = constant "bool"
 
     /// Free type variables in the given type.
     let rec freeTypeVariables = function

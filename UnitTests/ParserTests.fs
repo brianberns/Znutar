@@ -8,4 +8,12 @@ type ParserTests() =
 
     [<TestMethod>]
     member _.TypeArrow() =
-        ()
+        result {
+            let text = "'a -> 'b -> 'c"
+            let expected =
+                Type.variable "a"
+                    ^=> Type.variable "b"
+                        ^=> Type.variable "c"
+            let! actual = Parser.run Parser.Type.parse text
+            Assert.AreEqual(expected, actual, actual.Unparse())
+        } |> Assert.Ok
