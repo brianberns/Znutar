@@ -19,7 +19,7 @@ type TypeInferenceTests() =
             let! _, actual, expr' =
                 TypeInference.inferExpression
                     TypeEnvironment.empty expr
-            Assert.AreEqual(expected, actual)
+            Assert.AreEqual(expected, actual, actual.Unparse())
             Assert.AreEqual(
                 Set.empty,
                 Expression.freeTypeVariables expr')
@@ -34,10 +34,32 @@ type TypeInferenceTests() =
             let! _, actual, expr' =
                 TypeInference.inferExpression
                     TypeEnvironment.empty expr
-            Assert.AreEqual(expected, actual)
+            Assert.AreEqual(expected, actual, actual.Unparse())
             Assert.AreEqual(
                 Set.empty,
                 Expression.freeTypeVariables expr')
+        } |> assertOk
+
+    // https://courses.cs.cornell.edu/cs3110/2021sp/textbook/interp/reconstruction.html
+    [<TestMethod>]
+    member this.InferExpression3() =
+        let text = "fun f -> fun x -> f (x + 1)"
+        (*let sType = "(int -> 'a) -> (int -> 'a)"*)   // to-do: support type normalization
+        let sType = "(int -> 'a) -> (int -> 'a)"
+        result {
+            let! expr = Parser.run Parser.Expression.parse text
+            let! expected = Parser.run Parser.Type.parse sType
+            let! _, actual, _ =
+                TypeInference.inferExpression
+                    TypeEnvironment.empty expr
+            let! subst = Substitution.unify expected actual
+            let (KeyValue(tv, typ)) = Seq.exactlyOne subst
+            Assert.AreEqual("'a", TypeVariable.unparse tv)
+            Assert.IsTrue(
+                (match typ with
+                    | TypeVariable _ -> true
+                    | _ -> false),
+                typ.Unparse())
         } |> assertOk
 
     [<TestMethod>]

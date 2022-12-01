@@ -151,9 +151,12 @@ module TypeInference =   // to-do: replace with constraint-based inference
     /// Infers the type of a let binding.
     and private inferLet env letb =
         result {
+                // infer argument type
             let! argSubst, argType, argExpr =
                 inferExpression env letb.Argument
             let env' = TypeEnvironment.apply argSubst env
+
+                // generalize argument ("let polymorphism")
             let argType' = generalize env' argType
             let! bodySubst, bodyType, bodyExpr =
                 let env'' =
