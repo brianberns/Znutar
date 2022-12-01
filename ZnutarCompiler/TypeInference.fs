@@ -18,6 +18,7 @@ module TypeInference =   // to-do: replace with constraint-based inference
                     acc |> Map.add tv typ)
         Type.apply subst scheme.Type
 
+    /// Creates a scheme for the given type.
     let private generalize env typ =
         let tvs =
             Set.toList (
@@ -156,12 +157,17 @@ module TypeInference =   // to-do: replace with constraint-based inference
             let env' = TypeEnvironment.apply argSubst env
 
                 // generalize argument ("let polymorphism")
+                // e.g. let id arg = arg
             let argType' = generalize env' argType
+
+                // infer body type using argument type
             let! bodySubst, bodyType, bodyExpr =
                 let env'' =
                     TypeEnvironment.add
                         letb.Identifier argType' env'
                 inferExpression env'' letb.Body
+
+                // gather result
             let expr =
                 LetExpr {
                     letb with

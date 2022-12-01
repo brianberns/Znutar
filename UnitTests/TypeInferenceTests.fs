@@ -18,7 +18,8 @@ type TypeInferenceTests() =
             Assert.AreEqual(expected, actual, actual.Unparse())
             Assert.AreEqual(
                 Set.empty,
-                Expression.freeTypeVariables expr')
+                Expression.freeTypeVariables expr',
+                expr'.Unparse())
         } |> Assert.Ok
 
     [<TestMethod>]
@@ -33,12 +34,35 @@ type TypeInferenceTests() =
             Assert.AreEqual(expected, actual, actual.Unparse())
             Assert.AreEqual(
                 Set.empty,
-                Expression.freeTypeVariables expr')
+                Expression.freeTypeVariables expr',
+                expr'.Unparse())
+        } |> Assert.Ok
+
+    // https://courses.cs.cornell.edu/cs3110/2021sp/textbook/interp/letpoly.html
+    [<TestMethod>]
+    member this.InferExpression3() =
+        let text =
+            """
+            let id = fun x -> x in
+            let a = id 0 in
+            id true
+            """.Trim()
+        result {
+            let! expr = Parser.run Parser.Expression.parse text
+            let expected = Type.bool
+            let! _, actual, expr' =
+                TypeInference.inferExpression
+                    TypeEnvironment.empty expr
+            Assert.AreEqual(expected, actual, actual.Unparse())
+            Assert.AreEqual(
+                Set.empty,
+                Expression.freeTypeVariables expr',
+                expr'.Unparse())
         } |> Assert.Ok
 
     // https://courses.cs.cornell.edu/cs3110/2021sp/textbook/interp/reconstruction.html
     [<TestMethod>]
-    member this.InferExpression3() =
+    member this.InferExpression4() =
         let text = "fun f -> fun x -> f (x + 1)"
         let sType = "(int -> 'a) -> int -> 'a"
         result {
