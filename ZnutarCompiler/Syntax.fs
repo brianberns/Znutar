@@ -1,9 +1,11 @@
 ﻿namespace Znutar
 
+/// A literal value, such as 1 or true.
 type Literal =
     | IntLiteral of int
     | BoolLiteral of bool
 
+/// Binary operator.
 type BinaryOperator =
     | Plus | Minus | Times | Equals
 
@@ -57,7 +59,7 @@ type Expression =
             | AnnotationExpr ann ->
                 $"({ann.Expression.Unparse()} : {ann.Type.Unparse()})"
 
-/// fun arg
+/// func arg
 and Application =
     {
         Function : Expression
@@ -79,7 +81,7 @@ and LetBinding =
         Body : Expression
     }
 
-/// if cond then t-branch else f-branch
+/// if cond then true-branch else false-branch
 and If =
     {
         Condition : Expression

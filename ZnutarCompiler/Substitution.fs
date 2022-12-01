@@ -52,6 +52,7 @@ module Substitution =
     /// Attempts to find a substitution that unifies the given types.
     let rec unify type1 type2 =
 
+        /// Does the given type variable occur free in the given type?
         let occurs tv typ =
             Set.contains tv (Type.freeTypeVariables typ)
 
