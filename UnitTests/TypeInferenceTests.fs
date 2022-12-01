@@ -88,7 +88,7 @@ type TypeInferenceTests() =
                 TypeInference.inferDeclaration
                     TypeEnvironment.empty decl
             let actual = env[Identifier.create "const"]
-            Assert.AreEqual(expected, actual)
+            Assert.AreEqual(expected, actual, actual.Unparse())
         } |> Assert.Ok
 
     [<TestMethod>]
@@ -102,7 +102,7 @@ type TypeInferenceTests() =
                 TypeInference.inferDeclaration
                     TypeEnvironment.empty decl
             let actual = env[Identifier.create "twice"]
-            Assert.AreEqual(expected, actual)
+            Assert.AreEqual(expected, actual, actual.Unparse())
         } |> Assert.Ok
 
     [<TestMethod>]

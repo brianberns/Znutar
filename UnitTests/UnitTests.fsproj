@@ -13,6 +13,7 @@
     <Compile Include="InterpreterTests.fs" />
     <Compile Include="UnifyTests.fs" />
     <Compile Include="TypeInferenceTests.fs" />
+    <Compile Include="CompilerTests.fs" />
     <Compile Include="FuzzTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

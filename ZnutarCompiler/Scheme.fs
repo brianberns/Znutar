@@ -1,11 +1,24 @@
 ﻿namespace Znutar
 
-/// E.g. <'a>('a -> 'a).
+/// Generalized type signature of a function.
+/// E.g. isnum has scheme: <'a>('a -> Bool)
+[<System.Diagnostics.DebuggerDisplay("{Unparse()}")>]
 type Scheme =
     {
         TypeVariables : List<TypeVariable>
         Type : Type
     }
+
+    with
+    member scheme.Unparse() =
+        let typeVars =
+            if scheme.TypeVariables.IsEmpty then ""
+            else
+                scheme.TypeVariables
+                    |> Seq.map TypeVariable.unparse
+                    |> String.concat ", "
+                    |> sprintf "<%s>"
+        $"{typeVars}{Type.unparse scheme.Type}"
 
 module Scheme =
 
@@ -14,6 +27,9 @@ module Scheme =
             TypeVariables = typeVars
             Type = typ
         }
+
+    let unparse (scheme : Scheme) =
+        scheme.Unparse()
 
     /// Free type variables in the given scheme.
     let freeTypeVariables scheme =

@@ -282,12 +282,7 @@ module Compiler =
                 SyntaxKind.SimpleMemberAccessExpression,
                 InvocationExpression(
                     GenericName(
-                        Identifier(decl.Identifier.Name))
-                        .WithTypeArgumentList(
-                            TypeArgumentList(
-                                SingletonSeparatedList(
-                                    PredefinedType(
-                                        Token(SyntaxKind.BoolKeyword)))))),
+                        Identifier(decl.Identifier.Name))),
                 IdentifierName("Invoke"))
         }
 
