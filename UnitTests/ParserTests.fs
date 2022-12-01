@@ -14,6 +14,11 @@ type ParserTests() =
                 Type.variable "a"
                     ^=> Type.variable "b"
                         ^=> Type.variable "c"
+            let expected' =
+                Type.variable "a"
+                    ^=> (Type.variable "b"
+                        ^=> Type.variable "c")
+            Assert.AreEqual(expected, expected')
             let! actual = Parser.run Parser.Type.parse text
             Assert.AreEqual(expected, actual, actual.Unparse())
         } |> Assert.Ok
