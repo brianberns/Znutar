@@ -88,7 +88,7 @@ module Parser =
                             inpType ^=> outType)
                 }
 
-            chainl1
+            chainr1   // type arrow is right-associative
                 (parseSimpleType .>> spaces)
                 (create .>> spaces)
 
