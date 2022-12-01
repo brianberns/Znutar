@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Utility.fs" />
     <Compile Include="InterpreterTests.fs" />
     <Compile Include="UnifyTests.fs" />
     <Compile Include="TypeInferenceTests.fs" />
