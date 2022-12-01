@@ -37,7 +37,7 @@ module Substitution =
                     |> Option.map (apply subst)   // https://github.com/sdiehl/write-you-a-haskell/issues/116
                     |> Option.defaultValue typ
             | TypeArrow (type1, type2) ->
-                apply subst type1 => apply subst type2
+                apply subst type1 ^=> apply subst type2
 
     /// Composition of substitutions.
     let compose (subst1 : Substitution) (subst2 : Substitution) : Substitution =

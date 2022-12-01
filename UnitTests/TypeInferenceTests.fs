@@ -30,7 +30,7 @@ type TypeInferenceTests() =
         let text = "fun x -> x + 1"
         result {
             let! expr = Parser.run Parser.Expression.parse text
-            let expected = Type.int => Type.int
+            let expected = Type.int ^=> Type.int
             let! _, actual, expr' =
                 TypeInference.inferExpression
                     TypeEnvironment.empty expr
@@ -74,8 +74,8 @@ type TypeInferenceTests() =
                     Scheme.create
                         [tvX; tvY]
                         (TypeVariable tvX
-                            => (TypeVariable tvY
-                                => TypeVariable tvX))
+                            ^=> (TypeVariable tvY
+                                ^=> TypeVariable tvX))
                 scheme
             let! env, _ =
                 TypeInference.inferDeclaration
@@ -90,7 +90,7 @@ type TypeInferenceTests() =
         result {
             let! decl = Parser.run Parser.parseDeclaration text
             let expected =
-                Scheme.create [] (Type.int => Type.int)
+                Scheme.create [] (Type.int ^=> Type.int)
             let! env, _ =
                 TypeInference.inferDeclaration
                     TypeEnvironment.empty decl
@@ -112,7 +112,7 @@ type TypeInferenceTests() =
                 let scheme =
                     Scheme.create
                         [tv]
-                        (TypeVariable tv => TypeVariable tv)
+                        (TypeVariable tv ^=> TypeVariable tv)
                 scheme, Type.bool
             let! env, typ, _ =
                 TypeInference.inferProgram program

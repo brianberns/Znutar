@@ -40,8 +40,8 @@ type Type =
             | TypeArrow (inpType, outType) ->
                 $"({inpType.Unparse()} -> {outType.Unparse()})"
 
-    /// Constructs a type arrow.
-    static member (=>) (type1, type2) =
+    /// Constructs a type arrow. Right associative.
+    static member (^=>) (type1, type2) =
         TypeArrow (type1, type2)
 
 module Type =

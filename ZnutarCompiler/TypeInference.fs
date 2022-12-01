@@ -28,10 +28,10 @@ module TypeInference =   // to-do: replace with constraint-based inference
 
     let private binOpMap =
         Map [
-            Plus, Type.int => Type.int => Type.int
-            Minus, Type.int => Type.int => Type.int
-            Times, Type.int => Type.int => Type.int
-            Equals, Type.int => Type.int => Type.bool   // to-do: make polymorphic
+            Plus, Type.int ^=> Type.int ^=> Type.int
+            Minus, Type.int ^=> Type.int ^=> Type.int
+            Times, Type.int ^=> Type.int ^=> Type.int
+            Equals, Type.int ^=> Type.int ^=> Type.bool   // to-do: make polymorphic
         ]
 
     /// Annotates the given expression with the given type.
@@ -113,7 +113,7 @@ module TypeInference =   // to-do: replace with constraint-based inference
                 // gather results
             let typ =
                 let identType' = Type.apply bodySubst identType
-                identType' => bodyType
+                identType' ^=> bodyType
             let expr =
                 LambdaExpr { lam with Body = bodyExpr }
             return bodySubst, typ, expr
@@ -131,11 +131,11 @@ module TypeInference =   // to-do: replace with constraint-based inference
                 let env' = TypeEnvironment.apply funSubst env
                 inferExpression env' app.Argument
 
-                // unify (input => output) with function type
+                // unify (input ^=> output) with function type
             let outType = createFreshTypeVariable "app"
             let! appSubst =
                 let funType' = Type.apply argSubst funType
-                unify funType' (argType => outType)
+                unify funType' (argType ^=> outType)
 
                 // gather results
             let subst = funSubst ++ argSubst ++ appSubst
@@ -203,7 +203,7 @@ module TypeInference =   // to-do: replace with constraint-based inference
                 inferExpression env expr
             let freshType = createFreshTypeVariable "fix"
             let! arrowSubst =
-                unify (freshType => freshType) exprType
+                unify (freshType ^=> freshType) exprType
             let typ = Type.apply exprSubst freshType
             let expr = FixExpr exprExpr
             return arrowSubst, typ, expr
@@ -218,7 +218,7 @@ module TypeInference =   // to-do: replace with constraint-based inference
             let freshType = createFreshTypeVariable "bop"
             let! arrowSubst =
                 unify
-                    (leftType => rightType => freshType)
+                    (leftType ^=> rightType ^=> freshType)
                     binOpMap[bop.Operator]
             let typ = Type.apply arrowSubst freshType
             let expr =

@@ -85,7 +85,7 @@ module Parser =
                 parse {
                     do! skipString "->" >>. spaces
                     return (fun inpType outType ->
-                            inpType => outType)
+                            inpType ^=> outType)
                 }
 
             chainl1

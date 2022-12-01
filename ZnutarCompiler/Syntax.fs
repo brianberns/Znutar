@@ -132,7 +132,7 @@ module Expression =
                 + freeTypeVariables ann.Expression
 
 /// Top-level declaration.
-/// E.g. let add x y = x + y => let add = \x -> \y -> x + y
+/// E.g. let add x y = x + y ^=> let add = \x -> \y -> x + y
 type Declaration =
     {
         Identifier : Identifier
