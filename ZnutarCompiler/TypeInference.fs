@@ -10,6 +10,7 @@ module TypeInference =   // to-do: replace with constraint-based inference
         count <- count + 1
         Type.variable $"{prefix}{count}"
 
+    /// Creates a fresh type from the given scheme.
     let private instantiate scheme =
         let subst =
             (Substitution.empty, scheme.TypeVariables)
@@ -157,7 +158,7 @@ module TypeInference =   // to-do: replace with constraint-based inference
             let env' = TypeEnvironment.apply argSubst env
 
                 // generalize argument ("let polymorphism")
-                // e.g. let id arg = arg
+                // e.g. let id = fun x -> x in ...
             let argType' = generalize env' argType
 
                 // infer body type using argument type
