@@ -9,43 +9,6 @@ open type SyntaxFactory
 
 open Basic.Reference.Assemblies
 
-module private Syntax =
-
-    let numericLiteral (n : int) =
-        LiteralExpression(
-            SyntaxKind.NumericLiteralExpression,
-            Literal(n))
-
-    let boolLiteral flag =
-        let kind =
-            if flag then SyntaxKind.TrueLiteralExpression
-            else SyntaxKind.FalseLiteralExpression
-        LiteralExpression(kind)
-
-    let by1 node kind =
-        BinaryExpression(
-            kind,
-            node,
-            numericLiteral 1)
-
-    let isType node kind =
-        BinaryExpression(
-            SyntaxKind.IsExpression,
-            node,
-            PredefinedType(Token(kind)))
-
-    let print node =
-        InvocationExpression(IdentifierName("Print"))
-            .WithArgumentList(
-                ArgumentList(
-                    SingletonSeparatedList(
-                        Argument(node))))
-
-    let not node =
-        PrefixUnaryExpression(
-            SyntaxKind.LogicalNotExpression,
-            node)
-
 type VariableEnvironment = Map<Identifier, Syntax.ExpressionSyntax>
 
 module VariableEnvironment =
@@ -129,12 +92,8 @@ module Compiler =
                         Identifier("Func"))
                         .WithTypeArgumentList(
                             TypeArgumentList(
-                                SeparatedList(
-                                    [|
-                                        SyntaxNodeOrToken.op_Implicit(inpNode)
-                                        SyntaxNodeOrToken.op_Implicit(Token(SyntaxKind.CommaToken))
-                                        SyntaxNodeOrToken.op_Implicit(outNode)
-                                    |]))))
+                                Syntax.separatedList(
+                                    [inpNode; outNode]))))
 
     module private rec Expression =
 
