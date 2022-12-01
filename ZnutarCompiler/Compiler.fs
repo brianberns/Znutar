@@ -156,6 +156,7 @@ module Compiler =
             VariableEnvironment.tryFind ident venv
                 |> Result.map (fun node -> node, venv)
 
+        /// E.g. ((System.Func<int, int>)(x => x + 1))
         let private compileLambda venv typ (lam : LambdaAbstraction) =
             result {
                 let venv' =
