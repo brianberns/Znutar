@@ -60,12 +60,13 @@ module CompilationUnit =
             .WithModifiers(
                 TokenList(
                     Token(SyntaxKind.StaticKeyword)))
+
             .WithTypeParameterList(
                 TypeParameterList(
                     Syntax.separatedList
                         [
-                            IdentifierName("A")
-                            IdentifierName("B")
+                            TypeParameter(Identifier("A"))
+                            TypeParameter(Identifier("B"))
                         ]))
             .WithParameterList(
                 ParameterList(
@@ -104,39 +105,39 @@ module CompilationUnit =
                                                                                 IdentifierName("B")
                                                                             ])))
                                                     ])))))))
-                    .WithBody(
-                        Block(
-                            SingletonList<Syntax.StatementSyntax>(
-                                ReturnStatement(
-                                    ParenthesizedLambdaExpression()
-                                        .WithParameterList(
-                                            ParameterList(
-                                                SingletonSeparatedList(
-                                                    Parameter(
-                                                        Identifier("x"))
-                                                        .WithType(
-                                                            IdentifierName("A")))))
-                                        .WithExpressionBody(
+            .WithBody(
+                Block(
+                    SingletonList<Syntax.StatementSyntax>(
+                        ReturnStatement(
+                            ParenthesizedLambdaExpression()
+                                .WithParameterList(
+                                    ParameterList(
+                                        SingletonSeparatedList(
+                                            Parameter(
+                                                Identifier("x"))
+                                                .WithType(
+                                                    IdentifierName("A")))))
+                                .WithExpressionBody(
+                                    InvocationExpression(
+                                        ParenthesizedExpression(
                                             InvocationExpression(
-                                                ParenthesizedExpression(
-                                                    InvocationExpression(
-                                                        IdentifierName("f"))
-                                                        .WithArgumentList(
-                                                            ArgumentList(
-                                                                SingletonSeparatedList(
-                                                                    Argument(
-                                                                        InvocationExpression(
-                                                                            IdentifierName("Fix"))
-                                                                            .WithArgumentList(
-                                                                                ArgumentList(
-                                                                                    SingletonSeparatedList(
-                                                                                        Argument(
-                                                                                            IdentifierName("f")))))))))))
+                                                IdentifierName("f"))
                                                 .WithArgumentList(
                                                     ArgumentList(
                                                         SingletonSeparatedList(
                                                             Argument(
-                                                                IdentifierName("x"))))))))))
+                                                                InvocationExpression(
+                                                                    IdentifierName("Fix"))
+                                                                    .WithArgumentList(
+                                                                        ArgumentList(
+                                                                            SingletonSeparatedList(
+                                                                                Argument(
+                                                                                    IdentifierName("f")))))))))))
+                                        .WithArgumentList(
+                                            ArgumentList(
+                                                SingletonSeparatedList(
+                                                    Argument(
+                                                        IdentifierName("x"))))))))))
 
     (*
         static void Main()
