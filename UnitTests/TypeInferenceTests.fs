@@ -6,10 +6,6 @@ open Znutar
 [<TestClass>]
 type TypeInferenceTests() =
 
-    let assertOk = function
-        | Ok () -> ()
-        | Error err -> Assert.Fail(string err)
-
     [<TestMethod>]
     member this.InferExpression1() =
         let text = "let x = 2 in 3 * x"
@@ -23,7 +19,7 @@ type TypeInferenceTests() =
             Assert.AreEqual(
                 Set.empty,
                 Expression.freeTypeVariables expr')
-        } |> assertOk
+        } |> Assert.Ok
 
     [<TestMethod>]
     member this.InferExpression2() =
@@ -38,7 +34,7 @@ type TypeInferenceTests() =
             Assert.AreEqual(
                 Set.empty,
                 Expression.freeTypeVariables expr')
-        } |> assertOk
+        } |> Assert.Ok
 
     // https://courses.cs.cornell.edu/cs3110/2021sp/textbook/interp/reconstruction.html
     [<TestMethod>]
@@ -60,7 +56,7 @@ type TypeInferenceTests() =
                     | TypeVariable _ -> true
                     | _ -> false),
                 typ.Unparse())
-        } |> assertOk
+        } |> Assert.Ok
 
     [<TestMethod>]
     member this.InferDeclaration1() =
@@ -82,7 +78,7 @@ type TypeInferenceTests() =
                     TypeEnvironment.empty decl
             let actual = env[Identifier.create "const"]
             Assert.AreEqual(expected, actual)
-        } |> assertOk
+        } |> Assert.Ok
 
     [<TestMethod>]
     member this.InferDeclaration2() =
@@ -96,7 +92,7 @@ type TypeInferenceTests() =
                     TypeEnvironment.empty decl
             let actual = env[Identifier.create "twice"]
             Assert.AreEqual(expected, actual)
-        } |> assertOk
+        } |> Assert.Ok
 
     [<TestMethod>]
     member this.InferProgram() =
@@ -118,7 +114,7 @@ type TypeInferenceTests() =
                 TypeInference.inferProgram program
             let actual = env[Identifier.create "id"], typ
             Assert.AreEqual(expected, actual)
-        } |> assertOk
+        } |> Assert.Ok
 
     [<TestMethod>]
     member this.InferFail() =
@@ -132,4 +128,4 @@ type TypeInferenceTests() =
                 TypeInference.inferExpression
                     TypeEnvironment.empty expr
             Assert.AreEqual(expected, actual)
-        } |> assertOk
+        } |> Assert.Ok

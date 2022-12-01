@@ -15,3 +15,8 @@ type Assert private () =
         if actual <> expected then
             sprintf "%s\nExpected: %A.\nActual:   %A" msg expected actual
                 |> Assert.Fail
+
+    static member Ok(result) =
+        match result with
+            | Ok () -> ()
+            | Error err -> Assert.Fail(string err)
