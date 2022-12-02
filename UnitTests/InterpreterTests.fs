@@ -24,6 +24,19 @@ type InterpreterTests() =
         } |> ignore // |> Assert.Ok
 
     [<TestMethod>]
+    member _.Identity() =
+        result {
+            let text =
+                """
+                decl id = fun x -> x;
+                id true
+                """
+            let! program = Parser.run Parser.parseProgram text
+            let! actual = Interpreter.evalProgram program
+            Assert.AreEqual(BoolValue true, actual)
+        } |> Assert.Ok
+
+    [<TestMethod>]
     member _.Factorial() =
         result {
             let text =

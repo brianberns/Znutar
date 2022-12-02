@@ -266,6 +266,7 @@ module Compiler =
                         :> Syntax.MemberDeclarationSyntax
             }
 
+    /// E.g. Member().Invoke
     let private compileMemberAccess decl =
         result {
             return MemberAccessExpression(
