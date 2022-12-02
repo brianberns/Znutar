@@ -95,6 +95,13 @@ module Compiler =
                                 Syntax.separatedList(
                                     [inpNode; outNode]))))
 
+    type Syntax.MethodDeclarationSyntax with
+        member node.MaybeWithTypeParameterList(
+            typeParameterList : Syntax.TypeParameterListSyntax) =
+            if typeParameterList.Parameters.Count > 0 then
+                node.WithTypeParameterList(typeParameterList)
+            else node
+
     let compileExpr tenv venv expr =
 
         let rec compile venv = function
@@ -145,13 +152,26 @@ module Compiler =
                             match cerr with
                                 | :? UnboundVariable as (UnboundVariable ident) ->
                                     result {
+                                        let! inpType =
+                                            match app.Function with
+                                                | AnnotationExpr { Type = TypeArrow(inpType, _); Expression = _ } ->
+                                                    Ok inpType
+                                                | expr -> cerror (Unsupported <| expr.Unparse())
                                         let! scheme = TypeEnvironment.tryFind ident tenv
-                                        return MemberAccessExpression(
-                                            SyntaxKind.SimpleMemberAccessExpression,
+                                        let typeArgNodes =
+                                            assert(scheme.TypeVariables.Length <= 1)
+                                            scheme.TypeVariables
+                                                |> Seq.map (fun _ ->
+                                                    Type.compile inpType)
+                                                |> Seq.cast<SyntaxNode>
+                                        let node =
                                             InvocationExpression(
                                                 GenericName(
-                                                    Identifier(ident.Name))),
-                                            IdentifierName("Invoke"))
+                                                    Identifier(ident.Name))
+                                                    .WithTypeArgumentList(
+                                                        TypeArgumentList(
+                                                            Syntax.separatedList typeArgNodes)))
+                                        return node
                                     }
                                 | _ -> Error cerr
 
@@ -240,13 +260,6 @@ module Compiler =
             }
 
         compile venv expr
-
-    type Syntax.MethodDeclarationSyntax with
-        member node.MaybeWithTypeParameterList(
-            typeParameterList : Syntax.TypeParameterListSyntax) =
-            if typeParameterList.Parameters.Count > 0 then
-                node.WithTypeParameterList(typeParameterList)
-            else node
 
     module private Decl =
 

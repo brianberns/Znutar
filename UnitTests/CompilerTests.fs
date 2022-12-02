@@ -41,4 +41,4 @@ type CompilerTests() =
             decl id = fun x -> x;
             id true
             """
-        Assert.AreEqual(Ok "720", run text)
+        Assert.AreEqual(Ok "True", run text)
