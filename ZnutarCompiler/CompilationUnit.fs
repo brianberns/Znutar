@@ -10,14 +10,12 @@ module private Syntax =
         let comma =
             SyntaxNodeOrToken.op_Implicit(
                 Token(SyntaxKind.CommaToken))
-        nodes
-            |> Seq.collect (fun (node : SyntaxNode) ->
-                let node' =
-                    SyntaxNodeOrToken.op_Implicit(node)
-                [comma; node'])
-            |> Seq.skip 1
-            |> Seq.toArray
-            |> SeparatedList
+        SeparatedList [|
+            for iNode, node in Seq.indexed nodes do
+                if iNode > 0 then yield comma
+                yield SyntaxNodeOrToken.op_Implicit(
+                    node : SyntaxNode)
+        |]
 
 module CompilationUnit =
 
