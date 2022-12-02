@@ -252,7 +252,7 @@ module Compiler =
 
                     // compile body
                 let! bodyNode, _ =
-                    Expression.compile VariableEnvironment.empty decl.Body
+                    compileExpr tenv VariableEnvironment.empty decl.Body
 
                     // construct member
                 return
@@ -268,17 +268,6 @@ module Compiler =
                         :> Syntax.MemberDeclarationSyntax
             }
 
-    /// E.g. Member().Invoke
-    let private compileMemberAccess decl =
-        result {
-            return MemberAccessExpression(
-                SyntaxKind.SimpleMemberAccessExpression,
-                InvocationExpression(
-                    GenericName(
-                        Identifier(decl.Identifier.Name))),
-                IdentifierName("Invoke"))
-        }
-
     let private compileProgam tenv program =
         result {
 
@@ -291,7 +280,7 @@ module Compiler =
                 // compile main expression
             let! mainNode, _ =
                 program.Main
-                    |> Expression.compile VariableEnvironment.empty
+                    |> compileExpr tenv VariableEnvironment.empty
 
             return declNodes, mainNode
         }
