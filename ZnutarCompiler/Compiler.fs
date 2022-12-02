@@ -95,9 +95,9 @@ module Compiler =
                                 Syntax.separatedList(
                                     [inpNode; outNode]))))
 
-    module private rec Expression =
+    let compileExpr tenv venv expr =
 
-        let compile venv = function
+        let rec compile venv = function
             | VariableExpr ident -> compileIdentifier venv ident
             | ApplicationExpr app -> compileApplication venv app
             | LetExpr letb -> compileLet venv letb
@@ -111,12 +111,12 @@ module Compiler =
                     | expr -> compile venv expr
             | LambdaExpr lam -> cerror (Unsupported "Unannotated lambda")
 
-        let private compileIdentifier venv ident =
+        and compileIdentifier venv ident =
             VariableEnvironment.tryFind ident venv
                 |> Result.map (fun node -> node, venv)
 
         /// E.g. ((System.Func<int, int>)(x => x + 1))
-        let private compileLambda venv typ (lam : LambdaAbstraction) =
+        and compileLambda venv typ (lam : LambdaAbstraction) =
             result {
                 let venv' =
                     let identNode : Syntax.ExpressionSyntax =
@@ -135,7 +135,7 @@ module Compiler =
                 return node, venv
             }
 
-        let private compileApplication venv (app : Application) =
+        and compileApplication venv (app : Application) =
             result {
 
                 let! funcNode, _ = compile venv app.Function
@@ -151,7 +151,7 @@ module Compiler =
                 return node, venv
             }
 
-        let private compileLiteral venv (lit : Literal) =
+        and compileLiteral venv (lit : Literal) =
             let node =
                 match lit with
                     | IntLiteral n ->
@@ -166,7 +166,7 @@ module Compiler =
                         LiteralExpression(kind)
             Ok (node, venv)
 
-        let private compileLet venv (letb : LetBinding) =
+        and compileLet venv (letb : LetBinding) =
             result {
                 let! argNode, _ = compile venv letb.Argument
                 let! node, _ =
@@ -175,7 +175,7 @@ module Compiler =
                 return node, venv
             }
 
-        let private compileIf venv (iff : If) =
+        and compileIf venv (iff : If) =
             result {
 
                 let! condNode, _ = compile venv iff.Condition
@@ -189,7 +189,7 @@ module Compiler =
                 return node, venv
             }
 
-        let private compileFix venv expr =
+        and compileFix venv expr =
             result {
 
                 let! exprNode, _ = compile venv expr
@@ -205,7 +205,7 @@ module Compiler =
                 return node, venv
             }
 
-        let private compileBinaryOperation venv (bop : BinaryOperation) =
+        and compileBinaryOperation venv (bop : BinaryOperation) =
             let kind =
                 match bop.Operator with
                     | Plus -> SyntaxKind.AddExpression
@@ -222,6 +222,8 @@ module Compiler =
                         rightNode)
                 return node, venv
             }
+
+        compile venv expr
 
     type Syntax.MethodDeclarationSyntax with
         member node.MaybeWithTypeParameterList(
@@ -286,18 +288,10 @@ module Compiler =
                     |> Result.traverse (fun decl ->
                         Decl.compile tenv decl)
 
-            let! venv =
-                (VariableEnvironment.empty, program.Declarations)
-                    ||> Result.foldM (fun acc decl ->
-                        result {
-                            let! node = compileMemberAccess decl
-                            return acc |> Map.add decl.Identifier node
-                        })
-
                 // compile main expression
             let! mainNode, _ =
                 program.Main
-                    |> Expression.compile venv
+                    |> Expression.compile VariableEnvironment.empty
 
             return declNodes, mainNode
         }
