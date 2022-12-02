@@ -234,18 +234,28 @@ module Compiler =
 
         let compile tenv (decl : Declaration) =
             result {
+
+                    // find scheme of this declaration
                 let! scheme =
                     TypeEnvironment.tryFind decl.Identifier tenv
-                let returnType = Type.compile scheme.Type
+
+                    // compile return type
+                let returnTypeNode = Type.compile scheme.Type
+
+                    // compile type parameters
                 let typeParmNodes =
                     scheme.TypeVariables
                         |> Seq.map (fun tv ->
                             TypeParameter(Identifier(tv.Name)))
+
+                    // compile body
                 let! bodyNode, _ =
                     Expression.compile VariableEnvironment.empty decl.Body
-                let methodNode =
+
+                    // construct member
+                return
                     MethodDeclaration(
-                        returnType = returnType,
+                        returnType = returnTypeNode,
                         identifier = decl.Identifier.Name)
                         .AddModifiers(
                             Token(SyntaxKind.StaticKeyword))
@@ -253,7 +263,7 @@ module Compiler =
                             TypeParameterList(SeparatedList(typeParmNodes)))
                         .WithBody(
                             Block(ReturnStatement(bodyNode)))
-                return methodNode :> Syntax.MemberDeclarationSyntax
+                        :> Syntax.MemberDeclarationSyntax
             }
 
     let private compileMemberAccess decl =
@@ -268,10 +278,13 @@ module Compiler =
 
     let private compileProgam tenv program =
         result {
+
+                // compile each declaration
             let! declNodes =
                 program.Declarations
                     |> Result.traverse (fun decl ->
                         Decl.compile tenv decl)
+
             let! venv =
                 (VariableEnvironment.empty, program.Declarations)
                     ||> Result.foldM (fun acc decl ->
@@ -279,9 +292,12 @@ module Compiler =
                             let! node = compileMemberAccess decl
                             return acc |> Map.add decl.Identifier node
                         })
+
+                // compile main expression
             let! mainNode, _ =
                 program.Main
                     |> Expression.compile venv
+
             return declNodes, mainNode
         }
 
