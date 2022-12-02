@@ -138,7 +138,23 @@ module Compiler =
         and compileApplication venv (app : Application) =
             result {
 
-                let! funcNode, _ = compile venv app.Function
+                let! funcNode =
+                    match compile venv app.Function with
+                        | Ok (node, _) -> Ok node
+                        | Error cerr ->
+                            match cerr with
+                                | :? UnboundVariable as (UnboundVariable ident) ->
+                                    result {
+                                        let! scheme = TypeEnvironment.tryFind ident tenv
+                                        return MemberAccessExpression(
+                                            SyntaxKind.SimpleMemberAccessExpression,
+                                            InvocationExpression(
+                                                GenericName(
+                                                    Identifier(ident.Name))),
+                                            IdentifierName("Invoke"))
+                                    }
+                                | _ -> Error cerr
+
                 let! argNode, _ = compile venv app.Argument
 
                 let node =
