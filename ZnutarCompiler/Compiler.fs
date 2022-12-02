@@ -95,13 +95,6 @@ module Compiler =
                                 Syntax.separatedList(
                                     [inpNode; outNode]))))
 
-    type Syntax.MethodDeclarationSyntax with
-        member node.MaybeWithTypeParameterList(
-            typeParameterList : Syntax.TypeParameterListSyntax) =
-            if typeParameterList.Parameters.Count > 0 then
-                node.WithTypeParameterList(typeParameterList)
-            else node
-
     let compileExpr tenv venv expr =
 
         let rec compile venv = function
@@ -163,15 +156,12 @@ module Compiler =
                                             scheme.TypeVariables
                                                 |> Seq.map (fun _ ->
                                                     Type.compile inpType)
-                                                |> Seq.cast<SyntaxNode>
-                                        let node =
-                                            InvocationExpression(
-                                                GenericName(
-                                                    Identifier(ident.Name))
-                                                    .WithTypeArgumentList(
-                                                        TypeArgumentList(
-                                                            Syntax.separatedList typeArgNodes)))
-                                        return node
+                                        return InvocationExpression(
+                                            GenericName(   // to-do: use plain IdentifierName(ident.Name) for non-generic calls?
+                                                Identifier(ident.Name))
+                                                .WithTypeArgumentList(
+                                                    TypeArgumentList(
+                                                        Syntax.separatedList typeArgNodes)))
                                     }
                                 | _ -> Error cerr
 
@@ -262,6 +252,13 @@ module Compiler =
         compile venv expr
 
     module private Decl =
+
+        type Syntax.MethodDeclarationSyntax with
+            member node.MaybeWithTypeParameterList(
+                typeParameterList : Syntax.TypeParameterListSyntax) =
+                if typeParameterList.Parameters.Count > 0 then
+                    node.WithTypeParameterList(typeParameterList)
+                else node
 
         let compile tenv (decl : Declaration) =
             result {

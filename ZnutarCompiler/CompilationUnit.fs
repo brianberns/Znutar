@@ -6,15 +6,14 @@ open type SyntaxFactory
 
 module private Syntax =
 
-    let separatedList nodes =
+    let separatedList<'t when 't :> SyntaxNode> nodes : SeparatedSyntaxList<'t> =
         let comma =
             SyntaxNodeOrToken.op_Implicit(
                 Token(SyntaxKind.CommaToken))
         SeparatedList [|
-            for iNode, node in Seq.indexed nodes do
+            for iNode, (node : 't) in Seq.indexed nodes do
                 if iNode > 0 then yield comma
-                yield SyntaxNodeOrToken.op_Implicit(
-                    node : SyntaxNode)
+                yield SyntaxNodeOrToken.op_Implicit(node)
         |]
 
 module CompilationUnit =
