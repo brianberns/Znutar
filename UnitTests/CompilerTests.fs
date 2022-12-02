@@ -33,3 +33,12 @@ type CompilerTests() =
             factorial 6
             """
         Assert.AreEqual(Ok "720", run text)
+
+    [<TestMethod>]
+    member _.Identity() =
+        let text =
+            """
+            decl id = fun x -> x;
+            id true
+            """
+        Assert.AreEqual(Ok "720", run text)
