@@ -35,11 +35,20 @@ type CompilerTests() =
         Assert.AreEqual(Ok "720", run text)
 
     [<TestMethod>]
-    member _.Identity() =
+    member _.IdentityDecl() =
         let text =
             """
             decl id = fun x -> x;
             id true
+            """
+        Assert.AreEqual(Ok "True", run text)
+
+    [<TestMethod>]
+    member _.IdentityLambda() =
+        let text =
+            """
+            let id = fun x -> x
+            in id true
             """
         Assert.AreEqual(Ok "True", run text)
 
