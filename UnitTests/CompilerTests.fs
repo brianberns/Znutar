@@ -14,6 +14,11 @@ type CompilerTests() =
         }
 
     [<TestMethod>]
+    member _.Simple() =
+        let text = "1"
+        Assert.AreEqual(Ok "1", run text)
+
+    [<TestMethod>]
     member _.Plus1Decl() =
         let text =
             """
