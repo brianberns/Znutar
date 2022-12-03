@@ -25,7 +25,7 @@ type Expression =
     | LetExpr of LetBinding
     | LiteralExpr of Literal
     | IfExpr of If
-    | FixExpr of Expression
+    | FixExpr of Expression   // to-do: support mutually recursive functions (e.g. even/odd)
     | BinaryOperationExpr of BinaryOperation
     | AnnotationExpr of Annotation
 
