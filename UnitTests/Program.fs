@@ -5,7 +5,7 @@ module Program =
         let text =
             """
             decl const = fun x -> fun y -> x;
-            const 5 6
+            const false 6
             """
         let assemblyName = "Test"
         do! Compiler.compile assemblyName text

@@ -145,17 +145,17 @@ module Compiler =
                             match cerr with
                                 | :? UnboundVariable as (UnboundVariable ident) ->
                                     result {
-                                        let! inpType =
+                                        let! instType =
                                             match app.Function with
-                                                | AnnotationExpr { Type = TypeArrow(inpType, _); Expression = _ } ->
-                                                    Ok inpType
+                                                | AnnotationExpr { Type = typ; Expression = _ } ->
+                                                    Ok typ
                                                 | expr -> cerror (Unsupported <| expr.Unparse())
                                         let! scheme = TypeEnvironment.tryFind ident tenv
+                                        let! subst = Substitution.unify scheme.Type instType
                                         let typeArgNodes =
-                                            assert(scheme.TypeVariables.Length <= 1)
                                             scheme.TypeVariables
-                                                |> Seq.map (fun _ ->
-                                                    Type.compile inpType)
+                                                |> Seq.map (fun tv ->
+                                                    Type.compile subst[tv])
                                         return InvocationExpression(
                                             GenericName(   // to-do: use plain IdentifierName(ident.Name) for non-generic calls?
                                                 Identifier(ident.Name))

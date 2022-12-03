@@ -48,6 +48,6 @@ type CompilerTests() =
         let text =
             """
             decl const = fun x -> fun y -> x;
-            const 5 6
+            const false 6
             """
-        Assert.AreEqual(Ok "True", run text)
+        Assert.AreEqual(Ok "False", run text)
