@@ -14,10 +14,19 @@ type CompilerTests() =
         }
 
     [<TestMethod>]
-    member _.Plus1() =
+    member _.Plus1Decl() =
         let text =
             """
             decl plus1 = fun x -> x + 1;
+            plus1 5
+            """
+        Assert.AreEqual(Ok "6", run text)
+
+    [<TestMethod>]
+    member _.Plus1Lambda() =
+        let text =
+            """
+            let plus1 = fun x -> x + 1 in
             plus1 5
             """
         Assert.AreEqual(Ok "6", run text)
@@ -47,8 +56,20 @@ type CompilerTests() =
     member _.IdentityLambda() =
         let text =
             """
-            let id = fun x -> x
-            in id true
+            let id = fun x -> x in
+            id true
+            """
+        Assert.AreEqual(Ok "True", run text)
+
+    [<TestMethod>]
+    member _.IdentityDecl2() =
+        let text =
+            """
+            decl id = fun x -> x;
+
+            let value = id 0 in
+            if value = 0 then id true
+            else id false
             """
         Assert.AreEqual(Ok "True", run text)
 
