@@ -4,8 +4,8 @@ module Program =
     result {
         let text =
             """
-            decl id = fun x -> x;
-            id true
+            decl const = fun x -> fun y -> x;
+            const 5 6
             """
         let assemblyName = "Test"
         do! Compiler.compile assemblyName text

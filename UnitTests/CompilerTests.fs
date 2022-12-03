@@ -42,3 +42,12 @@ type CompilerTests() =
             id true
             """
         Assert.AreEqual(Ok "True", run text)
+
+    [<TestMethod>]
+    member _.Const() =
+        let text =
+            """
+            decl const = fun x -> fun y -> x;
+            const 5 6
+            """
+        Assert.AreEqual(Ok "True", run text)
