@@ -131,13 +131,13 @@ module TypeInference =   // to-do: replace with constraint-based inference
 
                 // generalize argument ("let polymorphism")
                 // e.g. let id = fun x -> x in ...
-            let argType = generalize env' argAnnex.Type
+            let scheme = generalize env' argAnnex.Type
 
                 // infer body type using argument type
             let! bodySubst, bodyAnnex =
                 let env'' =
                     TypeEnvironment.add
-                        letb.Identifier argType env'
+                        letb.Identifier scheme env'
                 inferExpression env'' letb.Body
 
                 // gather result
