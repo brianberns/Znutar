@@ -15,12 +15,12 @@ type Unsupported =
 
 module Compiler =
 
-    let private compileWithMembers assemblyName memberNodes mainNode =
+    let private compileWithMembers assemblyName memberNodes =
 
         let emitResult =
 
             let compilationUnit, mainTypeName =
-                CompilationUnit.create assemblyName memberNodes mainNode
+                CompilationUnit.create assemblyName memberNodes
 #if DEBUG
             printfn "%A" <| compilationUnit.NormalizeWhitespace()
 #endif
@@ -83,11 +83,11 @@ module Compiler =
                                 Syntax.separatedList(
                                     [inpNode; outNode]))))
 
-    let compileExpr tenv expr =
+    let getType = function
+        | AnnotationExpr ann -> ann.Type
+        | _ -> failwith "Unexpected"
 
-        let getType = function
-            | AnnotationExpr ann -> ann.Type
-            | _ -> failwith "Unexpected"
+    let compileExpr tenv expr =
 
         let compileLiteral (lit : Literal) =
             let node =
@@ -112,6 +112,7 @@ module Compiler =
             // | FixExpr expr -> compileFix venv expr
             | BinaryOperationExpr bop -> compileBinaryOperation bop
             | LiteralExpr lit -> compileLiteral lit
+            | AnnotationExpr ann -> compile ann.Expression
             (*
             | AnnotationExpr ann ->
                 match ann.Expression with
@@ -348,24 +349,38 @@ module Compiler =
                     |> Result.traverse (fun decl ->
                         Decl.compile tenv decl)
 *)
-            let declNodes = []
 
                 // compile main expression
             let! mainStmtNodes, mainExprNode =
                 program.Main |> compileExpr tenv
 
+            let mainMethodNode =
+                let typeNode =
+                    getType program.Main
+                        |> Type.compile
+                let stmts =
+                    [|
+                        yield! mainStmtNodes
+                        yield ReturnStatement(mainExprNode)
+                    |]
+                MethodDeclaration(
+                    returnType = typeNode,
+                    identifier = "main")
+                    .AddModifiers(
+                        Token(SyntaxKind.StaticKeyword))
+                    .WithBody(
+                        Block(stmts))
 
-            return declNodes, mainNode
+            return mainMethodNode
         }
 
     let compile assemblyName text =
         result {
             let! program = Parser.run Parser.parseProgram text
             let! tenv, _, program' = TypeInference.inferProgram program
-            let! declNodes, mainNode = compileProgam tenv program'
+            let! methodNode = compileProgam tenv program'
             do!
                 compileWithMembers
                     assemblyName
-                    declNodes
-                    mainNode
+                    [methodNode]
         }

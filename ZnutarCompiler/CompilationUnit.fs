@@ -126,8 +126,7 @@ module CompilationUnit =
             System.Console.Write($node);
         }
     *)
-    /// our_code_starts_here
-    let private mainMethod node =
+    let private mainMethod =
         MethodDeclaration(
             returnType =
                 PredefinedType(
@@ -149,16 +148,17 @@ module CompilationUnit =
                             .WithArgumentList(
                                 ArgumentList(
                                     SingletonSeparatedList(
-                                        Argument(node)))))))
+                                        Argument(InvocationExpression(
+                                            IdentifierName("main")))))))))
 
-    let create assemblyName memberNodes mainNode =
+    let create assemblyName memberNodes =
         let classNode =
             ClassDeclaration($"{assemblyName}Type")
                 .AddModifiers(
                     Token(SyntaxKind.StaticKeyword))
                 .AddMembers(
                     [|
-                        mainMethod mainNode
+                        mainMethod
                             :> Syntax.MemberDeclarationSyntax
                         fixMethod
                         yield! memberNodes
