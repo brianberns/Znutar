@@ -9,18 +9,6 @@ open type SyntaxFactory
 
 open Basic.Reference.Assemblies
 
-type VariableEnvironment = Map<Identifier, Syntax.ExpressionSyntax>
-
-module VariableEnvironment =
-
-    let empty : VariableEnvironment =
-        Map.empty
-
-    let tryFind ident (env : VariableEnvironment) =
-        match Map.tryFind ident env with
-            | Some node -> Ok node
-            | None -> cerror (UnboundVariable ident)
-
 type Unsupported =
     Unsupported of string
     with interface ICompilerError
@@ -95,22 +83,91 @@ module Compiler =
                                 Syntax.separatedList(
                                     [inpNode; outNode]))))
 
-    let compileExpr tenv venv expr =
+    let compileExpr tenv expr =
 
-        let rec compile venv = function
-            | VariableExpr ident -> compileIdentifier venv ident
-            | ApplicationExpr app -> compileApplication venv app
-            | LetExpr letb -> compileLet venv letb
-            | IfExpr iff -> compileIf venv iff
-            | FixExpr expr -> compileFix venv expr
-            | BinaryOperationExpr bop -> compileBinaryOperation venv bop
-            | LiteralExpr lit -> compileLiteral venv lit
+        let getType = function
+            | AnnotationExpr ann -> ann.Type
+            | _ -> failwith "Unexpected"
+
+        let compileLiteral (lit : Literal) =
+            let node =
+                match lit with
+                    | IntLiteral n ->
+                        LiteralExpression(
+                            SyntaxKind.NumericLiteralExpression,
+                            Literal(n))
+                            :> Syntax.ExpressionSyntax
+                    | BoolLiteral b ->
+                        let kind =
+                            if b then SyntaxKind.TrueLiteralExpression
+                            else SyntaxKind.FalseLiteralExpression
+                        LiteralExpression(kind)
+            Ok ([], node)
+
+        let rec compile = function
+            // | VariableExpr ident -> compileIdentifier venv ident
+            // | ApplicationExpr app -> compileApplication venv app
+            | LetExpr letb -> compileLet letb
+            // | IfExpr iff -> compileIf venv iff
+            // | FixExpr expr -> compileFix venv expr
+            | BinaryOperationExpr bop -> compileBinaryOperation bop
+            | LiteralExpr lit -> compileLiteral lit
+            (*
             | AnnotationExpr ann ->
                 match ann.Expression with
                     | LambdaExpr lam -> compileLambda venv ann.Type lam
                     | expr -> compile venv expr
             | LambdaExpr lam -> cerror (Unsupported "Unannotated lambda")
+            *)
 
+        and compileLet (letb : LetBinding) =
+            result {
+                let typeNode = Type.compile (getType letb.Argument)
+                let! argStmtNodes, argExprNode = compile letb.Argument   // argStmtNodes: int x = 1, argExprNode: 2 * x
+                let! bodyStmtNodes, bodyExprNode = compile letb.Body     // bodyStmtNodes: int z = 3, bodyExprNode: y + z
+                let stmtNode : Syntax.StatementSyntax =                  // stmtNode: int y = 2 * x
+                    LocalDeclarationStatement(
+                        VariableDeclaration(typeNode)
+                            .WithVariables(
+                                SingletonSeparatedList(
+                                    VariableDeclarator(
+                                        Identifier(letb.Identifier.Name))
+                                        .WithInitializer(
+                                            EqualsValueClause(
+                                                argExprNode)))))
+                let stmtNodes =
+                    [
+                        yield! argStmtNodes
+                        yield stmtNode
+                        yield! bodyStmtNodes
+                    ]
+                return stmtNodes, bodyExprNode
+            }
+
+        and compileBinaryOperation (bop : BinaryOperation) =
+            let kind =
+                match bop.Operator with
+                    | Plus -> SyntaxKind.AddExpression
+                    | Minus -> SyntaxKind.SubtractExpression
+                    | Times -> SyntaxKind.MultiplyExpression
+                    | Equals -> SyntaxKind.EqualsExpression
+            result {
+                let! leftStmtNodes, leftExprNode = compile bop.Left
+                let! rightStmtNodes, rightExprNode = compile bop.Right
+                let stmtNodes =
+                    [
+                        yield! leftStmtNodes
+                        yield! rightStmtNodes
+                    ]
+                let exprNode =
+                    BinaryExpression(
+                        kind,
+                        leftExprNode,
+                        rightExprNode)
+                return stmtNodes, exprNode
+            }
+
+        (*
         and compileIdentifier venv ident =
             VariableEnvironment.tryFind ident venv
                 |> Result.map (fun node -> node, venv)
@@ -177,21 +234,6 @@ module Compiler =
                 return node, venv
             }
 
-        and compileLiteral venv (lit : Literal) =
-            let node =
-                match lit with
-                    | IntLiteral n ->
-                        LiteralExpression(
-                            SyntaxKind.NumericLiteralExpression,
-                            Literal(n))
-                            :> Syntax.ExpressionSyntax
-                    | BoolLiteral b ->
-                        let kind =
-                            if b then SyntaxKind.TrueLiteralExpression
-                            else SyntaxKind.FalseLiteralExpression
-                        LiteralExpression(kind)
-            Ok (node, venv)
-
         and compileLet venv (letb : LetBinding) =
             result {
                 let! argNode, _ = compile venv letb.Argument
@@ -248,9 +290,11 @@ module Compiler =
                         rightNode)
                 return node, venv
             }
+    *)
 
-        compile venv expr
+        compile expr
 
+(*
     module private Decl =
 
         type Syntax.MethodDeclarationSyntax with
@@ -277,8 +321,7 @@ module Compiler =
                             TypeParameter(Identifier(tv.Name)))
 
                     // compile body
-                let! bodyNode, _ =
-                    compileExpr tenv VariableEnvironment.empty decl.Body
+                let! bodyNode, _ = compileExpr tenv decl.Body
 
                     // construct member
                 return
@@ -293,20 +336,24 @@ module Compiler =
                             Block(ReturnStatement(bodyNode)))
                         :> Syntax.MemberDeclarationSyntax
             }
+*)
 
     let private compileProgam tenv program =
         result {
 
                 // compile each declaration
+(*
             let! declNodes =
                 program.Declarations
                     |> Result.traverse (fun decl ->
                         Decl.compile tenv decl)
+*)
+            let declNodes = []
 
                 // compile main expression
-            let! mainNode, _ =
-                program.Main
-                    |> compileExpr tenv VariableEnvironment.empty
+            let! mainStmtNodes, mainExprNode =
+                program.Main |> compileExpr tenv
+
 
             return declNodes, mainNode
         }
