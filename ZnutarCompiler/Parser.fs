@@ -1,6 +1,5 @@
 ﻿namespace Znutar
 
-open System
 open FParsec
 
 type ParserError = ParserError of string
@@ -79,17 +78,29 @@ module Parser =
                 parseParenType
             ]
 
+        let private parseTuple =
+            parse {
+                let! tuples =
+                    sepBy1 (parseSimpleType .>> spaces)
+                        (skipChar '*' >>. spaces)
+                match tuples with
+                    | [] -> return! fail "0-tuple"
+                    | [typ] -> return typ
+                    | type1 :: type2 :: types ->
+                        return TypeTuple (type1, type2, types)
+            }
+
         let private parseTypeImpl =
 
             let create =
                 parse {
                     do! skipString "->" >>. spaces
                     return (fun inpType outType ->
-                            inpType ^=> outType)
+                        inpType ^=> outType)
                 }
 
             chainr1   // type arrow is right-associative
-                (parseSimpleType .>> spaces)
+                (parseTuple .>> spaces)
                 (create .>> spaces)
 
         let parse = parseType

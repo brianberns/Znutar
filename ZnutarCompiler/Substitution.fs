@@ -38,6 +38,11 @@ module Substitution =
                     |> Option.defaultValue typ
             | TypeArrow (type1, type2) ->
                 apply subst type1 ^=> apply subst type2
+            | TypeTuple (type1, type2, types) ->
+                TypeTuple (
+                    apply subst type1,
+                    apply subst type2,
+                    List.map (apply subst) types)
 
     /// Composition of substitutions.
     let compose (subst1 : Substitution) (subst2 : Substitution) : Substitution =
