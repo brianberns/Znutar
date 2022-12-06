@@ -85,6 +85,8 @@ module Compiler =
 
     let getType = function
         | AnnotationExpr ann -> ann.Type
+        | LiteralExpr (IntLiteral _) -> Type.int
+        | LiteralExpr (BoolLiteral _) -> Type.bool
         | _ -> failwith "Unexpected"
 
     let compileExpr tenv expr =
@@ -105,7 +107,7 @@ module Compiler =
             Ok ([], node)
 
         let rec compile = function
-            // | VariableExpr ident -> compileIdentifier venv ident
+            | VariableExpr ident -> compileIdentifier ident
             // | ApplicationExpr app -> compileApplication venv app
             | LetExpr letb -> compileLet letb
             // | IfExpr iff -> compileIf venv iff
@@ -120,6 +122,9 @@ module Compiler =
                     | expr -> compile venv expr
             | LambdaExpr lam -> cerror (Unsupported "Unannotated lambda")
             *)
+
+        and compileIdentifier (ident : Identifier) =
+            Ok ([], IdentifierName(ident.Name))
 
         and compileLet (letb : LetBinding) =
             result {

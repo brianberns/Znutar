@@ -19,6 +19,19 @@ type CompilerTests() =
         Assert.AreEqual(Ok "1", run text)
 
     [<TestMethod>]
+    member _.Arithmetic() =
+        let text =
+            """
+            let y =
+                let x = 1
+                in 2 * x
+            in
+            let z = 3 in
+            y + z
+            """
+        Assert.AreEqual(Ok "5", run text)
+
+    [<TestMethod>]
     member _.Plus1Decl() =
         let text =
             """
