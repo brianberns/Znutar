@@ -35,6 +35,29 @@ module TypeInference =   // to-do: replace with constraint-based inference
             Equals, Type.int ^=> Type.int ^=> Type.bool   // to-do: make polymorphic
         ]
 
+    /// From: let const = fun x -> fun y -> x in body
+    /// To:   let const (x, y) = x in body
+    let tryConvert (scheme : Scheme) (letb : AnnotatedLetBinding) =
+
+        let rec gatherLambdas = function
+            | LambdaExpr lam ->
+                lam :: gatherLambdas lam.Body
+            | _ -> []
+
+        let lams = gatherLambdas letb.Argument
+        if lams.Length = 0 then None
+        else
+            Some {
+                Identifier = letb.Identifier
+                Arguments =
+                    lams
+                        |> List.map (fun lam -> lam.Identifier)
+                Body =
+                    let lam = List.last lams
+                    lam.Body
+                Scheme = scheme
+            }
+
     /// Infers and annotates the type of the given expression.
     /// * Substitution used to infer the type
     /// * Equivalent expression fully annotated with inferred types
@@ -142,12 +165,18 @@ module TypeInference =   // to-do: replace with constraint-based inference
 
                 // gather result
             let annex =
-                LetExpr {
-                    Identifier = letb.Identifier
-                    Argument = argAnnex
-                    Body = bodyAnnex
-                    Type = bodyAnnex.Type
-                }
+                let letb' =
+                    {
+                        Identifier = letb.Identifier
+                        Argument = argAnnex
+                        Body = bodyAnnex
+                        Type = bodyAnnex.Type
+                    }
+                letb'
+                    |> tryConvert scheme
+                    |> Option.map FunctionExpr
+                    |> Option.defaultValue (
+                        LetExpr letb')
             return argSubst ++ bodySubst, annex
         }
 

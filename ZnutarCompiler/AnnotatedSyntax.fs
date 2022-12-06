@@ -10,6 +10,7 @@ type AnnotatedExpression =
     | IfExpr of AnnotatedIf
     | FixExpr of AnnotatedFix
     | BinaryOperationExpr of AnnotatedBinaryOperation
+    | FunctionExpr of Function
 
     with
     member annex.Type =
@@ -105,6 +106,22 @@ and AnnotatedBinaryOperation =
         Left : AnnotatedExpression
         Right : AnnotatedExpression
         Type : Type
+    }
+
+/// let const x y = x
+and Function =
+    {
+        /// E.g. "const"
+        Identifier : Identifier
+
+        /// E.g. [x; y]
+        Arguments : List<Identifier>
+
+        /// E.g. x
+        Body : AnnotatedExpression
+
+        /// E.g. <'a, 'b>('a -> 'b -> 'a)
+        Scheme : Scheme
     }
 
 module AnnotatedExpression =
