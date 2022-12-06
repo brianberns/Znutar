@@ -92,10 +92,19 @@ type CompilerTests() =
         Assert.AreEqual(Ok "True", run text)
 
     [<TestMethod>]
-    member _.Const() =
+    member _.ConstDecl() =
         let text =
             """
             decl const = fun x -> fun y -> x;
             const false 6
+            """
+        Assert.AreEqual(Ok "False", run text)
+
+    [<TestMethod>]
+    member _.ConstLambda() =
+        let text =
+            """
+            let const = fun x -> fun y -> x
+            in const false 6
             """
         Assert.AreEqual(Ok "False", run text)
