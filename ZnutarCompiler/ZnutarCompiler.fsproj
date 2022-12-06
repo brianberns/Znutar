@@ -16,13 +16,12 @@
     <Compile Include="Interpreter.fs" />
     <Compile Include="Scheme.fs" />
     <Compile Include="Substitution.fs" />
+    <Compile Include="AnnotatedSyntax.fs" />
     <Compile Include="TypeInference.fs" />
     <Compile Include="CompilationUnit.fs" />
     <Compile Include="Compiler.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
-
-  <ItemGroup />
 
   <ItemGroup>
     <PackageReference Include="Basic.Reference.Assemblies.Net60" Version="1.4.1" />

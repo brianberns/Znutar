@@ -83,12 +83,6 @@ module Compiler =
                                 Syntax.separatedList(
                                     [inpNode; outNode]))))
 
-    let getType = function
-        | AnnotationExpr ann -> Ok ann.Type
-        | LiteralExpr (IntLiteral _) -> Ok Type.int
-        | LiteralExpr (BoolLiteral _) -> Ok Type.bool
-        | _ -> cerror (Unsupported "Unannotated")
-
     let compileExpr tenv expr =
 
         let compileLiteral (lit : Literal) =
@@ -107,26 +101,21 @@ module Compiler =
             Ok ([], node)
 
         let rec compile = function
-            | VariableExpr ident -> compileIdentifier ident
+            | VariableExpr var -> compileIdentifier var.Identifier
             // | ApplicationExpr app -> compileApplication venv app
             | LetExpr letb -> compileLet letb
             // | IfExpr iff -> compileIf venv iff
             // | FixExpr expr -> compileFix venv expr
             | BinaryOperationExpr bop -> compileBinaryOperation bop
             | LiteralExpr lit -> compileLiteral lit
-            | AnnotationExpr ann ->
-                match ann.Expression with
-                    // | LambdaExpr lam -> compileLambda ann.Type lam
-                    | expr -> compile expr
             // | LambdaExpr lam -> cerror (Unsupported "Unannotated lambda")
 
         and compileIdentifier (ident : Identifier) =
             Ok ([], IdentifierName(ident.Name))
 
-        and compileLet (letb : LetBinding) =
+        and compileLet letb =
             result {
-                let! typ = getType letb.Argument
-                let typeNode = Type.compile typ
+                let typeNode = Type.compile letb.Argument.Type
                 let! argStmtNodes, argExprNode = compile letb.Argument   // argStmtNodes: int x = 1, argExprNode: 2 * x
                 let! bodyStmtNodes, bodyExprNode = compile letb.Body     // bodyStmtNodes: int z = 3, bodyExprNode: y + z
                 let stmtNode : Syntax.StatementSyntax =                  // stmtNode: int y = 2 * x
@@ -148,7 +137,7 @@ module Compiler =
                 return stmtNodes, bodyExprNode
             }
 
-        and compileBinaryOperation (bop : BinaryOperation) =
+        and compileBinaryOperation bop =
             let kind =
                 match bop.Operator with
                     | Plus -> SyntaxKind.AddExpression
@@ -366,8 +355,7 @@ module Compiler =
             let! mainStmtNodes, mainExprNode =
                 program.Main |> compileExpr tenv
 
-            let! typ = getType program.Main
-            let typeNode = Type.compile typ
+            let typeNode = Type.compile program.Main.Type
             let stmts =
                 [|
                     yield! mainStmtNodes
@@ -385,7 +373,7 @@ module Compiler =
     let compile assemblyName text =
         result {
             let! program = Parser.run Parser.parseProgram text
-            let! tenv, _, program' = TypeInference.inferProgram program
+            let! tenv, program' = TypeInference.inferProgram program
             let! methodNode = compileProgam tenv program'
             do!
                 compileWithMembers

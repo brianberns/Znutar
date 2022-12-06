@@ -12,9 +12,10 @@ type TypeInferenceTests() =
         result {
             let! expr = Parser.run Parser.Expression.parse text
             let expected = Type.int
-            let! _, actual, expr' =
+            let! _, expr' =
                 TypeInference.inferExpression
                     TypeEnvironment.empty expr
+            let actual = expr'.Type
             Assert.AreEqual(expected, actual, actual.Unparse())
         } |> Assert.Ok
 
@@ -24,9 +25,10 @@ type TypeInferenceTests() =
         result {
             let! expr = Parser.run Parser.Expression.parse text
             let expected = Type.int ^=> Type.int
-            let! _, actual, expr' =
+            let! _, expr' =
                 TypeInference.inferExpression
                     TypeEnvironment.empty expr
+            let actual = expr'.Type
             Assert.AreEqual(expected, actual, actual.Unparse())
         } |> Assert.Ok
 
@@ -42,9 +44,10 @@ type TypeInferenceTests() =
         result {
             let! expr = Parser.run Parser.Expression.parse text
             let expected = Type.bool
-            let! _, actual, expr' =
+            let! _, expr' =
                 TypeInference.inferExpression
                     TypeEnvironment.empty expr
+            let actual = expr'.Type
             Assert.AreEqual(expected, actual, actual.Unparse())
         } |> Assert.Ok
 
@@ -56,9 +59,10 @@ type TypeInferenceTests() =
         result {
             let! expr = Parser.run Parser.Expression.parse text
             let! expected = Parser.run Parser.Type.parse sType
-            let! _, actual, _ =
+            let! _, expr' =
                 TypeInference.inferExpression
                     TypeEnvironment.empty expr
+            let actual = expr'.Type
             let! subst = Substitution.unify expected actual
             let (KeyValue(tv, typ)) = Seq.exactlyOne subst
             Assert.AreEqual("'a", TypeVariable.unparse tv)
@@ -121,9 +125,9 @@ type TypeInferenceTests() =
                         [tv]
                         (TypeVariable tv ^=> TypeVariable tv)
                 scheme, Type.bool
-            let! env, typ, _ =
+            let! env, program' =
                 TypeInference.inferProgram program
-            let actual = env[Identifier.create "id"], typ
+            let actual = env[Identifier.create "id"], program'.Main.Type
             Assert.AreEqual(expected, actual)
         } |> Assert.Ok
 
