@@ -4,12 +4,8 @@ module Program =
     result {
         let text =
             """
-            let y =
-                let x = 1
-                in 2 * x
-            in
-            let z = 3 in
-            y + z
+            let id = fun x -> x in
+            id true
             """
         let assemblyName = "Test"
         do! Compiler.compile assemblyName text

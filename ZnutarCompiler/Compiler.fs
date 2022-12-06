@@ -84,10 +84,10 @@ module Compiler =
                                     [inpNode; outNode]))))
 
     let getType = function
-        | AnnotationExpr ann -> ann.Type
-        | LiteralExpr (IntLiteral _) -> Type.int
-        | LiteralExpr (BoolLiteral _) -> Type.bool
-        | _ -> failwith "Unexpected"
+        | AnnotationExpr ann -> Ok ann.Type
+        | LiteralExpr (IntLiteral _) -> Ok Type.int
+        | LiteralExpr (BoolLiteral _) -> Ok Type.bool
+        | _ -> cerror (Unsupported "Unannotated")
 
     let compileExpr tenv expr =
 
@@ -114,21 +114,19 @@ module Compiler =
             // | FixExpr expr -> compileFix venv expr
             | BinaryOperationExpr bop -> compileBinaryOperation bop
             | LiteralExpr lit -> compileLiteral lit
-            | AnnotationExpr ann -> compile ann.Expression
-            (*
             | AnnotationExpr ann ->
                 match ann.Expression with
-                    | LambdaExpr lam -> compileLambda venv ann.Type lam
-                    | expr -> compile venv expr
-            | LambdaExpr lam -> cerror (Unsupported "Unannotated lambda")
-            *)
+                    // | LambdaExpr lam -> compileLambda ann.Type lam
+                    | expr -> compile expr
+            // | LambdaExpr lam -> cerror (Unsupported "Unannotated lambda")
 
         and compileIdentifier (ident : Identifier) =
             Ok ([], IdentifierName(ident.Name))
 
         and compileLet (letb : LetBinding) =
             result {
-                let typeNode = Type.compile (getType letb.Argument)
+                let! typ = getType letb.Argument
+                let typeNode = Type.compile typ
                 let! argStmtNodes, argExprNode = compile letb.Argument   // argStmtNodes: int x = 1, argExprNode: 2 * x
                 let! bodyStmtNodes, bodyExprNode = compile letb.Body     // bodyStmtNodes: int z = 3, bodyExprNode: y + z
                 let stmtNode : Syntax.StatementSyntax =                  // stmtNode: int y = 2 * x
@@ -172,6 +170,42 @@ module Compiler =
                         rightExprNode)
                 return stmtNodes, exprNode
             }
+
+        (*
+        and compileLambda typ (lam : LambdaAbstraction) =
+            result {
+                let! bodyStmtNodes, bodyExprNodes = compile lam.Body
+                let node =
+                    LocalFunctionStatement(
+                        PredefinedType(
+                            Token(SyntaxKind.IntKeyword)),
+                        Identifier(lam.Identifier.Name))
+                        .WithParameterList(
+                            ParameterList(
+                                SingletonSeparatedList(
+                                    Parameter(
+                                        Identifier("x"))
+                                        .WithType(
+                                            PredefinedType(
+                                                Token(SyntaxKind.IntKeyword))))))
+                        .WithBody(
+                            Block(
+                                SingletonList<Syntax.StatementSyntax>(
+                                    ReturnStatement(
+                                        IdentifierName("x"))))),
+                        ReturnStatement(
+                            InvocationExpression(
+                                IdentifierName("id"))
+                                .WithArgumentList(
+                                    ArgumentList(
+                                        SingletonSeparatedList(
+                                            Argument(
+                                                LiteralExpression(
+                                                    SyntaxKind.NumericLiteralExpression,
+                                                    Literal(0)))))))
+                return 
+            }
+        *)
 
         (*
         and compileIdentifier venv ident =
@@ -240,15 +274,6 @@ module Compiler =
                 return node, venv
             }
 
-        and compileLet venv (letb : LetBinding) =
-            result {
-                let! argNode, _ = compile venv letb.Argument
-                let! node, _ =
-                    let venv' = Map.add letb.Identifier argNode venv
-                    compile venv' letb.Body
-                return node, venv
-            }
-
         and compileIf venv (iff : If) =
             result {
 
@@ -276,24 +301,6 @@ module Compiler =
                                 SingletonSeparatedList(
                                     Argument(exprNode))))
 
-                return node, venv
-            }
-
-        and compileBinaryOperation venv (bop : BinaryOperation) =
-            let kind =
-                match bop.Operator with
-                    | Plus -> SyntaxKind.AddExpression
-                    | Minus -> SyntaxKind.SubtractExpression
-                    | Times -> SyntaxKind.MultiplyExpression
-                    | Equals -> SyntaxKind.EqualsExpression
-            result {
-                let! leftNode, _ = compile venv bop.Left
-                let! rightNode, _ = compile venv bop.Right
-                let node =
-                    BinaryExpression(
-                        kind,
-                        leftNode,
-                        rightNode)
                 return node, venv
             }
     *)
@@ -359,24 +366,20 @@ module Compiler =
             let! mainStmtNodes, mainExprNode =
                 program.Main |> compileExpr tenv
 
-            let mainMethodNode =
-                let typeNode =
-                    getType program.Main
-                        |> Type.compile
-                let stmts =
-                    [|
-                        yield! mainStmtNodes
-                        yield ReturnStatement(mainExprNode)
-                    |]
-                MethodDeclaration(
-                    returnType = typeNode,
-                    identifier = "main")
-                    .AddModifiers(
-                        Token(SyntaxKind.StaticKeyword))
-                    .WithBody(
-                        Block(stmts))
-
-            return mainMethodNode
+            let! typ = getType program.Main
+            let typeNode = Type.compile typ
+            let stmts =
+                [|
+                    yield! mainStmtNodes
+                    yield ReturnStatement(mainExprNode)
+                |]
+            return MethodDeclaration(
+                returnType = typeNode,
+                identifier = "main")
+                .AddModifiers(
+                    Token(SyntaxKind.StaticKeyword))
+                .WithBody(
+                    Block(stmts))
         }
 
     let compile assemblyName text =
