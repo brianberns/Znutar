@@ -80,14 +80,18 @@ module Parser =
 
         let private parseTuple =
             parse {
-                let! tuples =
+                let! types =
                     sepBy1 (parseSimpleType .>> spaces)
                         (skipChar '*' >>. spaces)
-                match tuples with
+                match types with
                     | [] -> return! fail "0-tuple"
                     | [typ] -> return typ
                     | type1 :: type2 :: types ->
-                        return TypeTuple (type1, type2, types)
+                        return TypeTuple {
+                            Type1 = type1
+                            Type2 = type2
+                            Types3N = types
+                        }
             }
 
         let private parseTypeImpl =
