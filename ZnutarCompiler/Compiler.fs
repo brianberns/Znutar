@@ -191,6 +191,13 @@ module Compiler =
                                 Parameter(
                                     Identifier(ident.Name))
                                     .WithType(Type.compile typ))
+                    let! bodyStmtNodes, bodyExprNode = compile func.FunctionBody
+                    let! nextStmtNodes, nextExprNode = compile func.ExpressionBody
+                    let bodyStmtNodes' =
+                        [|
+                            yield! bodyStmtNodes
+                            yield ReturnStatement(bodyExprNode)
+                        |]
                     let funcNode =
                         LocalFunctionStatement(
                             returnType = returnTypeNode,
@@ -201,7 +208,14 @@ module Compiler =
                             .WithParameterList(
                                 ParameterList(
                                     Syntax.separatedList parmNodes))
-                    return funcNode
+                            .WithBody(
+                                Block(bodyStmtNodes'))
+                    let stmtNodes =
+                        [
+                            yield funcNode :> Syntax.StatementSyntax
+                            yield! nextStmtNodes
+                        ]
+                    return stmtNodes, nextExprNode
                 else
                     return! cerror (Unsupported "Function arity mismatch")
             }
