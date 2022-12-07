@@ -10,7 +10,6 @@ type AnnotatedExpression =
     | IfExpr of AnnotatedIf
     | FixExpr of AnnotatedFix
     | BinaryOperationExpr of AnnotatedBinaryOperation
-    | FunctionExpr of Function
 
     with
 
@@ -26,7 +25,6 @@ type AnnotatedExpression =
             | IfExpr iff -> iff.Type
             | FixExpr fix -> fix.Type
             | BinaryOperationExpr bop -> bop.Type
-            | FunctionExpr func -> func.ExpressionBody.Type
 
     member annex.Unparse() =
         match annex with
@@ -88,6 +86,10 @@ and AnnotatedLambdaAbstraction =
 and AnnotatedLetBinding =
     {
         Identifier : Identifier
+
+        /// E.g. <'a, 'b>('a -> 'b -> 'a).
+        Scheme : Scheme
+
         Argument : AnnotatedExpression
         Body : AnnotatedExpression
 
@@ -123,25 +125,6 @@ and AnnotatedBinaryOperation =
 
         /// Result type. E.g. ((1 = 1) : bool).
         Type : Type
-    }
-
-/// let const x y = x in next
-and Function =
-    {
-        /// E.g. "const"
-        Identifier : Identifier
-
-        /// E.g. [x; y]
-        Arguments : List<Identifier>
-
-        /// E.g. x
-        FunctionBody : AnnotatedExpression
-
-        /// E.g. <'a, 'b>('a -> 'b -> 'a)
-        Scheme : Scheme
-
-        /// E.g. next
-        ExpressionBody : AnnotatedExpression
     }
 
 module AnnotatedExpression =

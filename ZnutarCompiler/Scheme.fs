@@ -1,7 +1,7 @@
 ﻿namespace Znutar
 
 /// Generalized type signature of a function.
-/// E.g. isnum has scheme: <'a>('a -> Bool)
+/// E.g. const has scheme: <'a, 'b>('a -> 'b -> 'a).
 [<System.Diagnostics.DebuggerDisplay("{Unparse()}")>]
 type Scheme =
     {

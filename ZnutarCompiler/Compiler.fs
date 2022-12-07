@@ -9,6 +9,51 @@ open type SyntaxFactory
 
 open Basic.Reference.Assemblies
 
+/// let const x y = x in next
+type Function =
+    {
+        /// E.g. "const"
+        Identifier : Identifier
+
+        /// E.g. [x; y]
+        Arguments : List<Identifier>
+
+        /// E.g. x
+        FunctionBody : AnnotatedExpression
+
+        /// E.g. <'a, 'b>('a -> 'b -> 'a)
+        Scheme : Scheme
+
+        /// E.g. next
+        ExpressionBody : AnnotatedExpression
+    }
+
+module Function =
+
+    /// From: let const = fun x -> fun y -> x in body
+    /// To:   let const (x, y) = x in body
+    let tryCreate (letb : AnnotatedLetBinding) =
+
+        let rec gatherLambdas = function
+            | LambdaExpr lam ->
+                lam :: gatherLambdas lam.Body
+            | _ -> []
+
+        let lams = gatherLambdas letb.Argument
+        if lams.Length = 0 then None
+        else
+            Some {
+                Identifier = letb.Identifier
+                Arguments =
+                    lams
+                        |> List.map (fun lam -> lam.Identifier)
+                FunctionBody =
+                    let lam = List.last lams
+                    lam.Body
+                Scheme = letb.Scheme
+                ExpressionBody = letb.Body
+            }
+
 type Unsupported =
     Unsupported of string
     with interface ICompilerError
@@ -109,12 +154,16 @@ module Compiler =
             | BinaryOperationExpr bop -> compileBinaryOperation bop
             | LiteralExpr lit -> compileLiteral lit
             // | LambdaExpr lam -> cerror (Unsupported "Unannotated lambda")
-            | FunctionExpr func -> compileFunction func
 
         and compileIdentifier (ident : Identifier) =
             Ok ([], IdentifierName(ident.Name))
 
         and compileLet letb =
+            match Function.tryCreate letb with
+                | Some func -> compileFunction func
+                | None -> compileLetRaw letb
+
+        and compileLetRaw letb =
             result {
                 let typeNode = Type.compile letb.Argument.Type
                 let! argStmtNodes, argExprNode = compile letb.Argument   // argStmtNodes: int x = 1, argExprNode: 2 * x
@@ -136,29 +185,6 @@ module Compiler =
                         yield! bodyStmtNodes
                     ]
                 return stmtNodes, bodyExprNode
-            }
-
-        and compileBinaryOperation bop =
-            let kind =
-                match bop.Operator with
-                    | Plus -> SyntaxKind.AddExpression
-                    | Minus -> SyntaxKind.SubtractExpression
-                    | Times -> SyntaxKind.MultiplyExpression
-                    | Equals -> SyntaxKind.EqualsExpression
-            result {
-                let! leftStmtNodes, leftExprNode = compile bop.Left
-                let! rightStmtNodes, rightExprNode = compile bop.Right
-                let stmtNodes =
-                    [
-                        yield! leftStmtNodes
-                        yield! rightStmtNodes
-                    ]
-                let exprNode =
-                    BinaryExpression(
-                        kind,
-                        leftExprNode,
-                        rightExprNode)
-                return stmtNodes, exprNode
             }
 
         and compileFunction (func : Function) =
@@ -220,11 +246,30 @@ module Compiler =
                     return! cerror (Unsupported "Function arity mismatch")
             }
 
-        (*
-        and compileIdentifier venv ident =
-            VariableEnvironment.tryFind ident venv
-                |> Result.map (fun node -> node, venv)
+        and compileBinaryOperation bop =
+            let kind =
+                match bop.Operator with
+                    | Plus -> SyntaxKind.AddExpression
+                    | Minus -> SyntaxKind.SubtractExpression
+                    | Times -> SyntaxKind.MultiplyExpression
+                    | Equals -> SyntaxKind.EqualsExpression
+            result {
+                let! leftStmtNodes, leftExprNode = compile bop.Left
+                let! rightStmtNodes, rightExprNode = compile bop.Right
+                let stmtNodes =
+                    [
+                        yield! leftStmtNodes
+                        yield! rightStmtNodes
+                    ]
+                let exprNode =
+                    BinaryExpression(
+                        kind,
+                        leftExprNode,
+                        rightExprNode)
+                return stmtNodes, exprNode
+            }
 
+        (*
         /// E.g. ((System.Func<int, int>)(x => x + 1))
         and compileLambda venv typ (lam : LambdaAbstraction) =
             result {
