@@ -7,10 +7,10 @@ open Znutar
 type TypeInferenceTests() =
 
     [<TestMethod>]
-    member this.InferExpression1() =
+    member _.Let() =
         let text = "let x = 2 in 3 * x"
         result {
-            let! expr = Parser.run Parser.Expression.parse text
+            let! expr = Parser.run Parser.parseExpression text
             let expected = Type.int
             let! _, expr' =
                 TypeInference.inferExpression
@@ -20,10 +20,10 @@ type TypeInferenceTests() =
         } |> Assert.Ok
 
     [<TestMethod>]
-    member this.InferExpression2() =
+    member _.Lambda() =
         let text = "fun x -> x + 1"
         result {
-            let! expr = Parser.run Parser.Expression.parse text
+            let! expr = Parser.run Parser.parseExpression text
             let expected = Type.int ^=> Type.int
             let! _, expr' =
                 TypeInference.inferExpression
@@ -34,15 +34,15 @@ type TypeInferenceTests() =
 
     // https://courses.cs.cornell.edu/cs3110/2021sp/textbook/interp/letpoly.html
     [<TestMethod>]
-    member this.InferExpression3() =
+    member _.Polymorphic() =
         let text =
             """
             let id = fun x -> x in
             let a = id 0 in
             id true
-            """.Trim()
+            """
         result {
-            let! expr = Parser.run Parser.Expression.parse text
+            let! expr = Parser.run Parser.parseExpression text
             let expected = Type.bool
             let! _, expr' =
                 TypeInference.inferExpression
@@ -53,11 +53,11 @@ type TypeInferenceTests() =
 
     // https://courses.cs.cornell.edu/cs3110/2021sp/textbook/interp/reconstruction.html
     [<TestMethod>]
-    member this.InferExpression4() =
+    member _.Arrows() =
         let text = "fun f -> fun x -> f (x + 1)"
         let sType = "(int -> 'a) -> int -> 'a"
         result {
-            let! expr = Parser.run Parser.Expression.parse text
+            let! expr = Parser.run Parser.parseExpression text
             let! expected = Parser.run Parser.Type.parse sType
             let! _, expr' =
                 TypeInference.inferExpression
@@ -74,68 +74,27 @@ type TypeInferenceTests() =
         } |> Assert.Ok
 
     [<TestMethod>]
-    member this.InferDeclaration1() =
-        let text = "decl const = fun x -> fun y -> x;"
-        result {
-            let! decl = Parser.run Parser.parseDeclaration text
-            let expected =
-                let tvX = TypeVariable.create "x1"
-                let tvY = TypeVariable.create "y2"
-                let scheme =
-                    Scheme.create
-                        [tvX; tvY]
-                        (TypeVariable tvX
-                            ^=> TypeVariable tvY
-                                ^=> TypeVariable tvX)
-                scheme
-            let! env, _ =
-                TypeInference.inferDeclaration
-                    TypeEnvironment.empty decl
-            let actual = env[Identifier.create "const"]
-            Assert.AreEqual(expected, actual, actual.Unparse())
-        } |> Assert.Ok
-
-    [<TestMethod>]
-    member this.InferDeclaration2() =
-        let text = "decl twice = fun x -> x + x;"
-        result {
-            let! decl = Parser.run Parser.parseDeclaration text
-            let expected =
-                Scheme.create [] (Type.int ^=> Type.int)
-            let! env, _ =
-                TypeInference.inferDeclaration
-                    TypeEnvironment.empty decl
-            let actual = env[Identifier.create "twice"]
-            Assert.AreEqual(expected, actual, actual.Unparse())
-        } |> Assert.Ok
-
-    [<TestMethod>]
-    member this.InferProgram() =
+    member _.Const() =
         let text =
             """
-            decl id = fun x -> x;
-            id true
+            let const = fun x -> fun y -> x
+            in const false 6
             """
         result {
-            let! program = Parser.run Parser.parseProgram text
-            let expected =
-                let tv = TypeVariable.create "x1"
-                let scheme =
-                    Scheme.create
-                        [tv]
-                        (TypeVariable tv ^=> TypeVariable tv)
-                scheme, Type.bool
-            let! env, program' =
-                TypeInference.inferProgram program
-            let actual = env[Identifier.create "id"], program'.Main.Type
-            Assert.AreEqual(expected, actual)
+            let! expr = Parser.run Parser.parseExpression text
+            let expected = Type.bool
+            let! _, expr' =
+                TypeInference.inferExpression
+                    TypeEnvironment.empty expr
+            let actual = expr'.Type
+            Assert.AreEqual(expected, actual, actual.Unparse())
         } |> Assert.Ok
 
     [<TestMethod>]
-    member this.InferFail() =
+    member _.Fail() =
         let text = "false * 1"
         result {
-            let! expr = Parser.run Parser.Expression.parse text
+            let! expr = Parser.run Parser.parseExpression text
             let expected =
                 cerror (
                     UnificationFailure (Type.bool, Type.int))

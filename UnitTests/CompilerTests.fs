@@ -23,25 +23,15 @@ type CompilerTests() =
         let text =
             """
             let y =
-                let x = 1
-                in 2 * x
-            in
+                let x = 1 in
+                2 * x in
             let z = 3 in
             y + z
             """
         Assert.AreEqual(Ok "5", run text)
 
     [<TestMethod>]
-    member _.Plus1Decl() =
-        let text =
-            """
-            decl plus1 = fun x -> x + 1;
-            plus1 5
-            """
-        Assert.AreEqual(Ok "6", run text)
-
-    [<TestMethod>]
-    member _.Plus1Lambda() =
+    member _.Plus1() =
         let text =
             """
             let plus1 = fun x -> x + 1 in
@@ -53,25 +43,16 @@ type CompilerTests() =
     member _.Factorial() =
         let text =
             """
-            decl factorial = fix (fun fact -> fun n ->
+            let factorial = fix (fun fact -> fun n ->
                 if n = 0 then 1
-                else n * fact (n - 1));
+                else n * fact (n - 1)) in
 
-            factorial 6
+           factorial 6
             """
         Assert.AreEqual(Ok "720", run text)
 
     [<TestMethod>]
-    member _.IdentityDecl() =
-        let text =
-            """
-            decl id = fun x -> x;
-            id true
-            """
-        Assert.AreEqual(Ok "True", run text)
-
-    [<TestMethod>]
-    member _.IdentityLambda() =
+    member _.Identity() =
         let text =
             """
             let id = fun x -> x in
@@ -80,11 +61,10 @@ type CompilerTests() =
         Assert.AreEqual(Ok "True", run text)
 
     [<TestMethod>]
-    member _.IdentityDecl2() =
+    member _.Identity2() =
         let text =
             """
-            decl id = fun x -> x;
-
+            let id = fun x -> x in
             let value = id 0 in
             if value = 0 then id true
             else id false
@@ -92,19 +72,10 @@ type CompilerTests() =
         Assert.AreEqual(Ok "True", run text)
 
     [<TestMethod>]
-    member _.ConstDecl() =
+    member _.Const() =
         let text =
             """
-            decl const = fun x -> fun y -> x;
+            let const = fun x -> fun y -> x in
             const false 6
-            """
-        Assert.AreEqual(Ok "False", run text)
-
-    [<TestMethod>]
-    member _.ConstLambda() =
-        let text =
-            """
-            let const = fun x -> fun y -> x
-            in const false 6
             """
         Assert.AreEqual(Ok "False", run text)

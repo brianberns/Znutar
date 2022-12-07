@@ -128,7 +128,7 @@ module Compiler =
                                 Syntax.separatedList(
                                     [inpNode; outNode]))))
 
-    let compileExpr tenv expr =
+    let private compileExpr expr =
 
         let compileLiteral (lit : Literal) =
             let node =
@@ -365,66 +365,12 @@ module Compiler =
 
         compile expr
 
-(*
-    module private Decl =
-
-        type Syntax.MethodDeclarationSyntax with
-            member node.MaybeWithTypeParameterList(
-                typeParameterList : Syntax.TypeParameterListSyntax) =
-                if typeParameterList.Parameters.Count > 0 then
-                    node.WithTypeParameterList(typeParameterList)
-                else node
-
-        let compile tenv (decl : Declaration) =
-            result {
-
-                    // find scheme of this declaration
-                let! scheme =
-                    TypeEnvironment.tryFind decl.Identifier tenv
-
-                    // compile return type
-                let returnTypeNode = Type.compile scheme.Type
-
-                    // compile type parameters
-                let typeParmNodes =
-                    scheme.TypeVariables
-                        |> Seq.map (fun tv ->
-                            TypeParameter(Identifier(tv.Name)))
-
-                    // compile body
-                let! bodyNode, _ = compileExpr tenv decl.Body
-
-                    // construct member
-                return
-                    MethodDeclaration(
-                        returnType = returnTypeNode,
-                        identifier = decl.Identifier.Name)
-                        .AddModifiers(
-                            Token(SyntaxKind.StaticKeyword))
-                        .MaybeWithTypeParameterList(
-                            TypeParameterList(SeparatedList(typeParmNodes)))
-                        .WithBody(
-                            Block(ReturnStatement(bodyNode)))
-                        :> Syntax.MemberDeclarationSyntax
-            }
-*)
-
-    let private compileProgam tenv program =
+    let private compileExpression annex =
         result {
-
-                // compile each declaration
-(*
-            let! declNodes =
-                program.Declarations
-                    |> Result.traverse (fun decl ->
-                        Decl.compile tenv decl)
-*)
-
-                // compile main expression
             let! mainStmtNodes, mainExprNode =
-                program.Main |> compileExpr tenv
+                compileExpr annex
 
-            let typeNode = Type.compile program.Main.Type
+            let typeNode = Type.compile annex.Type
             let stmts =
                 [|
                     yield! mainStmtNodes
@@ -441,9 +387,9 @@ module Compiler =
 
     let compile assemblyName text =
         result {
-            let! program = Parser.run Parser.parseProgram text
-            let! tenv, program' = TypeInference.inferProgram program
-            let! methodNode = compileProgam tenv program'
+            let! expr = Parser.run Parser.parseExpression text
+            let! subst, annex = TypeInference.inferExpression TypeEnvironment.empty expr
+            let! methodNode = compileExpression annex
             do!
                 compileWithMembers
                     assemblyName

@@ -108,34 +108,3 @@ module Expression =
 
     let rec unparse (expr : Expression) =
         expr.Unparse()
-
-/// Top-level declaration.
-/// E.g. let add x y = x + y ^=> let add = \x -> \y -> x + y
-type Declaration =
-    {
-        Identifier : Identifier
-        Body : Expression
-    }
-
-module Declaration =
-
-    let unparse decl =
-        let ident = decl.Identifier.Name
-        let body = Expression.unparse decl.Body
-        $"decl {ident} = {body};"
-
-type Program =
-    {
-        Declarations : List<Declaration>
-        Main : Expression
-    }
-
-module Program =
-
-    let unparse program =
-        let decls =
-            program.Declarations
-                |> Seq.map Declaration.unparse
-                |> String.concat "\n\n"
-        let main = Expression.unparse program.Main
-        $"{decls}\n\n{main}"

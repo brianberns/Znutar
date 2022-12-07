@@ -49,12 +49,12 @@ type FuzzTests() =
     [<TestMethod>]
     member _.ParseUnparseIsOriginal() =
 
-        let parseUnparseIsOriginal program =
-            let unparsed = Program.unparse program
+        let parseUnparseIsOriginal expr =
+            let unparsed = Expression.unparse expr
             let reparsed =
-                Parser.run Parser.parseProgram unparsed
+                Parser.run Parser.parseExpression unparsed
             let msg = sprintf "Text: %s\nResult: %A" unparsed reparsed
-            reparsed = Ok program |@ msg
+            reparsed = Ok expr |@ msg
 
         Check.One(config, parseUnparseIsOriginal)
 

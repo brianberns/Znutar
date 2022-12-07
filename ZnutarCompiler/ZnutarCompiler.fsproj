@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net7.0</TargetFramework>
   </PropertyGroup>
 
@@ -14,13 +13,12 @@
     <Compile Include="Syntax.fs" />
     <Compile Include="Parser.fs" />
     <Compile Include="Interpreter.fs" />
-    <Compile Include="Scheme.fs" />
-    <Compile Include="Substitution.fs" />
-    <Compile Include="AnnotatedSyntax.fs" />
-    <Compile Include="TypeInference.fs" />
-    <Compile Include="CompilationUnit.fs" />
-    <Compile Include="Compiler.fs" />
-    <Compile Include="Program.fs" />
+    <Compile Include="TypeInference\Scheme.fs" />
+    <Compile Include="TypeInference\Substitution.fs" />
+    <Compile Include="TypeInference\AnnotatedExpression.fs" />
+    <Compile Include="TypeInference\TypeInference.fs" />
+    <Compile Include="Transpiler\CompilationUnit.fs" />
+    <Compile Include="Transpiler\Compiler.fs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -111,7 +111,7 @@ module Parser =
 
         do parseTypeRef.Value <- parseTypeImpl
 
-    module Expression =
+    module private Expression =
 
         let private parseExpression, private parseExpressionRef =
             createParserForwardedToRef ()
@@ -246,30 +246,10 @@ module Parser =
 
         let parse = parseExpression
 
-    let parseDeclaration =
-        parse {
-            do! skipString "decl" >>. spaces
-            let! ident = parseIdentifier
-            do! spaces >>. skipChar '=' >>. spaces
-            let! body = Expression.parse
-            do! spaces >>. skipChar ';'
-            return {
-                Identifier = ident
-                Body = body
-            }
-        }
-
-    let parseProgram =
-        parse {
-            do! spaces
-            let! decls = many (parseDeclaration .>> spaces)
-            let! main = Expression.parse
-            do! spaces
-            return {
-                Declarations = decls
-                Main = main
-            }
-        }
+    let parseExpression =
+        spaces
+            >>. Expression.parse
+            .>> spaces
 
     /// Runs the given parser on the given text.
     let run parser text =

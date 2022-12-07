@@ -45,7 +45,7 @@ module Interpreter =
             | Equals, IntValue x, IntValue y -> Ok (BoolValue (x = y))
             | _ -> InvalidBinaryOperation.error op leftVal rightVal
 
-    let rec evalExpr env expr =
+    let rec private evalExpr (env : TermEnvironment) expr =
         result {
             match expr with
 
@@ -122,18 +122,5 @@ module Interpreter =
                     return! evalExpr env ann.Expression
         }
 
-    let private evalDecl env decl =
-        result {
-            let! declVal = evalExpr env decl.Body
-            return Map.add decl.Identifier declVal env
-        }
-
-    let evalProgram program =
-        result {
-            let! env =
-                Result.foldM
-                    evalDecl
-                    Map.empty
-                    program.Declarations
-            return! evalExpr env program.Main
-        }
+    let eval =
+        evalExpr Map.empty
