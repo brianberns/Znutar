@@ -108,7 +108,7 @@ and AnnotatedBinaryOperation =
         Type : Type
     }
 
-/// let const x y = x
+/// let const x y = x in next
 and Function =
     {
         /// E.g. "const"
@@ -118,10 +118,13 @@ and Function =
         Arguments : List<Identifier>
 
         /// E.g. x
-        Body : AnnotatedExpression
+        FunctionBody : AnnotatedExpression
 
         /// E.g. <'a, 'b>('a -> 'b -> 'a)
         Scheme : Scheme
+
+        /// E.g. next
+        ExpressionBody : AnnotatedExpression
     }
 
 module AnnotatedExpression =

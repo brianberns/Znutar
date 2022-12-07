@@ -41,10 +41,11 @@ module TypeInference =   // to-do: replace with constraint-based inference
 
         let rec gatherLambdas = function
             | LambdaExpr lam ->
-                lam :: gatherLambdas lam.Body
-            | _ -> []
+                let lams, expr = gatherLambdas lam.Body
+                lam :: lams, expr
+            | expr -> [], expr
 
-        let lams = gatherLambdas letb.Argument
+        let lams, exprBody = gatherLambdas letb.Argument
         if lams.Length = 0 then None
         else
             Some {
@@ -52,10 +53,11 @@ module TypeInference =   // to-do: replace with constraint-based inference
                 Arguments =
                     lams
                         |> List.map (fun lam -> lam.Identifier)
-                Body =
+                FunctionBody =
                     let lam = List.last lams
                     lam.Body
                 Scheme = scheme
+                ExpressionBody = exprBody
             }
 
     /// Infers and annotates the type of the given expression.
