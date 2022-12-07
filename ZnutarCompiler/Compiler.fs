@@ -221,42 +221,6 @@ module Compiler =
             }
 
         (*
-        and compileLambda typ (lam : LambdaAbstraction) =
-            result {
-                let! bodyStmtNodes, bodyExprNodes = compile lam.Body
-                let node =
-                    LocalFunctionStatement(
-                        PredefinedType(
-                            Token(SyntaxKind.IntKeyword)),
-                        Identifier(lam.Identifier.Name))
-                        .WithParameterList(
-                            ParameterList(
-                                SingletonSeparatedList(
-                                    Parameter(
-                                        Identifier("x"))
-                                        .WithType(
-                                            PredefinedType(
-                                                Token(SyntaxKind.IntKeyword))))))
-                        .WithBody(
-                            Block(
-                                SingletonList<Syntax.StatementSyntax>(
-                                    ReturnStatement(
-                                        IdentifierName("x"))))),
-                        ReturnStatement(
-                            InvocationExpression(
-                                IdentifierName("id"))
-                                .WithArgumentList(
-                                    ArgumentList(
-                                        SingletonSeparatedList(
-                                            Argument(
-                                                LiteralExpression(
-                                                    SyntaxKind.NumericLiteralExpression,
-                                                    Literal(0)))))))
-                return 
-            }
-        *)
-
-        (*
         and compileIdentifier venv ident =
             VariableEnvironment.tryFind ident venv
                 |> Result.map (fun node -> node, venv)
