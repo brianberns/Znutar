@@ -13,6 +13,8 @@ type AnnotatedExpression =
     | FunctionExpr of Function
 
     with
+
+    /// Result type.
     member annex.Type =
         match annex with
             | VariableExpr var -> var.Type
@@ -57,6 +59,8 @@ type AnnotatedExpression =
 and AnnotatedVariable =
     {
         Identifier : Identifier
+
+        /// Result type. E.g. (x : int).
         Type : Type
     }
 
@@ -65,6 +69,8 @@ and AnnotatedApplication =
     {
         Function : AnnotatedExpression
         Argument : AnnotatedExpression
+
+        /// Result type. E.g. ((f x) : int).
         Type : Type
     }
 
@@ -73,6 +79,8 @@ and AnnotatedLambdaAbstraction =
     {
         Identifier : Identifier
         Body : AnnotatedExpression
+
+        /// Result type. E.g. ((fun x -> x + 1) : int -> int).
         Type : Type
     }
 
@@ -82,6 +90,8 @@ and AnnotatedLetBinding =
         Identifier : Identifier
         Argument : AnnotatedExpression
         Body : AnnotatedExpression
+
+        /// Result type. E.g. ((let x = 1 in x + 1) : int).
         Type : Type
     }
 
@@ -91,12 +101,16 @@ and AnnotatedIf =
         Condition : AnnotatedExpression
         TrueBranch : AnnotatedExpression
         FalseBranch : AnnotatedExpression
+
+        /// Result type. E.g. ((if flag then 1 else 0) : int).
         Type : Type
     }
 
 and AnnotatedFix =
     {
         Expression : AnnotatedExpression
+
+        /// Result type. E.g. (x : int).
         Type : Type
     }
 
@@ -106,6 +120,8 @@ and AnnotatedBinaryOperation =
         Operator : BinaryOperator
         Left : AnnotatedExpression
         Right : AnnotatedExpression
+
+        /// Result type. E.g. ((1 = 1) : bool).
         Type : Type
     }
 
