@@ -109,6 +109,7 @@ module Compiler =
             | BinaryOperationExpr bop -> compileBinaryOperation bop
             | LiteralExpr lit -> compileLiteral lit
             // | LambdaExpr lam -> cerror (Unsupported "Unannotated lambda")
+            | FunctionExpr func -> compileFunction func
 
         and compileIdentifier (ident : Identifier) =
             Ok ([], IdentifierName(ident.Name))
@@ -158,6 +159,51 @@ module Compiler =
                         leftExprNode,
                         rightExprNode)
                 return stmtNodes, exprNode
+            }
+
+        and compileFunction (func : Function) =
+
+            let rec gatherTypes = function
+                | TypeArrow (inpType, outType) ->
+                    inpType :: gatherTypes outType
+                | typ -> [typ]
+
+            result {
+                let types = gatherTypes func.Scheme.Type
+                let! argTypes, returnType =
+                    match List.rev types with
+                        | [] | [_] ->
+                            cerror (
+                                Unsupported $"Invalid function type: \
+                                    {func.Scheme.Type.Unparse()}")
+                        | returnType :: argTypesRev ->
+                            Ok (List.rev argTypesRev, returnType)
+                if argTypes.Length = func.Arguments.Length then
+                    let argPairs = List.zip func.Arguments argTypes
+                    let returnTypeNode = Type.compile returnType
+                    let typeParmNodes =
+                        func.Scheme.TypeVariables
+                            |> List.map (fun tv ->
+                                TypeParameter(Identifier(tv.Name)))
+                    let parmNodes =
+                        argPairs
+                            |> List.map (fun (ident, typ) ->
+                                Parameter(
+                                    Identifier(ident.Name))
+                                    .WithType(Type.compile typ))
+                    let funcNode =
+                        LocalFunctionStatement(
+                            returnType = returnTypeNode,
+                            identifier = func.Identifier.Name)
+                            .WithTypeParameterList(
+                                TypeParameterList(
+                                    Syntax.separatedList typeParmNodes))
+                            .WithParameterList(
+                                ParameterList(
+                                    Syntax.separatedList parmNodes))
+                    return funcNode
+                else
+                    return! cerror (Unsupported "Function arity mismatch")
             }
 
         (*
