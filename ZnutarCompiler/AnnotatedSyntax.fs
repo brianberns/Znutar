@@ -110,7 +110,7 @@ and AnnotatedFix =
     {
         Expression : AnnotatedExpression
 
-        /// Result type. E.g. (x : int).
+        /// Result type. E.g. ((fix f) : int -> int).
         Type : Type
     }
 
