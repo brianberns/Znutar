@@ -24,6 +24,7 @@ type AnnotatedExpression =
             | IfExpr iff -> iff.Type
             | FixExpr fix -> fix.Type
             | BinaryOperationExpr bop -> bop.Type
+            | FunctionExpr func -> func.ExpressionBody.Type
 
     member annex.Unparse() =
         match annex with
