@@ -10,12 +10,12 @@ open Znutar.TypeInference
 
 module Expression =
 
-    let private transpileIdentifier (ident : Identifier) =
+    let private transpileIdentifier ident =
         let node : Syntax.ExpressionSyntax =
             IdentifierName(ident.Name)
         Ok ([], node)
 
-    let private transpileLiteral (lit : Literal) =
+    let private transpileLiteral lit =
         let node : Syntax.ExpressionSyntax =
             match lit with
                 | IntLiteral n ->
@@ -44,6 +44,21 @@ module Expression =
             | Some func -> transpileFunction func
             | None -> transpileLetRaw letb
 
+    (*
+        From:
+            let y =
+                let x = 1
+                in 2 * x
+            in
+            let z = 3 in
+            y + z
+
+        To:
+            int x = 1;
+            int y = 2 * x;
+            int z = 3;
+            return y + z;
+     *)
     and private transpileLetRaw letb =
         result {
             let typeNode = Type.transpile letb.Argument.Type
@@ -68,7 +83,7 @@ module Expression =
             return stmtNodes, bodyExprNode
         }
 
-    and private transpileFunction (func : Function) =
+    and private transpileFunction func =
 
         let rec gatherTypes = function
             | TypeArrow (inpType, outType) ->
