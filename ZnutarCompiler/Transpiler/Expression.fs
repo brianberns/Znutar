@@ -31,13 +31,18 @@ module Expression =
 
     let rec private transpileExpr = function
         | VariableExpr var -> transpileIdentifier var.Identifier
-        // | ApplicationExpr app -> transpileApplication venv app
+        | ApplicationExpr app -> transpileApplication app
         | LetExpr letb -> transpileLet letb
         // | IfExpr iff -> transpileIf venv iff
         // | FixExpr expr -> transpileFix venv expr
         | BinaryOperationExpr bop -> transpileBinaryOperation bop
         | LiteralExpr lit -> transpileLiteral lit
         // | LambdaExpr lam -> cerror (Unsupported "Unannotated lambda")
+
+    and private transpileApplication app =
+        app
+            |> FunctionCall.create
+            |> FunctionCall.transpile transpileExpr
 
     and private transpileLet letb =
         match Function.tryCreate letb with
@@ -110,68 +115,6 @@ module Expression =
         }
 
     (*
-    /// E.g. ((System.Func<int, int>)(x => x + 1))
-    and transpileLambda venv typ (lam : LambdaAbstraction) =
-        result {
-            let venv' =
-                let identNode : Syntax.ExpressionSyntax =
-                    IdentifierName(lam.Identifier.Name)
-                Map.add lam.Identifier identNode venv
-            let! bodyNode, _ = transpile venv' lam.Body
-            let node =
-                ParenthesizedExpression(
-                    CastExpression(
-                        Type.transpile typ,
-                        ParenthesizedExpression(
-                            SimpleLambdaExpression(
-                                Parameter(
-                                    Identifier(lam.Identifier.Name)))
-                                .WithExpressionBody(bodyNode))))
-            return node, venv
-        }
-
-    and transpileApplication venv (app : Application) =
-        result {
-
-            let! funcNode =
-                match transpile venv app.Function with
-                    | Ok (node, _) -> Ok node
-                    | Error cerr ->
-                        match cerr with
-                            | :? UnboundVariable as (UnboundVariable ident) ->
-                                result {
-                                    let! instType =
-                                        match app.Function with
-                                            | AnnotationExpr { Type = typ; Expression = _ } ->
-                                                Ok typ
-                                            | expr -> cerror (Unsupported <| expr.Unparse())
-                                    let! scheme = TypeEnvironment.tryFind ident tenv
-                                    let! subst = Substitution.unify scheme.Type instType
-                                    let typeArgNodes =
-                                        scheme.TypeVariables
-                                            |> Seq.map (fun tv ->
-                                                Type.transpile subst[tv])
-                                    return InvocationExpression(
-                                        GenericName(   // to-do: use plain IdentifierName(ident.Name) for non-generic calls?
-                                            Identifier(ident.Name))
-                                            .WithTypeArgumentList(
-                                                TypeArgumentList(
-                                                    Syntax.separatedList typeArgNodes)))
-                                }
-                            | _ -> Error cerr
-
-            let! argNode, _ = transpile venv app.Argument
-
-            let node =
-                InvocationExpression(funcNode)
-                    .WithArgumentList(
-                        ArgumentList(
-                            SingletonSeparatedList(
-                                Argument(argNode))))
-
-            return node, venv
-        }
-
     and transpileIf venv (iff : If) =
         result {
 

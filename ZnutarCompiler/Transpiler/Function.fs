@@ -7,6 +7,12 @@ open type SyntaxFactory
 open Znutar
 open Znutar.TypeInference
 
+type ExpressionTranspiler =
+    AnnotatedExpression ->
+        Result<
+            List<Syntax.StatementSyntax> * Syntax.ExpressionSyntax,
+            ICompilerError>
+
 /// A function definition.
 /// E.g. let const x y = x in next.
 type Function =
@@ -90,7 +96,7 @@ module Function =
                 Block(bodyStmtNodes : Syntax.StatementSyntax[]))
 
     /// Transpiles the given function.
-    let transpile transpileExpr func =
+    let transpile (transpileExpr : ExpressionTranspiler) func =
         result {
             let! parmTypes, returnType = getSignature func
             if parmTypes.Length = func.Parameters.Length then
@@ -146,6 +152,7 @@ type FunctionCall =
 
 module FunctionCall =
 
+    /// App (App f a) b -> f, [a; b].
     let private gatherArguments app =
 
         let rec loop (app : AnnotatedApplication) =
@@ -160,7 +167,23 @@ module FunctionCall =
 
     /// Converts an abstraction application into a function call.
     /// E.g. (f a) b -> f(a, b).
-    /// App (App f a) b -> Call f [a; b].
     let create app =
+        let expr, args = gatherArguments app
+        {
+            Function = expr
+            Arguments = args
+        }
 
-        gatherArguments app
+    let transpile (transpileExpr : ExpressionTranspiler) funcCall =
+        result {
+            let! argNodes =
+                funcCall.Arguments
+                    |> List.map transpileExpr
+            let node =
+                InvocationExpression(
+                    IdentifierName("Plus"))
+                    .WithArgumentList(
+                        ArgumentList(
+                            Syntax.separatedList args))
+            return node
+        }
