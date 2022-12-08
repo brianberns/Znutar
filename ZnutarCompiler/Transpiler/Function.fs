@@ -197,9 +197,12 @@ module FunctionCall =
             let callStmtNodes =
                 funcStmtNodes @ argStmtNodes
             let callExprNode : Syntax.ExpressionSyntax =
+                let argNodes =
+                    argExprNodes
+                        |> Seq.map Argument
+                        |> Syntax.separatedList
                 InvocationExpression(funcExprNode)
                     .WithArgumentList(
-                        ArgumentList(
-                            Syntax.separatedList argExprNodes))
+                        ArgumentList(argNodes))
             return callStmtNodes, callExprNode
         }
