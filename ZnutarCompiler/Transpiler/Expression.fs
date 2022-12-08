@@ -10,14 +10,18 @@ open Znutar.TypeInference
 
 module Expression =
 
+    let private transpileIdentifier (ident : Identifier) =
+        let node : Syntax.ExpressionSyntax =
+            IdentifierName(ident.Name)
+        Ok ([], node)
+
     let private transpileLiteral (lit : Literal) =
-        let node =
+        let node : Syntax.ExpressionSyntax =
             match lit with
                 | IntLiteral n ->
                     LiteralExpression(
                         SyntaxKind.NumericLiteralExpression,
                         Literal(n))
-                        :> Syntax.ExpressionSyntax
                 | BoolLiteral b ->
                     let kind =
                         if b then SyntaxKind.TrueLiteralExpression
@@ -35,9 +39,6 @@ module Expression =
         | LiteralExpr lit -> transpileLiteral lit
         // | LambdaExpr lam -> cerror (Unsupported "Unannotated lambda")
 
-    and private transpileIdentifier (ident : Identifier) =
-        Ok ([], IdentifierName(ident.Name))
-
     and private transpileLet letb =
         match Function.tryCreate letb with
             | Some func -> transpileFunction func
@@ -48,7 +49,7 @@ module Expression =
             let typeNode = Type.transpile letb.Argument.Type
             let! argStmtNodes, argExprNode = transpileExpr letb.Argument   // argStmtNodes: int x = 1, argExprNode: 2 * x
             let! bodyStmtNodes, bodyExprNode = transpileExpr letb.Body     // bodyStmtNodes: int z = 3, bodyExprNode: y + z
-            let stmtNode : Syntax.StatementSyntax =                      // stmtNode: int y = 2 * x
+            let stmtNode : Syntax.StatementSyntax =                        // stmtNode: int y = 2 * x
                 LocalDeclarationStatement(
                     VariableDeclaration(typeNode)
                         .WithVariables(
