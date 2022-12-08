@@ -29,16 +29,16 @@ type Function =
 
 module Function =
 
+    let rec private gatherLambdas = function
+        | LambdaExpr lam ->
+            lam :: gatherLambdas lam.Body
+        | _ -> []
+
     /// Attempts to convert a let-bound lambda into a function
     /// definition. For example:
     /// * From: let const = fun x -> fun y -> x in next
     /// * To:   let const(x, y) = x in next
     let tryCreate letb =
-
-        let rec gatherLambdas = function
-            | LambdaExpr lam ->
-                lam :: gatherLambdas lam.Body
-            | _ -> []
 
         let lams = gatherLambdas letb.Argument
         if lams.Length = 0 then None
@@ -137,3 +137,30 @@ module Function =
             else
                 return! cerror (Unsupported "Function arity mismatch")
         }
+
+type FunctionCall =
+    {
+        Function : AnnotatedExpression
+        Arguments : List<AnnotatedExpression>
+    }
+
+module FunctionCall =
+
+    let private gatherArguments app =
+
+        let rec loop (app : AnnotatedApplication) =
+            match app.Function with
+                | ApplicationExpr app' ->
+                    let expr, args = loop app'
+                    expr, app'.Argument :: args
+                | expr -> expr, [app.Argument]
+
+        let expr, argsRev = loop app
+        expr, List.rev argsRev
+
+    /// Converts an abstraction application into a function call.
+    /// E.g. (f a) b -> f(a, b).
+    /// App (App f a) b -> Call f [a; b].
+    let create app =
+
+        gatherArguments app
