@@ -1,4 +1,6 @@
-﻿namespace Znutar
+﻿namespace Znutar.TypeInference
+
+open Znutar
 
 [<System.Diagnostics.DebuggerDisplay("{Unparse()}")>]
 type AnnotatedExpression =

@@ -1,6 +1,9 @@
-﻿namespace Znutar
+﻿namespace Znutar.TypeInference
 
-module TypeInference =   // to-do: replace with constraint-based inference
+open Znutar
+open Znutar.TypeInference
+
+module Infer =   // to-do: replace with constraint-based inference
 
     open Substitution
 

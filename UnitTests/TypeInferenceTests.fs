@@ -1,7 +1,9 @@
 ﻿namespace Znutar
 
 open Microsoft.VisualStudio.TestTools.UnitTesting
+
 open Znutar
+open Znutar.TypeInference
 
 [<TestClass>]
 type TypeInferenceTests() =
@@ -12,7 +14,7 @@ type TypeInferenceTests() =
         result {
             let! expr = Parser.run Parser.Expression.parse text
             let expected = Type.int
-            let! expr' = TypeInference.inferExpression expr
+            let! expr' = Infer.inferExpression expr
             let actual = expr'.Type
             Assert.AreEqual(expected, actual, actual.Unparse())
         } |> Assert.Ok
@@ -23,7 +25,7 @@ type TypeInferenceTests() =
         result {
             let! expr = Parser.run Parser.Expression.parse text
             let expected = Type.int ^=> Type.int
-            let! expr' = TypeInference.inferExpression expr
+            let! expr' = Infer.inferExpression expr
             let actual = expr'.Type
             Assert.AreEqual(expected, actual, actual.Unparse())
         } |> Assert.Ok
@@ -40,7 +42,7 @@ type TypeInferenceTests() =
         result {
             let! expr = Parser.run Parser.Expression.parse text
             let expected = Type.bool
-            let! expr' = TypeInference.inferExpression expr
+            let! expr' = Infer.inferExpression expr
             let actual = expr'.Type
             Assert.AreEqual(expected, actual, actual.Unparse())
         } |> Assert.Ok
@@ -53,7 +55,7 @@ type TypeInferenceTests() =
         result {
             let! expr = Parser.run Parser.Expression.parse text
             let! expected = Parser.run Parser.Type.parse sType
-            let! expr' = TypeInference.inferExpression expr
+            let! expr' = Infer.inferExpression expr
             let actual = expr'.Type
             let! subst = Substitution.unify expected actual
             let (KeyValue(tv, typ)) = Seq.exactlyOne subst
@@ -75,7 +77,7 @@ type TypeInferenceTests() =
         result {
             let! expr = Parser.run Parser.Expression.parse text
             let expected = Type.bool
-            let! expr' = TypeInference.inferExpression expr
+            let! expr' = Infer.inferExpression expr
             let actual = expr'.Type
             Assert.AreEqual(expected, actual, actual.Unparse())
         } |> Assert.Ok
@@ -88,6 +90,6 @@ type TypeInferenceTests() =
             let expected =
                 cerror (
                     UnificationFailure (Type.bool, Type.int))
-            let actual = TypeInference.inferExpression expr
+            let actual = Infer.inferExpression expr
             Assert.AreEqual(expected, actual)
         } |> Assert.Ok

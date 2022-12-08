@@ -1,8 +1,10 @@
-﻿namespace Znutar
+﻿namespace Znutar.Transpile
 
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open type SyntaxFactory
+
+open Znutar
 
 module private Syntax =
 
@@ -151,7 +153,7 @@ module CompilationUnit =
                                         Argument(InvocationExpression(
                                             IdentifierName("main")))))))))
 
-    let create assemblyName memberNodes =
+    let create assemblyName memberNode =
         let classNode =
             ClassDeclaration($"{assemblyName}Type")
                 .AddModifiers(
@@ -161,7 +163,7 @@ module CompilationUnit =
                         mainMethod
                             :> Syntax.MemberDeclarationSyntax
                         fixMethod
-                        yield! memberNodes
+                        memberNode
                     |])
         let namespaceNode =
             NamespaceDeclaration(

@@ -1,6 +1,7 @@
-﻿namespace Znutar
+﻿namespace Znutar.Transpile
 
-open Microsoft.CodeAnalysis.CSharp
+open Znutar
+open Znutar.TypeInference
 
 /// let const x y = x in next
 type Function =
@@ -23,8 +24,8 @@ type Function =
 
 module Function =
 
-    /// From: let const = fun x -> fun y -> x in body
-    /// To:   let const (x, y) = x in body
+    /// From: let const = fun x -> fun y -> x in next
+    /// To:   let const(x, y) = x in next
     let tryCreate (letb : AnnotatedLetBinding) =
 
         let rec gatherLambdas = function

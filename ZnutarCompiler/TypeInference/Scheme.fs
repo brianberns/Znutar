@@ -1,4 +1,6 @@
-﻿namespace Znutar
+﻿namespace Znutar.TypeInference
+
+open Znutar
 
 /// Generalized type signature of a function.
 /// E.g. const has scheme: <'a, 'b>('a -> 'b -> 'a).
@@ -36,9 +38,9 @@ module Scheme =
         Type.freeTypeVariables scheme.Type
             - set scheme.TypeVariables
 
-type TypeEnvironment = Map<Identifier, Scheme>
+type private TypeEnvironment = Map<Identifier, Scheme>
 
-module TypeEnvironment =
+module private TypeEnvironment =
 
     let empty : TypeEnvironment = Map.empty
 

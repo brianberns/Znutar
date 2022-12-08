@@ -1,7 +1,9 @@
 ﻿namespace Znutar
 
 open Microsoft.VisualStudio.TestTools.UnitTesting
+
 open Znutar
+open Znutar.TypeInference
 
 [<TestClass>]
 type UnifyTests() =

@@ -1,4 +1,4 @@
-﻿namespace Znutar
+﻿namespace Znutar.Transpile
 
 open System.IO
 open System.Reflection
@@ -9,79 +9,10 @@ open type SyntaxFactory
 
 open Basic.Reference.Assemblies
 
-type Unsupported =
-    Unsupported of string
-    with interface ICompilerError
+open Znutar
+open Znutar.TypeInference
 
 module Compiler =
-
-    let private compileWithMembers assemblyName memberNodes =
-
-        let emitResult =
-
-            let compilationUnit, mainTypeName =
-                CompilationUnit.create assemblyName memberNodes
-#if DEBUG
-            printfn "%A" <| compilationUnit.NormalizeWhitespace()
-#endif
-            let compilation =
-                let options =
-                    CSharpCompilationOptions(OutputKind.ConsoleApplication)
-                        .WithMainTypeName(mainTypeName)
-                CSharpCompilation
-                    .Create(assemblyName)
-                    .WithReferences(
-                        Net60.References.SystemRuntime,
-                        Net60.References.SystemConsole)
-                    .AddSyntaxTrees(compilationUnit.SyntaxTree)
-                    .WithOptions(options)
-            compilation.Emit($"{assemblyName}.dll")
-
-        result {
-            if emitResult.Success then
-                let sourcePath =
-                    Path.Combine(
-                        Path.GetDirectoryName(
-                            Assembly.GetExecutingAssembly().Location),
-                        "App.runtimeconfig.json")
-                File.Copy(
-                    sourcePath,
-                    $"{assemblyName}.runtimeconfig.json",
-                    overwrite = true)
-            else
-                return! emitResult.Diagnostics
-                    |> Seq.map string
-                    |> String.concat "\n"
-                    |> Unsupported
-                    |> cerror
-        }
-
-    module private Type =
-
-        let private predefinedTypeMap =
-            Map [
-                Type.int, SyntaxKind.IntKeyword
-                Type.bool, SyntaxKind.BoolKeyword
-            ]
-
-        let rec compile = function
-            | TypeConstant _ as typ ->
-                let kind = predefinedTypeMap[typ]
-                PredefinedType(Token(kind))
-                    : Syntax.TypeSyntax
-            | TypeVariable tv ->
-                IdentifierName(tv.Name)
-            | TypeArrow (inpType, outType) ->
-                let inpNode = compile inpType
-                let outNode = compile outType
-                QualifiedName(
-                    IdentifierName("System"),
-                    GenericName(
-                        Identifier("Func"))
-                        .WithTypeArgumentList(
-                            TypeArgumentList(
-                                Syntax.separatedList(
-                                    [inpNode; outNode]))))
 
     let private compileExpr expr =
 
@@ -120,7 +51,7 @@ module Compiler =
 
         and compileLetRaw letb =
             result {
-                let typeNode = Type.compile letb.Argument.Type
+                let typeNode = Type.transpile letb.Argument.Type
                 let! argStmtNodes, argExprNode = compile letb.Argument   // argStmtNodes: int x = 1, argExprNode: 2 * x
                 let! bodyStmtNodes, bodyExprNode = compile letb.Body     // bodyStmtNodes: int z = 3, bodyExprNode: y + z
                 let stmtNode : Syntax.StatementSyntax =                  // stmtNode: int y = 2 * x
@@ -161,7 +92,7 @@ module Compiler =
                             Ok (List.rev argTypesRev, returnType)
                 if argTypes.Length = func.Arguments.Length then
                     let argPairs = List.zip func.Arguments argTypes
-                    let returnTypeNode = Type.compile returnType
+                    let returnTypeNode = Type.transpile returnType
                     let typeParmNodes =
                         func.Scheme.TypeVariables
                             |> List.map (fun tv ->
@@ -171,7 +102,7 @@ module Compiler =
                             |> List.map (fun (ident, typ) ->
                                 Parameter(
                                     Identifier(ident.Name))
-                                    .WithType(Type.compile typ))
+                                    .WithType(Type.transpile typ))
                     let! bodyStmtNodes, bodyExprNode = compile func.FunctionBody
                     let! nextStmtNodes, nextExprNode = compile func.ExpressionBody
                     let bodyStmtNodes' =
@@ -325,7 +256,7 @@ module Compiler =
             let! mainStmtNodes, mainExprNode =
                 compileExpr annex
 
-            let typeNode = Type.compile annex.Type
+            let typeNode = Type.transpile annex.Type
             let stmts =
                 [|
                     yield! mainStmtNodes
@@ -340,13 +271,54 @@ module Compiler =
                     Block(stmts))
         }
 
+    let private compileWithMember assemblyName memberNode =
+
+        let emitResult =
+
+            let compilationUnit, mainTypeName =
+                CompilationUnit.create assemblyName memberNode
+#if DEBUG
+            printfn "%A" <| compilationUnit.NormalizeWhitespace()
+#endif
+            let compilation =
+                let options =
+                    CSharpCompilationOptions(OutputKind.ConsoleApplication)
+                        .WithMainTypeName(mainTypeName)
+                CSharpCompilation
+                    .Create(assemblyName)
+                    .WithReferences(
+                        Net60.References.SystemRuntime,
+                        Net60.References.SystemConsole)
+                    .AddSyntaxTrees(compilationUnit.SyntaxTree)
+                    .WithOptions(options)
+            compilation.Emit($"{assemblyName}.dll")
+
+        result {
+            if emitResult.Success then
+                let sourcePath =
+                    Path.Combine(
+                        Path.GetDirectoryName(
+                            Assembly.GetExecutingAssembly().Location),
+                        "App.runtimeconfig.json")
+                File.Copy(
+                    sourcePath,
+                    $"{assemblyName}.runtimeconfig.json",
+                    overwrite = true)
+            else
+                return! emitResult.Diagnostics
+                    |> Seq.map string
+                    |> String.concat "\n"
+                    |> Unsupported
+                    |> cerror
+        }
+
     let compile assemblyName text =
         result {
             let! expr = Parser.run Parser.Expression.parse text
-            let! annex = TypeInference.inferExpression expr
+            let! annex = Infer.inferExpression expr
             let! methodNode = compileExpression annex
             do!
-                compileWithMembers
+                compileWithMember
                     assemblyName
-                    [methodNode]
+                    methodNode
         }

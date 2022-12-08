@@ -83,3 +83,7 @@ module CompilerError =
     /// Creates a standard compiler error.
     let cerror (err : ICompilerError) =
         Error err
+
+type Unsupported =
+    Unsupported of string
+    with interface ICompilerError

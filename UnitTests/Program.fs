@@ -1,5 +1,7 @@
 namespace Znutar
 
+open Znutar.Transpile
+
 module Program =
     result {
         let text =

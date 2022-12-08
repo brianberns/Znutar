@@ -2,6 +2,7 @@ namespace Znutar
 
 open Microsoft.VisualStudio.TestTools.UnitTesting
 open FsCheck
+open Znutar.TypeInference
 
 module Gen =
 

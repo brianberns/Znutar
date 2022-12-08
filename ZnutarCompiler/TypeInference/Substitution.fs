@@ -1,4 +1,6 @@
-﻿namespace Znutar
+﻿namespace Znutar.TypeInference
+
+open Znutar
 
 /// Substitute types for type variables.
 type Substitution = Map<TypeVariable, Type>
