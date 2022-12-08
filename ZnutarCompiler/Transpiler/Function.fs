@@ -1,4 +1,4 @@
-﻿namespace Znutar.Transpile
+﻿namespace Znutar.Transpiler
 
 open Znutar
 open Znutar.TypeInference

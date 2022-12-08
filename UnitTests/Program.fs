@@ -1,6 +1,6 @@
 namespace Znutar
 
-open Znutar.Transpile
+open Znutar.Transpiler
 
 module Program =
     result {
@@ -10,6 +10,6 @@ module Program =
             0
             """
         let assemblyName = "Test"
-        do! Compiler.compile assemblyName text
+        do! Transpiler.transpile assemblyName text
         return! Process.run assemblyName
     } |> printfn "%A"

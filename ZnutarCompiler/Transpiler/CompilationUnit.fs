@@ -1,4 +1,4 @@
-﻿namespace Znutar.Transpile
+﻿namespace Znutar.Transpiler
 
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
