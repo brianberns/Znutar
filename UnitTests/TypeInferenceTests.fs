@@ -10,7 +10,7 @@ type TypeInferenceTests() =
     member _.Let() =
         let text = "let x = 2 in 3 * x"
         result {
-            let! expr = Parser.run Parser.parseExpression text
+            let! expr = Parser.run Parser.Expression.parse text
             let expected = Type.int
             let! _, expr' =
                 TypeInference.inferExpression
@@ -23,7 +23,7 @@ type TypeInferenceTests() =
     member _.Lambda() =
         let text = "fun x -> x + 1"
         result {
-            let! expr = Parser.run Parser.parseExpression text
+            let! expr = Parser.run Parser.Expression.parse text
             let expected = Type.int ^=> Type.int
             let! _, expr' =
                 TypeInference.inferExpression
@@ -42,7 +42,7 @@ type TypeInferenceTests() =
             id true
             """
         result {
-            let! expr = Parser.run Parser.parseExpression text
+            let! expr = Parser.run Parser.Expression.parse text
             let expected = Type.bool
             let! _, expr' =
                 TypeInference.inferExpression
@@ -57,7 +57,7 @@ type TypeInferenceTests() =
         let text = "fun f -> fun x -> f (x + 1)"
         let sType = "(int -> 'a) -> int -> 'a"
         result {
-            let! expr = Parser.run Parser.parseExpression text
+            let! expr = Parser.run Parser.Expression.parse text
             let! expected = Parser.run Parser.Type.parse sType
             let! _, expr' =
                 TypeInference.inferExpression
@@ -81,7 +81,7 @@ type TypeInferenceTests() =
             in const false 6
             """
         result {
-            let! expr = Parser.run Parser.parseExpression text
+            let! expr = Parser.run Parser.Expression.parse text
             let expected = Type.bool
             let! _, expr' =
                 TypeInference.inferExpression
@@ -94,7 +94,7 @@ type TypeInferenceTests() =
     member _.Fail() =
         let text = "false * 1"
         result {
-            let! expr = Parser.run Parser.parseExpression text
+            let! expr = Parser.run Parser.Expression.parse text
             let expected =
                 cerror (
                     UnificationFailure (Type.bool, Type.int))

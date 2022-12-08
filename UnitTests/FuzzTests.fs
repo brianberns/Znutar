@@ -52,7 +52,7 @@ type FuzzTests() =
         let parseUnparseIsOriginal expr =
             let unparsed = Expression.unparse expr
             let reparsed =
-                Parser.run Parser.parseExpression unparsed
+                Parser.run Parser.Expression.parse unparsed
             let msg = sprintf "Text: %s\nResult: %A" unparsed reparsed
             reparsed = Ok expr |@ msg
 

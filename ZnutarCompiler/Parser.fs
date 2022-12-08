@@ -111,7 +111,7 @@ module Parser =
 
         do parseTypeRef.Value <- parseTypeImpl
 
-    module private Expression =
+    module Expression =
 
         let private parseExpression, private parseExpressionRef =
             createParserForwardedToRef ()
@@ -246,14 +246,13 @@ module Parser =
 
         let parse = parseExpression
 
-    let parseExpression =
-        spaces
-            >>. Expression.parse
-            .>> spaces
-
     /// Runs the given parser on the given text.
     let run parser text =
-        let parser' = parser .>> eof
+        let parser' =
+            spaces
+                >>. parser
+                .>> spaces
+                .>> eof
         match runParserOnString parser' () "" text with
             | Success (result, _, _) -> Result.Ok result
             | Failure (msg, _, _) -> cerror (ParserError msg)

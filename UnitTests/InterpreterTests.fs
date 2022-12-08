@@ -11,14 +11,14 @@ type InterpreterTests() =
 
         result {
             let text = "3 - 2"
-            let! expr = Parser.run Parser.parseExpression text
+            let! expr = Parser.run Parser.Expression.parse text
             let! actual = Interpreter.eval expr
             Assert.AreEqual(IntValue 1, actual)
         } |> Assert.Ok
 
         result {
             let text = "3-2"   // to-do: support this
-            let! expr = Parser.run Parser.parseExpression text
+            let! expr = Parser.run Parser.Expression.parse text
             let! actual = Interpreter.eval expr
             Assert.AreEqual(IntValue 1, actual)
         } |> ignore // |> Assert.Ok
@@ -31,7 +31,7 @@ type InterpreterTests() =
                 let id = fun x -> x in
                 id true
                 """
-            let! expr = Parser.run Parser.parseExpression text
+            let! expr = Parser.run Parser.Expression.parse text
             let! actual = Interpreter.eval expr
             Assert.AreEqual(BoolValue true, actual)
         } |> Assert.Ok
@@ -46,7 +46,7 @@ type InterpreterTests() =
                     else n * fact (n - 1)) in
                 factorial 6
                 """
-            let! expr = Parser.run Parser.parseExpression text
+            let! expr = Parser.run Parser.Expression.parse text
             let! actual = Interpreter.eval expr
             Assert.AreEqual(IntValue 720, actual)
         } |> Assert.Ok
