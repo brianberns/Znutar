@@ -6,6 +6,18 @@ open type SyntaxFactory
 
 open Znutar
 
+module private Syntax =
+
+    let separatedList<'t when 't :> SyntaxNode> nodes : SeparatedSyntaxList<'t> =
+        let comma =
+            SyntaxNodeOrToken.op_Implicit(
+                Token(SyntaxKind.CommaToken))
+        SeparatedList [|
+            for iNode, (node : 't) in Seq.indexed nodes do
+                if iNode > 0 then yield comma
+                yield SyntaxNodeOrToken.op_Implicit(node)
+        |]
+
 module Type =
 
     let private predefinedTypeMap =
