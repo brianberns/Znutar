@@ -6,6 +6,8 @@ open Znutar
 
 module Type =
 
+    open Common
+
     let private parseType, private parseTypeRef =
         createParserForwardedToRef ()
 
@@ -21,7 +23,7 @@ module Type =
             |>> TypeVariable
 
     let private parseParenType =
-        Common.parseParens parseType
+        parseParens parseType
 
     let private parseSimpleType =
         choice [

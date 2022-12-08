@@ -5,6 +5,8 @@ open Znutar
 
 module Expression =
 
+    open Common
+
     let private parseExpression, private parseExpressionRef =
         createParserForwardedToRef ()
 
@@ -73,11 +75,11 @@ module Expression =
                 Type = typ
             }
         }
-            |> Common.parseParens
+            |> parseParens
             |> attempt
 
     let private parseParenExpression =
-        Common.parseParens parseExpression
+        parseParens parseExpression
 
     let private parseSimpleExpr : Parser<_, _> =
         choice [
