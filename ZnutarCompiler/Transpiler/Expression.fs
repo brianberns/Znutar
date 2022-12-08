@@ -33,7 +33,7 @@ module Expression =
         | VariableExpr var -> transpileIdentifier var.Identifier
         | ApplicationExpr app -> transpileApplication app
         | LetExpr letb -> transpileLet letb
-        // | IfExpr iff -> transpileIf venv iff
+        | IfExpr iff -> transpileIf iff
         // | FixExpr expr -> transpileFix venv expr
         | BinaryOperationExpr bop -> transpileBinaryOperation bop
         | LiteralExpr lit -> transpileLiteral lit
@@ -91,6 +91,21 @@ module Expression =
     and private transpileFunction func =
         Function.transpile transpileExpr func
 
+    and transpileIf iff =
+        result {
+
+            let! condStmtNodes, condExprNode = transpileExpr iff.Condition
+            let! trueStmtNodes, trueExprNode = transpileExpr iff.TrueBranch
+            let! falseStmtNodes, falseExprNode = transpileExpr iff.FalseBranch
+
+            let ifStmtNodes =
+                condStmtNodes @ trueStmtNodes @ falseStmtNodes
+            let ifExprNode =
+                ConditionalExpression(
+                    condExprNode, trueExprNode, falseExprNode)
+            return ifStmtNodes, ifExprNode
+        }
+
     and private transpileBinaryOperation bop =
         let kind =
             match bop.Operator with
@@ -115,20 +130,6 @@ module Expression =
         }
 
     (*
-    and transpileIf venv (iff : If) =
-        result {
-
-            let! condNode, _ = transpile venv iff.Condition
-            let! trueNode, _ = transpile venv iff.TrueBranch
-            let! falseNode, _ = transpile venv iff.FalseBranch
-
-            let node =
-                ConditionalExpression(
-                    condNode, trueNode, falseNode)
-
-            return node, venv
-        }
-
     and transpileFix venv expr =
         result {
 

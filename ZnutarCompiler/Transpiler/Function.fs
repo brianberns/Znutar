@@ -177,9 +177,11 @@ module FunctionCall =
     let transpile (transpileExpr : ExpressionTranspiler) funcCall =
         result {
 
+                // transpile function expression being called
             let! funcStmtNodes, funcExprNode =
                 transpileExpr funcCall.Function
 
+                // transpile argument expressions
             let! argStmtNodesRev, argExprNodesRev =
                 (([], []), funcCall.Arguments)
                     ||> Result.foldM (fun (accStmtNodes, accExprNodes) arg ->
@@ -194,6 +196,7 @@ module FunctionCall =
             let argStmtNodes = List.rev argStmtNodesRev
             let argExprNodes = List.rev argExprNodesRev
 
+                // gather results
             let callStmtNodes =
                 funcStmtNodes @ argStmtNodes
             let callExprNode : Syntax.ExpressionSyntax =
