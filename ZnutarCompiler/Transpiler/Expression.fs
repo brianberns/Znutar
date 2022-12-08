@@ -25,7 +25,7 @@ module Expression =
                     LiteralExpression(kind)
         Ok ([], node)
 
-    let rec transpileExpr = function
+    let rec private transpileExpr = function
         | VariableExpr var -> transpileIdentifier var.Identifier
         // | ApplicationExpr app -> transpileApplication venv app
         | LetExpr letb -> transpileLet letb
