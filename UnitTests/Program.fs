@@ -7,7 +7,7 @@ module Program =
         let text =
             """
             let const = fun x -> fun y -> x in
-            0
+            const false 0
             """
         let assemblyName = "Test"
         do! Transpiler.transpile assemblyName text

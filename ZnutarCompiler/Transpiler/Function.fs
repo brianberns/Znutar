@@ -176,14 +176,30 @@ module FunctionCall =
 
     let transpile (transpileExpr : ExpressionTranspiler) funcCall =
         result {
-            let! argNodes =
-                funcCall.Arguments
-                    |> List.map transpileExpr
-            let node =
-                InvocationExpression(
-                    IdentifierName("Plus"))
+
+            let! funcStmtNodes, funcExprNode =
+                transpileExpr funcCall.Function
+
+            let! argStmtNodesRev, argExprNodesRev =
+                (([], []), funcCall.Arguments)
+                    ||> Result.foldM (fun (accStmtNodes, accExprNodes) arg ->
+                        result {
+                            let! stmtNodes, exprNode = transpileExpr arg
+                            let accStmtNodes' =
+                                (List.rev stmtNodes) @ accStmtNodes
+                            let accExprNodes' =
+                                exprNode :: accExprNodes
+                            return accStmtNodes', accExprNodes'
+                        })
+            let argStmtNodes = List.rev argStmtNodesRev
+            let argExprNodes = List.rev argExprNodesRev
+
+            let callStmtNodes =
+                funcStmtNodes @ argStmtNodes
+            let callExprNode : Syntax.ExpressionSyntax =
+                InvocationExpression(funcExprNode)
                     .WithArgumentList(
                         ArgumentList(
-                            Syntax.separatedList args))
-            return node
+                            Syntax.separatedList argExprNodes))
+            return callStmtNodes, callExprNode
         }
