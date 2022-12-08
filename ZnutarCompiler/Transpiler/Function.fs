@@ -55,6 +55,22 @@ module Function =
                 ExpressionBody = letb.Body
             }
 
+    let rec private gatherTypes = function
+        | TypeArrow (inpType, outType) ->
+            inpType :: gatherTypes outType
+        | typ -> [typ]
+
+    /// Creates function signature from its scheme.
+    let private getSignature func =
+        let types = gatherTypes func.Scheme.Type
+        match List.rev types with
+            | [] | [_] ->
+                cerror (
+                    Unsupported $"Invalid function type: \
+                        {func.Scheme.Type.Unparse()}")
+            | returnType :: parmTypesRev ->
+                Ok (List.rev parmTypesRev, returnType)
+
     let private createStatementNode
         returnTypeNode
         ident
@@ -75,25 +91,8 @@ module Function =
 
     /// Transpiles the given function.
     let transpile transpileExpr func =
-
-        let rec gatherTypes = function
-            | TypeArrow (inpType, outType) ->
-                inpType :: gatherTypes outType
-            | typ -> [typ]
-
         result {
-
-                // get function signature from scheme
-            let! parmTypes, returnType =
-                let types = gatherTypes func.Scheme.Type
-                match List.rev types with
-                    | [] | [_] ->
-                        cerror (
-                            Unsupported $"Invalid function type: \
-                                {func.Scheme.Type.Unparse()}")
-                    | returnType :: parmTypesRev ->
-                        Ok (List.rev parmTypesRev, returnType)
-
+            let! parmTypes, returnType = getSignature func
             if parmTypes.Length = func.Parameters.Length then
 
                     // create parameters
@@ -137,7 +136,6 @@ module Function =
                         yield! nextStmtNodes
                     ]
                 return stmtNodes, nextExprNode
-
             else
                 return! cerror (Unsupported "Function arity mismatch")
         }
