@@ -159,7 +159,7 @@ module FunctionCall =
             match app.Function with
                 | ApplicationExpr app' ->
                     let expr, args = loop app'
-                    expr, app'.Argument :: args
+                    expr, app.Argument :: args
                 | expr -> expr, [app.Argument]
 
         let expr, argsRev = loop app
