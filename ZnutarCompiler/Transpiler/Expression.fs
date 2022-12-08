@@ -84,63 +84,7 @@ module Expression =
         }
 
     and private transpileFunction func =
-
-        let rec gatherTypes = function
-            | TypeArrow (inpType, outType) ->
-                inpType :: gatherTypes outType
-            | typ -> [typ]
-
-        result {
-            let types = gatherTypes func.Scheme.Type
-            let! argTypes, returnType =
-                match List.rev types with
-                    | [] | [_] ->
-                        cerror (
-                            Unsupported $"Invalid function type: \
-                                {func.Scheme.Type.Unparse()}")
-                    | returnType :: argTypesRev ->
-                        Ok (List.rev argTypesRev, returnType)
-            if argTypes.Length = func.Arguments.Length then
-                let argPairs = List.zip func.Arguments argTypes
-                let returnTypeNode = Type.transpile returnType
-                let typeParmNodes =
-                    func.Scheme.TypeVariables
-                        |> List.map (fun tv ->
-                            TypeParameter(Identifier(tv.Name)))
-                let parmNodes =
-                    argPairs
-                        |> List.map (fun (ident, typ) ->
-                            Parameter(
-                                Identifier(ident.Name))
-                                .WithType(Type.transpile typ))
-                let! bodyStmtNodes, bodyExprNode = transpileExpr func.FunctionBody
-                let! nextStmtNodes, nextExprNode = transpileExpr func.ExpressionBody
-                let bodyStmtNodes' =
-                    [|
-                        yield! bodyStmtNodes
-                        yield ReturnStatement(bodyExprNode)
-                    |]
-                let funcNode =
-                    LocalFunctionStatement(
-                        returnType = returnTypeNode,
-                        identifier = func.Identifier.Name)
-                        .WithTypeParameterList(
-                            TypeParameterList(
-                                Syntax.separatedList typeParmNodes))
-                        .WithParameterList(
-                            ParameterList(
-                                Syntax.separatedList parmNodes))
-                        .WithBody(
-                            Block(bodyStmtNodes'))
-                let stmtNodes =
-                    [
-                        yield funcNode :> Syntax.StatementSyntax
-                        yield! nextStmtNodes
-                    ]
-                return stmtNodes, nextExprNode
-            else
-                return! cerror (Unsupported "Function arity mismatch")
-        }
+        Function.transpile transpileExpr func
 
     and private transpileBinaryOperation bop =
         let kind =
