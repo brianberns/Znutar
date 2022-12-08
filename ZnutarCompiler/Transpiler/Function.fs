@@ -110,10 +110,8 @@ module Function =
                             TypeParameter(Identifier(tv.Name)))
 
                     // transpile sub-expressions
-                let!
-                    (bodyStmtNodes : List<Syntax.StatementSyntax>),
-                    (bodyExprNode : Syntax.ExpressionSyntax) =
-                        transpileExpr func.FunctionBody
+                let! bodyStmtNodes, bodyExprNode =
+                    transpileExpr func.FunctionBody
                 let! nextStmtNodes, nextExprNode =
                     transpileExpr func.ExpressionBody
 
