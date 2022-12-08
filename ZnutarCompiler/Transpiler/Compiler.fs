@@ -388,7 +388,7 @@ module Compiler =
     let compile assemblyName text =
         result {
             let! expr = Parser.run Parser.Expression.parse text
-            let! subst, annex = TypeInference.inferExpression TypeEnvironment.empty expr
+            let! annex = TypeInference.inferExpression expr
             let! methodNode = compileExpression annex
             do!
                 compileWithMembers

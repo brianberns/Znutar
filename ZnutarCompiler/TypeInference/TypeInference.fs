@@ -35,193 +35,200 @@ module TypeInference =   // to-do: replace with constraint-based inference
             Equals, Type.int ^=> Type.int ^=> Type.bool   // to-do: make polymorphic
         ]
 
-    /// Infers and annotates the type of the given expression.
-    /// * Substitution used to infer the type
-    /// * Equivalent expression fully annotated with inferred types
-    let rec inferExpression env = function
-        | Expression.VariableExpr ident -> inferVariable env ident
-        | Expression.LambdaExpr lam -> inferLambda env lam
-        | Expression.ApplicationExpr app -> inferApplication env app
-        | Expression.LetExpr letb -> inferLet env letb
-        | Expression.IfExpr iff -> inferIf env iff
-        | Expression.FixExpr expr -> inferFix env expr
-        | Expression.BinaryOperationExpr bop ->
-            inferBinaryOperation env bop
-        | Expression.LiteralExpr lit ->
-            Ok (Substitution.empty, LiteralExpr lit)
-        | AnnotationExpr ann -> inferAnnotation env ann
+    module private rec Expression =
 
-    /// Infers the type of a variable by looking it up in the
-    /// given environment.
-    and private inferVariable env ident =
-        result {
-            let! scheme = TypeEnvironment.tryFind ident env
-            let annex =
-                VariableExpr {
-                    Identifier = ident
-                    Type = instantiate scheme
-                }
-            return Substitution.empty, annex
-        }
+        /// Infers and annotates the type of the given expression.
+        /// * Substitution used to infer the type
+        /// * Equivalent expression fully annotated with inferred types
+        let infer env = function
+            | Expression.VariableExpr ident -> inferVariable env ident
+            | Expression.LambdaExpr lam -> inferLambda env lam
+            | Expression.ApplicationExpr app -> inferApplication env app
+            | Expression.LetExpr letb -> inferLet env letb
+            | Expression.IfExpr iff -> inferIf env iff
+            | Expression.FixExpr expr -> inferFix env expr
+            | Expression.BinaryOperationExpr bop ->
+                inferBinaryOperation env bop
+            | Expression.LiteralExpr lit ->
+                Ok (Substitution.empty, LiteralExpr lit)
+            | AnnotationExpr ann -> inferAnnotation env ann
 
-    /// Infers the type of a lambda abstraction.
-    and private inferLambda env lam =
-        result {
-                // create an input type
-            let identType =
-                createFreshTypeVariable lam.Identifier.Name
-            let env' =
-                let scheme = Scheme.create [] identType
-                TypeEnvironment.add lam.Identifier scheme env
+        /// Infers the type of a variable by looking it up in the
+        /// given environment.
+        let private inferVariable env ident =
+            result {
+                let! scheme = TypeEnvironment.tryFind ident env
+                let annex =
+                    VariableExpr {
+                        Identifier = ident
+                        Type = instantiate scheme
+                    }
+                return Substitution.empty, annex
+            }
 
-                // infer the output type using the input type
-            let! bodySubst, bodyAnnex =
-                inferExpression env' lam.Body
+        /// Infers the type of a lambda abstraction.
+        let private inferLambda env lam =
+            result {
+                    // create an input type
+                let identType =
+                    createFreshTypeVariable lam.Identifier.Name
+                let env' =
+                    let scheme = Scheme.create [] identType
+                    TypeEnvironment.add lam.Identifier scheme env
 
-                // gather results
-            let typ =
-                let identType' = Type.apply bodySubst identType
-                identType' ^=> bodyAnnex.Type
-            let annex =
-                LambdaExpr {
-                    Identifier = lam.Identifier
-                    Body = bodyAnnex
-                    Type = typ
-                }
-            return bodySubst, annex
-        }
+                    // infer the output type using the input type
+                let! bodySubst, bodyAnnex =
+                    infer env' lam.Body
 
-    /// Infers the type of a function application.
-    and private inferApplication env app =
-        result {
-                // infer the function type (must be an arrow)
-            let! funSubst, funAnnex =
-                inferExpression env app.Function
+                    // gather results
+                let typ =
+                    let identType' = Type.apply bodySubst identType
+                    identType' ^=> bodyAnnex.Type
+                let annex =
+                    LambdaExpr {
+                        Identifier = lam.Identifier
+                        Body = bodyAnnex
+                        Type = typ
+                    }
+                return bodySubst, annex
+            }
 
-                // infer the input type
-            let! argSubst, argAnnex =
-                let env' = TypeEnvironment.apply funSubst env
-                inferExpression env' app.Argument
+        /// Infers the type of a function application.
+        let private inferApplication env app =
+            result {
+                    // infer the function type (must be an arrow)
+                let! funSubst, funAnnex =
+                    infer env app.Function
 
-                // unify (input ^=> output) with function type
-            let outType = createFreshTypeVariable "app"
-            let! appSubst =
-                let funType = Type.apply argSubst funAnnex.Type
-                unify funType (argAnnex.Type ^=> outType)
+                    // infer the input type
+                let! argSubst, argAnnex =
+                    let env' = TypeEnvironment.apply funSubst env
+                    infer env' app.Argument
 
-                // gather results
-            let subst = funSubst ++ argSubst ++ appSubst
-            let typ = Type.apply appSubst outType
-            let annex =
-                ApplicationExpr {
-                    Function = funAnnex
-                    Argument = argAnnex
-                    Type = typ
-                }
-            return subst, annex
-        }
+                    // unify (input ^=> output) with function type
+                let outType = createFreshTypeVariable "app"
+                let! appSubst =
+                    let funType = Type.apply argSubst funAnnex.Type
+                    unify funType (argAnnex.Type ^=> outType)
 
-    /// Infers the type of a let binding.
-    and private inferLet env letb =
-        result {
-                // infer argument type
-            let! argSubst, argAnnex =
-                inferExpression env letb.Argument
-            let env' = TypeEnvironment.apply argSubst env
+                    // gather results
+                let subst = funSubst ++ argSubst ++ appSubst
+                let typ = Type.apply appSubst outType
+                let annex =
+                    ApplicationExpr {
+                        Function = funAnnex
+                        Argument = argAnnex
+                        Type = typ
+                    }
+                return subst, annex
+            }
 
-                // generalize argument ("let polymorphism")
-                // e.g. let id = fun x -> x in ...
-            let scheme = generalize env' argAnnex.Type
+        /// Infers the type of a let binding.
+        let private inferLet env letb =
+            result {
+                    // infer argument type
+                let! argSubst, argAnnex =
+                    infer env letb.Argument
+                let env' = TypeEnvironment.apply argSubst env
 
-                // infer body type using argument type
-            let! bodySubst, bodyAnnex =
-                let env'' =
-                    TypeEnvironment.add
-                        letb.Identifier scheme env'
-                inferExpression env'' letb.Body
+                    // generalize argument ("let polymorphism")
+                    // e.g. let id = fun x -> x in ...
+                let scheme = generalize env' argAnnex.Type
 
-                // gather result
-            let annex =
-                LetExpr {
-                    Identifier = letb.Identifier
-                    Scheme = scheme
-                    Argument = argAnnex
-                    Body = bodyAnnex
-                    Type = bodyAnnex.Type
-                }
-            return argSubst ++ bodySubst, annex
-        }
+                    // infer body type using argument type
+                let! bodySubst, bodyAnnex =
+                    let env'' =
+                        TypeEnvironment.add
+                            letb.Identifier scheme env'
+                    infer env'' letb.Body
 
-    and private inferIf env iff =
-        result {
-            let! condSubst, condAnnex =
-                inferExpression env iff.Condition
-            let! trueSubst, trueAnnex =
-                inferExpression env iff.TrueBranch
-            let! falseSubst, falseAnnex =
-                inferExpression env iff.FalseBranch
-            let! condSubst' = unify condAnnex.Type Type.bool
-            let! branchSubst = unify trueAnnex.Type falseAnnex.Type
-            let typ = Type.apply branchSubst trueAnnex.Type
-            let annex =
-                IfExpr {
-                    Condition = condAnnex
-                    TrueBranch = trueAnnex
-                    FalseBranch = falseAnnex
-                    Type = typ
-                }
-            return
-                condSubst ++ trueSubst ++ falseSubst
-                    ++ condSubst' ++ branchSubst,
-                annex
-        }
+                    // gather result
+                let annex =
+                    LetExpr {
+                        Identifier = letb.Identifier
+                        Scheme = scheme
+                        Argument = argAnnex
+                        Body = bodyAnnex
+                        Type = bodyAnnex.Type
+                    }
+                return argSubst ++ bodySubst, annex
+            }
 
-    and private inferFix env expr =
-        result {
-            let! exprSubst, exprAnnex =
-                inferExpression env expr
-            let freshType = createFreshTypeVariable "fix"
-            let! arrowSubst =
-                unify (freshType ^=> freshType) exprAnnex.Type
-            let typ = Type.apply exprSubst freshType
-            let annex =
-                FixExpr {
-                    Expression = exprAnnex
-                    Type = exprAnnex.Type
-                }
-            return arrowSubst, annex
-        }
+        let private inferIf env iff =
+            result {
+                let! condSubst, condAnnex =
+                    infer env iff.Condition
+                let! trueSubst, trueAnnex =
+                    infer env iff.TrueBranch
+                let! falseSubst, falseAnnex =
+                    infer env iff.FalseBranch
+                let! condSubst' = unify condAnnex.Type Type.bool
+                let! branchSubst = unify trueAnnex.Type falseAnnex.Type
+                let typ = Type.apply branchSubst trueAnnex.Type
+                let annex =
+                    IfExpr {
+                        Condition = condAnnex
+                        TrueBranch = trueAnnex
+                        FalseBranch = falseAnnex
+                        Type = typ
+                    }
+                return
+                    condSubst ++ trueSubst ++ falseSubst
+                        ++ condSubst' ++ branchSubst,
+                    annex
+            }
 
-    and private inferBinaryOperation env bop =
-        result {
-            let! leftSubst, leftAnnex =
-                inferExpression env bop.Left
-            let! rightSubst, rightAnnex =
-                inferExpression env bop.Right
-            let freshType = createFreshTypeVariable "bop"
-            let! arrowSubst =
-                unify
-                    (leftAnnex.Type ^=> rightAnnex.Type ^=> freshType)
-                    binOpMap[bop.Operator]
-            let typ = Type.apply arrowSubst freshType
-            let annex =
-                BinaryOperationExpr {
-                    Operator = bop.Operator
-                    Left = leftAnnex
-                    Right = rightAnnex
-                    Type = typ
-                }
-            return
-                leftSubst ++ rightSubst ++ arrowSubst,
-                annex
-        }
+        let private inferFix env expr =
+            result {
+                let! exprSubst, exprAnnex =
+                    infer env expr
+                let freshType = createFreshTypeVariable "fix"
+                let! arrowSubst =
+                    unify (freshType ^=> freshType) exprAnnex.Type
+                let typ = Type.apply exprSubst freshType
+                let annex =
+                    FixExpr {
+                        Expression = exprAnnex
+                        Type = exprAnnex.Type
+                    }
+                return arrowSubst, annex
+            }
 
-    and private inferAnnotation env ann =
-        result {
-            let! exprSubst, exprAnnex =
-                inferExpression env ann.Expression
-            let! typeSubst = unify exprAnnex.Type ann.Type
-            return
-                exprSubst ++ typeSubst,
-                exprAnnex
-        }
+        let private inferBinaryOperation env bop =
+            result {
+                let! leftSubst, leftAnnex =
+                    infer env bop.Left
+                let! rightSubst, rightAnnex =
+                    infer env bop.Right
+                let freshType = createFreshTypeVariable "bop"
+                let! arrowSubst =
+                    unify
+                        (leftAnnex.Type ^=> rightAnnex.Type ^=> freshType)
+                        binOpMap[bop.Operator]
+                let typ = Type.apply arrowSubst freshType
+                let annex =
+                    BinaryOperationExpr {
+                        Operator = bop.Operator
+                        Left = leftAnnex
+                        Right = rightAnnex
+                        Type = typ
+                    }
+                return
+                    leftSubst ++ rightSubst ++ arrowSubst,
+                    annex
+            }
+
+        let private inferAnnotation env ann =
+            result {
+                let! exprSubst, exprAnnex =
+                    infer env ann.Expression
+                let! typeSubst = unify exprAnnex.Type ann.Type
+                return
+                    exprSubst ++ typeSubst,
+                    exprAnnex
+            }
+
+    let inferExpression expr =
+        expr
+            |> Expression.infer TypeEnvironment.empty
+            |> Result.map snd
