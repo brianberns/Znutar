@@ -17,6 +17,7 @@
     <Compile Include="TypeInference\Substitution.fs" />
     <Compile Include="TypeInference\AnnotatedExpression.fs" />
     <Compile Include="TypeInference\TypeInference.fs" />
+    <Compile Include="Transpiler\Function.fs" />
     <Compile Include="Transpiler\CompilationUnit.fs" />
     <Compile Include="Transpiler\Compiler.fs" />
   </ItemGroup>
