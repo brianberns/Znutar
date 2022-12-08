@@ -2,6 +2,8 @@ namespace Znutar
 
 open Microsoft.VisualStudio.TestTools.UnitTesting
 open FsCheck
+
+open Znutar.Parser
 open Znutar.TypeInference
 
 module Gen =
@@ -53,7 +55,7 @@ type FuzzTests() =
         let parseUnparseIsOriginal expr =
             let unparsed = Expression.unparse expr
             let reparsed =
-                Parser.run Parser.Expression.parse unparsed
+                Parser.run Expression.parse unparsed
             let msg = sprintf "Text: %s\nResult: %A" unparsed reparsed
             reparsed = Ok expr |@ msg
 

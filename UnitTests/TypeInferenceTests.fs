@@ -3,6 +3,7 @@
 open Microsoft.VisualStudio.TestTools.UnitTesting
 
 open Znutar
+open Znutar.Parser
 open Znutar.TypeInference
 
 [<TestClass>]
@@ -12,7 +13,7 @@ type TypeInferenceTests() =
     member _.Let() =
         let text = "let x = 2 in 3 * x"
         result {
-            let! expr = Parser.run Parser.Expression.parse text
+            let! expr = Parser.run Expression.parse text
             let expected = Type.int
             let! expr' = Infer.inferExpression expr
             let actual = expr'.Type
@@ -23,7 +24,7 @@ type TypeInferenceTests() =
     member _.Lambda() =
         let text = "fun x -> x + 1"
         result {
-            let! expr = Parser.run Parser.Expression.parse text
+            let! expr = Parser.run Expression.parse text
             let expected = Type.int ^=> Type.int
             let! expr' = Infer.inferExpression expr
             let actual = expr'.Type
@@ -40,7 +41,7 @@ type TypeInferenceTests() =
             id true
             """
         result {
-            let! expr = Parser.run Parser.Expression.parse text
+            let! expr = Parser.run Expression.parse text
             let expected = Type.bool
             let! expr' = Infer.inferExpression expr
             let actual = expr'.Type
@@ -53,8 +54,8 @@ type TypeInferenceTests() =
         let text = "fun f -> fun x -> f (x + 1)"
         let sType = "(int -> 'a) -> int -> 'a"
         result {
-            let! expr = Parser.run Parser.Expression.parse text
-            let! expected = Parser.run Parser.Type.parse sType
+            let! expr = Parser.run Expression.parse text
+            let! expected = Parser.run Type.parse sType
             let! expr' = Infer.inferExpression expr
             let actual = expr'.Type
             let! subst = Substitution.unify expected actual
@@ -75,7 +76,7 @@ type TypeInferenceTests() =
             in const false 6
             """
         result {
-            let! expr = Parser.run Parser.Expression.parse text
+            let! expr = Parser.run Expression.parse text
             let expected = Type.bool
             let! expr' = Infer.inferExpression expr
             let actual = expr'.Type
@@ -86,7 +87,7 @@ type TypeInferenceTests() =
     member _.Fail() =
         let text = "false * 1"
         result {
-            let! expr = Parser.run Parser.Expression.parse text
+            let! expr = Parser.run Expression.parse text
             let expected =
                 cerror (
                     UnificationFailure (Type.bool, Type.int))

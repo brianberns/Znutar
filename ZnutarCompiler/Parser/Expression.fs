@@ -1,0 +1,139 @@
+﻿namespace Znutar.Parser
+
+open FParsec
+open Znutar
+
+module Expression =
+
+    let private parseExpression, private parseExpressionRef =
+        createParserForwardedToRef ()
+
+    let private parseLambdaAbstraction =   // to-do: fold multiple arguments
+        parse {
+            do! skipString "fun" >>. spaces
+            let! ident = Identifier.parse
+            do! spaces >>. skipString "->" >>. spaces
+            let! body = parseExpression
+            return {
+                LambdaAbstraction.Identifier = ident
+                Body = body
+            }
+        }
+
+    let private parseLetBinding =
+        parse {
+            do! skipString "let" >>. spaces
+            let! ident = Identifier.parse
+            do! spaces >>. skipChar '=' >>. spaces
+            let! arg = parseExpression
+            do! spaces >>. skipString "in" >>. spaces
+            let! body = parseExpression
+            return {
+                Identifier = ident
+                Argument = arg
+                Body = body
+            }
+        }
+
+    let private parseLiteral =
+        choice [
+            pint32 |>> IntLiteral
+            skipString "true" >>% BoolLiteral true
+            skipString "false" >>% BoolLiteral false
+        ]
+
+    let private parseIf =
+        parse {
+            do! skipString "if" >>. spaces
+            let! cond = parseExpression
+            do! spaces >>. skipString "then" >>. spaces
+            let! trueBranch = parseExpression
+            do! spaces >>. skipString "else" >>. spaces
+            let! falseBranch = parseExpression
+            return {
+                Condition = cond
+                TrueBranch = trueBranch
+                FalseBranch = falseBranch
+            }
+        }
+
+    let private parseFix =
+        parse {
+            do! skipString "fix" >>. spaces
+            return! parseExpression
+        }
+
+    let private parseAnnotation =
+        parse {
+            let! expr = parseExpression
+            do! spaces >>. skipChar ':' >>. spaces
+            let! typ = Type.parse
+            return {
+                Expression = expr
+                Type = typ
+            }
+        }
+            |> Common.parseParens
+            |> attempt
+
+    let private parseParenExpression =
+        Common.parseParens parseExpression
+
+    let private parseSimpleExpr : Parser<_, _> =
+        choice [
+            Identifier.parse |>> VariableExpr
+            parseLambdaAbstraction |>> LambdaExpr
+            parseLetBinding |>> LetExpr
+            parseLiteral |>> LiteralExpr
+            parseIf |>> IfExpr
+            parseFix |>> FixExpr
+            parseAnnotation |>> AnnotationExpr
+            parseParenExpression
+        ]
+
+    let private parseSimpleExprs =
+
+        let gather = function
+            | [] -> failwith "Unexpected"
+            | [expr] -> expr
+            | func :: exprs ->
+                (func, exprs)
+                    ||> List.fold (fun func arg ->
+                            ApplicationExpr {
+                                Function = func
+                                Argument = arg
+                            })
+
+        many1 (parseSimpleExpr .>> spaces)
+            |>> gather
+
+    let private parseExprImpl =
+
+        let create (str, op) =
+            parse {
+                do! skipString str >>. spaces
+                return (fun left right ->
+                    BinaryOperationExpr {
+                        Operator = op
+                        Left = left
+                        Right = right
+                    })
+            }
+
+        let parseOp =
+            [
+                "+", Plus
+                "-", Minus
+                "*", Times
+                "=", Equals
+            ]
+                |> List.map create
+                |> choice
+
+        chainl1
+            (parseSimpleExprs .>> spaces)
+            (parseOp .>> spaces)
+
+    do parseExpressionRef.Value <- parseExprImpl
+
+    let parse = parseExpression

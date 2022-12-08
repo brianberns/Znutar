@@ -1,7 +1,9 @@
 namespace Znutar
 
 open Microsoft.VisualStudio.TestTools.UnitTesting
+
 open Znutar
+open Znutar.Parser
 
 [<TestClass>]
 type ParserTests() =
@@ -19,6 +21,6 @@ type ParserTests() =
                     ^=> (Type.variable "b"
                         ^=> Type.variable "c")
             Assert.AreEqual(expected, expected')
-            let! actual = Parser.run Parser.Type.parse text
+            let! actual = Parser.run Type.parse text
             Assert.AreEqual(expected, actual, actual.Unparse())
         } |> Assert.Ok

@@ -11,7 +11,9 @@
     <Compile Include="Result.fs" />
     <Compile Include="Type.fs" />
     <Compile Include="Expression.fs" />
-    <Compile Include="Parser.fs" />
+    <Compile Include="Parser\Common.fs" />
+    <Compile Include="Parser\Type.fs" />
+    <Compile Include="Parser\Expression.fs" />
     <Compile Include="Interpreter.fs" />
     <Compile Include="TypeInference\Scheme.fs" />
     <Compile Include="TypeInference\Substitution.fs" />

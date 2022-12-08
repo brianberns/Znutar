@@ -10,6 +10,7 @@ open type SyntaxFactory
 open Basic.Reference.Assemblies
 
 open Znutar
+open Znutar.Parser
 open Znutar.TypeInference
 
 module Compiler =
@@ -314,7 +315,7 @@ module Compiler =
 
     let compile assemblyName text =
         result {
-            let! expr = Parser.run Parser.Expression.parse text
+            let! expr = Parser.run Expression.parse text
             let! annex = Infer.inferExpression expr
             let! methodNode = compileExpression annex
             do!
