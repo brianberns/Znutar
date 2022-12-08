@@ -30,22 +30,6 @@ module Type =
             parseParenType
         ]
 
-    let private parseTuple =
-        parse {
-            let! types =
-                sepBy1 (parseSimpleType .>> spaces)
-                    (skipChar '*' >>. spaces)
-            match types with
-                | [] -> return! fail "0-tuple"
-                | [typ] -> return typ
-                | type1 :: type2 :: types ->
-                    return TypeTuple {
-                        Type1 = type1
-                        Type2 = type2
-                        Types3N = types
-                    }
-        }
-
     let private parseTypeImpl =
 
         let create =
@@ -56,7 +40,7 @@ module Type =
             }
 
         chainr1   // type arrow is right-associative
-            (parseTuple .>> spaces)
+            (parseSimpleType .>> spaces)
             (create .>> spaces)
 
     do parseTypeRef.Value <- parseTypeImpl

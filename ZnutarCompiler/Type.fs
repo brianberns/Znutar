@@ -35,9 +35,6 @@ type Type =
     /// Function type. E.g. "'a -> int".
     | TypeArrow of Type * Type
 
-    /// Tupled types. E.g. "int * 'a".
-    | TypeTuple of TypeTuple
-
     with
     member typ.Unparse() =
         match typ with
@@ -45,34 +42,11 @@ type Type =
             | TypeVariable tv -> TypeVariable.unparse tv
             | TypeArrow (inpType, outType) ->
                 $"({inpType.Unparse()} -> {outType.Unparse()})"
-            | TypeTuple tuple ->
-                let str =
-                    tuple.Types
-                        |> Seq.map (fun (typ : Type) ->
-                            typ.Unparse())
-                        |> String.concat " * "
-                $"({str})"
 
     /// Constructs a type arrow. Right associative.
     // https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/symbol-and-operator-reference/#operator-precedence
     static member (^=>) (type1, type2) =
         TypeArrow (type1, type2)
-
-/// Tupled types. E.g. "int * 'a".
-and TypeTuple =
-    {
-        Type1 : Type
-        Type2 : Type
-        Types3N : List<Type>
-    }
-
-    with
-    member this.Types =
-        seq {
-            yield this.Type1
-            yield this.Type2
-            yield! this.Types3N
-        }
 
 module Type =
 
@@ -91,16 +65,3 @@ module Type =
         | TypeVariable tv -> Set.singleton tv
         | TypeArrow (type1, type2) ->
             freeTypeVariables type1 + freeTypeVariables type2
-        | TypeTuple tuple ->
-            tuple.Types
-                |> Seq.map freeTypeVariables
-                |> Set.unionMany
-
-module TypeTuple =
-
-    let map f tuple =
-        {
-            Type1 = f tuple.Type1
-            Type2 = f tuple.Type2
-            Types3N = List.map f tuple.Types3N
-        }
