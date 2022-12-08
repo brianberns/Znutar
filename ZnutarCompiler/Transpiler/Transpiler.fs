@@ -5,7 +5,6 @@ open System.Reflection
 
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
-open type SyntaxFactory
 
 open Basic.Reference.Assemblies
 
