@@ -35,7 +35,7 @@ type InvalidConditionValue =
     InvalidConditionValue of Value
     with interface ICompilerError
 
-module Interpreter =
+module Interpreter =   // to-do: move to separate project
 
     let private evalBinOp op leftVal rightVal =
         match op, leftVal, rightVal with

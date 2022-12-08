@@ -6,7 +6,7 @@ open Znutar
 type ParserError = ParserError of string
     with interface ICompilerError
 
-module Common =
+module private Common =
 
 #if DEBUG
     let (<!>) (p: Parser<_,_>) label : Parser<_,_> =
@@ -18,7 +18,7 @@ module Common =
             reply
 #endif
 
-    let private parseBrackets cOpen cClose parser =
+    let parseBrackets cOpen cClose parser =
         parse {
             do! skipChar cOpen >>. spaces
             let! value = parser

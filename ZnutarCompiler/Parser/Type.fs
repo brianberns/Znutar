@@ -59,6 +59,6 @@ module Type =
             (parseTuple .>> spaces)
             (create .>> spaces)
 
-    let parse = parseType
-
     do parseTypeRef.Value <- parseTypeImpl
+
+    let parse = parseType
