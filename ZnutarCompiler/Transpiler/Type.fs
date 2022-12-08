@@ -8,12 +8,14 @@ open Znutar
 
 module private Syntax =
 
-    let separatedList<'t when 't :> SyntaxNode> nodes : SeparatedSyntaxList<'t> =
-        let comma =
-            SyntaxNodeOrToken.op_Implicit(
-                Token(SyntaxKind.CommaToken))
+    let private comma =
+        SyntaxNodeOrToken.op_Implicit(
+            Token(SyntaxKind.CommaToken))
+
+    /// Creates a comma-separated syntax list.
+    let separatedList nodes =
         SeparatedList [|
-            for iNode, (node : 't) in Seq.indexed nodes do
+            for iNode, (node : #SyntaxNode) in Seq.indexed nodes do
                 if iNode > 0 then yield comma
                 yield SyntaxNodeOrToken.op_Implicit(node)
         |]
@@ -26,6 +28,7 @@ module Type =
             Type.bool, SyntaxKind.BoolKeyword
         ]
 
+    /// Transpiles the given type.
     let rec transpile = function
         | TypeConstant _ as typ ->
             let kind = predefinedTypeMap[typ]

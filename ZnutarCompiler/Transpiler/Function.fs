@@ -3,7 +3,8 @@
 open Znutar
 open Znutar.TypeInference
 
-/// let const x y = x in next
+/// A function definition.
+/// E.g. let const x y = x in next.
 type Function =
     {
         /// E.g. "const"
@@ -24,9 +25,11 @@ type Function =
 
 module Function =
 
-    /// From: let const = fun x -> fun y -> x in next
-    /// To:   let const(x, y) = x in next
-    let tryCreate (letb : AnnotatedLetBinding) =
+    /// Attempts to convert a let-bound lambda into a function
+    /// definition. For example:
+    /// * From: let const = fun x -> fun y -> x in next
+    /// * To:   let const(x, y) = x in next
+    let tryCreate letb =
 
         let rec gatherLambdas = function
             | LambdaExpr lam ->
