@@ -38,6 +38,7 @@ module private Identifier =
         set [
             "fun"
             "let"
+            "rec"
             "in"
             "true"
             "false"

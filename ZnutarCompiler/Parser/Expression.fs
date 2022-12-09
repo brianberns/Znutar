@@ -25,12 +25,16 @@ module Expression =
     let private parseLetBinding =
         parse {
             do! skipString "let" >>. spaces
+            let! recurisive =
+                opt (skipString "rec" .>> spaces)
+                    |>> Option.isSome
             let! ident = Identifier.parse
             do! spaces >>. skipChar '=' >>. spaces
             let! arg = parseExpression
             do! spaces >>. skipString "in" >>. spaces
             let! body = parseExpression
             return {
+                Recursive = recurisive
                 Identifier = ident
                 Argument = arg
                 Body = body

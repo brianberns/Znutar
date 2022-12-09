@@ -39,7 +39,8 @@ type Expression =
                 $"(fun {lam.Identifier.Name} -> \
                     {lam.Body.Unparse()})"
             | LetExpr letb ->
-                $"(let {letb.Identifier.Name} = \
+                let sRec = if letb.Recursive then "rec " else ""
+                $"(let {sRec}{letb.Identifier.Name} = \
                     {letb.Argument.Unparse()} in \
                     {letb.Body.Unparse()})"
             | LiteralExpr (IntLiteral n) -> string n
@@ -70,9 +71,10 @@ and LambdaAbstraction =
         Body : Expression
     }
 
-/// let ident = arg in body
+/// let [rec] ident = arg in body
 and LetBinding =
     {
+        Recursive : bool
         Identifier : Identifier
         Argument : Expression
         Body : Expression

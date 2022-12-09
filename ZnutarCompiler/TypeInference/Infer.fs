@@ -128,14 +128,16 @@ module Infer =   // to-do: replace with constraint-based inference
         /// Infers the type of a let binding.
         let private inferLet env letb =
             result {
-                    // add placeholder argument type in case of recursion
+                    // add placeholder argument type in case of recursion?
                     // e.g. let f = arg_refers_to_f
                 let env' =
-                    let scheme =
-                        createFreshTypeVariable "arg"
-                            |> generalize env
-                    TypeEnvironment.add
-                        letb.Identifier scheme env   // to-do: allow mutual recursion
+                    if letb.Recursive then
+                        let scheme =
+                            createFreshTypeVariable "arg"
+                                |> generalize env
+                        TypeEnvironment.add
+                            letb.Identifier scheme env   // to-do: allow mutual recursion
+                    else env
 
                     // infer actual argument type
                 let! argSubst, argAnnex =
