@@ -171,17 +171,25 @@ module Infer =   // to-do: replace with constraint-based inference
                 return argSubst ++ bodySubst, annex
             }
 
+        /// Infers the type of an if expression.
         let private inferIf env iff =
             result {
+                    // infer sub-expression types
                 let! condSubst, condAnnex =
                     infer env iff.Condition
                 let! trueSubst, trueAnnex =
                     infer env iff.TrueBranch
                 let! falseSubst, falseAnnex =
                     infer env iff.FalseBranch
+
+                    // condition must be Boolean
                 let! condSubst' = unify condAnnex.Type Type.bool
+
+                    // branches must match
                 let! branchSubst = unify trueAnnex.Type falseAnnex.Type
                 let typ = Type.apply branchSubst trueAnnex.Type
+
+                    // gather results
                 let annex =
                     IfExpr {
                         Condition = condAnnex
@@ -195,18 +203,24 @@ module Infer =   // to-do: replace with constraint-based inference
                     annex
             }
 
+        /// Infers the type of a binary operation.
         let private inferBinaryOperation env bop =
             result {
+                    // infer sub-expression types
                 let! leftSubst, leftAnnex =
                     infer env bop.Left
                 let! rightSubst, rightAnnex =
                     infer env bop.Right
                 let resultType = createFreshTypeVariable "bop"
+
+                    // must match expected scheme
                 let! arrowSubst =
                     unify
                         (leftAnnex.Type ^=> rightAnnex.Type ^=> resultType)
                         binOpMap[bop.Operator]
                 let typ = Type.apply arrowSubst resultType
+
+                    // gather results
                 let annex =
                     BinaryOperationExpr {
                         Operator = bop.Operator
@@ -219,16 +233,23 @@ module Infer =   // to-do: replace with constraint-based inference
                     annex
             }
 
+        /// Infers the type of an annotation expression.
         let private inferAnnotation env ann =
             result {
+                    // infer acutal sub-expression type
                 let! exprSubst, exprAnnex =
                     infer env ann.Expression
+
+                    // must match annotated type
                 let! typeSubst = unify exprAnnex.Type ann.Type
+
+                    // gather results
                 return
                     exprSubst ++ typeSubst,
                     exprAnnex
             }
 
+    /// Infers the type of the given expression.
     let inferExpression expr =
         expr
             |> Expression.infer TypeEnvironment.empty

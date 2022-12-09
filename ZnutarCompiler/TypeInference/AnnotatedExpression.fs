@@ -2,6 +2,7 @@
 
 open Znutar
 
+/// An expression annotated with its inferred type.
 [<System.Diagnostics.DebuggerDisplay("{Unparse()}")>]
 type AnnotatedExpression =
     | VariableExpr of AnnotatedVariable
