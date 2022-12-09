@@ -6,7 +6,7 @@ module Program =
     result {
         let text =
             """
-            let rec factorial = fun n ->
+            let rec factorial n =
                 if n = 0 then 1
                 else n * factorial (n - 1) in
             factorial 6
