@@ -112,6 +112,10 @@ module Expression =
                 | Minus -> SyntaxKind.SubtractExpression
                 | Times -> SyntaxKind.MultiplyExpression
                 | Equals -> SyntaxKind.EqualsExpression
+                | GreaterThan -> SyntaxKind.GreaterThanExpression
+                | LessThan -> SyntaxKind.LessThanExpression
+                | Divide -> SyntaxKind.DivideExpression
+                | Modulo -> SyntaxKind.ModuloExpression
         result {
             let! leftStmtNodes, leftExprNode = transpileExpr bop.Left
             let! rightStmtNodes, rightExprNode = transpileExpr bop.Right

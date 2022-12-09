@@ -36,6 +36,10 @@ module Infer =   // to-do: replace with constraint-based inference
             Minus, Type.int ^=> Type.int ^=> Type.int
             Times, Type.int ^=> Type.int ^=> Type.int
             Equals, Type.int ^=> Type.int ^=> Type.bool   // to-do: make polymorphic
+            LessThan, Type.int ^=> Type.int ^=> Type.bool
+            GreaterThan, Type.int ^=> Type.int ^=> Type.bool
+            Divide, Type.int ^=> Type.int ^=> Type.int
+            Modulo, Type.int ^=> Type.int ^=> Type.int
         ]
 
     module private rec Expression =

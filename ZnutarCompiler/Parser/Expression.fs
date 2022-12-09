@@ -125,6 +125,10 @@ module Expression =
                 "-", Minus
                 "*", Times
                 "=", Equals
+                ">", GreaterThan
+                "<", LessThan
+                "/", Divide
+                "%", Modulo
             ]
                 |> List.map create
                 |> choice

@@ -60,6 +60,22 @@ type CompilerTests() =
         Assert.AreEqual(Ok "720", run text)
 
     [<TestMethod>]
+    member _.GreatestCommonDivisor() =
+        let text =
+            """
+            let abs = fun x ->
+                if x > 0 then x
+                else 0 - x in
+            
+            let rec gcd = fun a -> fun b ->
+                if b = 0 then abs a
+                else gcd b (a % b) in
+ 
+            gcd 400 600
+            """
+        Assert.AreEqual(Ok "200", run text)
+
+    [<TestMethod>]
     member _.Identity() =
         let text =
             """

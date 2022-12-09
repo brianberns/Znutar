@@ -7,7 +7,9 @@ type Literal =
 
 /// Binary operator.
 type BinaryOperator =
-    | Plus | Minus | Times | Equals
+    | Plus | Minus | Times
+    | Equals | GreaterThan | LessThan
+    | Divide | Modulo
 
 module BinaryOperator =
 
@@ -16,6 +18,10 @@ module BinaryOperator =
         | Minus -> "-"
         | Times -> "*"
         | Equals -> "="
+        | GreaterThan -> ">"
+        | LessThan -> "<"
+        | Divide -> "/"
+        | Modulo -> "%"
 
 [<System.Diagnostics.DebuggerDisplay("{Unparse()}")>]
 type Expression =
