@@ -36,7 +36,7 @@ module Expression =
         | IfExpr iff -> transpileIf iff
         | BinaryOperationExpr bop -> transpileBinaryOperation bop
         | LiteralExpr lit -> transpileLiteral lit
-        // | LambdaExpr lam -> cerror (Unsupported "Unannotated lambda")
+        | LambdaExpr lam -> transpileLambda lam
 
     and private transpileApplication app =
         app
@@ -127,6 +127,35 @@ module Expression =
                     rightExprNode)
             return stmtNodes, exprNode
         }
+
+    /// Converts an anonymous lambda to a named lambda, then
+    /// transpiles it into a function.
+    /// From: fun x -> x
+    /// To:   let lambda = (fun x -> x) in lambda
+    and private transpileLambda lam =
+        let ident = Identifier.create "anonymous"
+        let scheme =
+            let typeVars =
+                Type.freeTypeVariables lam.Type
+                    |> Set.toList
+            {
+                TypeVariables = typeVars
+                Type = lam.Type
+            }
+        let var =
+            {
+                Identifier = ident
+                Type = lam.Type
+            }
+        let expr =
+            LetExpr {
+                Identifier = ident
+                Scheme = scheme
+                Argument = LambdaExpr lam
+                Body = VariableExpr var
+                Type = lam.Type
+            }
+        transpileExpr expr
 
     let transpile expr =
         result {

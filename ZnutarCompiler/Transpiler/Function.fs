@@ -99,7 +99,7 @@ module Function =
     let transpile (transpileExpr : ExpressionTranspiler) func =
         result {
             let! parmTypes, returnType = getSignature func
-            if parmTypes.Length = func.Parameters.Length then
+            if parmTypes.Length = func.Parameters.Length then   // to-do: prevent earlier - this should be impossible
 
                     // create parameters
                 let parmNodes =

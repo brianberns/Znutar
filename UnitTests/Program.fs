@@ -6,11 +6,7 @@ module Program =
     result {
         let text =
             """
-            let factorial = fun n ->
-                if n = 0 then 1
-                else n * factorial (n - 1) in
-
-            factorial 6
+            (fun x -> fun y -> x) 1 true
             """
         let assemblyName = "Test"
         do! Transpiler.transpile assemblyName text

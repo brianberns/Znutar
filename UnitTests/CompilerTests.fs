@@ -80,3 +80,21 @@ type CompilerTests() =
             const false 6
             """
         Assert.AreEqual(Ok "False", run text)
+
+    [<TestMethod>]
+    member _.AnonymousLambda1() =
+
+        let text =
+            """
+            fun x -> fun y -> x
+            """
+        Assert.AreEqual(Ok "1", run text)
+
+    [<TestMethod>]
+    member _.AnonymousLambda2() =
+
+        let text =
+            """
+            (fun x -> fun y -> x) 1 true
+            """
+        Assert.AreEqual(Ok "1", run text)
