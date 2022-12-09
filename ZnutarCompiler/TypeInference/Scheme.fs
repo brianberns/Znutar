@@ -38,6 +38,9 @@ module Scheme =
         Type.freeTypeVariables scheme.Type
             - set scheme.TypeVariables
 
+type UnboundVariable = UnboundVariable of Identifier
+    with interface ICompilerError
+
 type private TypeEnvironment = Map<Identifier, Scheme>
 
 module private TypeEnvironment =
