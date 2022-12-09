@@ -10,7 +10,6 @@ type AnnotatedExpression =
     | LetExpr of AnnotatedLetBinding
     | LiteralExpr of Literal
     | IfExpr of AnnotatedIf
-    | FixExpr of AnnotatedFix
     | BinaryOperationExpr of AnnotatedBinaryOperation
 
     with
@@ -25,7 +24,6 @@ type AnnotatedExpression =
             | LiteralExpr (IntLiteral n) -> Type.int
             | LiteralExpr (BoolLiteral b) -> Type.bool
             | IfExpr iff -> iff.Type
-            | FixExpr fix -> fix.Type
             | BinaryOperationExpr bop -> bop.Type
 
     member annex.Unparse() =
@@ -48,8 +46,6 @@ type AnnotatedExpression =
                 $"(if {iff.Condition.Unparse()} \
                     then {iff.TrueBranch.Unparse()} \
                     else {iff.FalseBranch.Unparse()})"
-            | FixExpr fix ->
-                $"(fix {fix.Expression.Unparse()})"
             | BinaryOperationExpr bop ->
                 $"({bop.Left.Unparse()} \
                     {BinaryOperator.unparse bop.Operator} \
@@ -107,14 +103,6 @@ and AnnotatedIf =
         FalseBranch : AnnotatedExpression
 
         /// Result type. E.g. ((if flag then 1 else 0) : int).
-        Type : Type
-    }
-
-and AnnotatedFix =
-    {
-        Expression : AnnotatedExpression
-
-        /// Result type. E.g. ((fix f) : int -> int).
         Type : Type
     }
 

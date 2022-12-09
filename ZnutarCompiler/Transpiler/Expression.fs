@@ -34,7 +34,6 @@ module Expression =
         | ApplicationExpr app -> transpileApplication app
         | LetExpr letb -> transpileLet letb
         | IfExpr iff -> transpileIf iff
-        // | FixExpr expr -> transpileFix venv expr
         | BinaryOperationExpr bop -> transpileBinaryOperation bop
         | LiteralExpr lit -> transpileLiteral lit
         // | LambdaExpr lam -> cerror (Unsupported "Unannotated lambda")
@@ -128,24 +127,6 @@ module Expression =
                     rightExprNode)
             return stmtNodes, exprNode
         }
-
-    (*
-    and transpileFix venv expr =
-        result {
-
-            let! exprNode, _ = transpile venv expr
-
-            let node =
-                InvocationExpression(
-                    IdentifierName("Fix"))
-                    .WithArgumentList(
-                        ArgumentList(
-                            SingletonSeparatedList(
-                                Argument(exprNode))))
-
-            return node, venv
-        }
-*)
 
     let transpile expr =
         result {

@@ -59,12 +59,6 @@ module Expression =
             }
         }
 
-    let private parseFix =
-        parse {
-            do! skipString "fix" >>. spaces
-            return! parseExpression
-        }
-
     let private parseAnnotation =
         parse {
             let! expr = parseExpression
@@ -88,7 +82,6 @@ module Expression =
             parseLetBinding |>> LetExpr
             parseLiteral |>> LiteralExpr
             parseIf |>> IfExpr
-            parseFix |>> FixExpr
             parseAnnotation |>> AnnotationExpr
             parseParenExpression
         ]

@@ -25,7 +25,6 @@ type Expression =
     | LetExpr of LetBinding
     | LiteralExpr of Literal
     | IfExpr of If
-    | FixExpr of Expression   // to-do: support mutually recursive functions (e.g. even/odd)
     | BinaryOperationExpr of BinaryOperation
     | AnnotationExpr of Annotation
 
@@ -50,8 +49,6 @@ type Expression =
                 $"(if {iff.Condition.Unparse()} \
                     then {iff.TrueBranch.Unparse()} \
                     else {iff.FalseBranch.Unparse()})"
-            | FixExpr expr ->
-                $"(fix {expr.Unparse()})"
             | BinaryOperationExpr bop ->
                 $"({bop.Left.Unparse()} \
                     {BinaryOperator.unparse bop.Operator} \

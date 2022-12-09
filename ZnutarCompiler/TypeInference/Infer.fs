@@ -49,7 +49,6 @@ module Infer =   // to-do: replace with constraint-based inference
             | Expression.ApplicationExpr app -> inferApplication env app
             | Expression.LetExpr letb -> inferLet env letb
             | Expression.IfExpr iff -> inferIf env iff
-            | Expression.FixExpr expr -> inferFix env expr
             | Expression.BinaryOperationExpr bop ->
                 inferBinaryOperation env bop
             | Expression.LiteralExpr lit ->
@@ -179,22 +178,6 @@ module Infer =   // to-do: replace with constraint-based inference
                     condSubst ++ trueSubst ++ falseSubst
                         ++ condSubst' ++ branchSubst,
                     annex
-            }
-
-        let private inferFix env expr =
-            result {
-                let! exprSubst, exprAnnex =
-                    infer env expr
-                let freshType = createFreshTypeVariable "fix"
-                let! arrowSubst =
-                    unify (freshType ^=> freshType) exprAnnex.Type
-                let typ = Type.apply exprSubst freshType
-                let annex =
-                    FixExpr {
-                        Expression = exprAnnex
-                        Type = exprAnnex.Type
-                    }
-                return arrowSubst, annex
             }
 
         let private inferBinaryOperation env bop =

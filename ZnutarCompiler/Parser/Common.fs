@@ -44,7 +44,6 @@ module private Identifier =
             "if"
             "then"
             "else"
-            "fix"
         ]
 
     let parse : Parser<_, unit> =

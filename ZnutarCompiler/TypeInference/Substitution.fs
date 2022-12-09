@@ -106,7 +106,6 @@ module Substitution =
                     TrueBranch = apply subst iff.TrueBranch
                     FalseBranch = apply subst iff.FalseBranch
                 }
-            | FixExpr expr -> FixExpr (apply subst expr)
             | BinaryOperationExpr bop ->
                 BinaryOperationExpr {
                     bop with

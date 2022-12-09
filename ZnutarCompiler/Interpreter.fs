@@ -99,25 +99,6 @@ module Interpreter =   // to-do: move to separate project
                         | _ ->
                             return! cerror (InvalidConditionValue condVal)
 
-                    // fix f = \x -> f (fix f) x
-                    // https://en.wikipedia.org/wiki/Fixed-point_combinator#Strict_functional_implementation
-                | FixExpr f ->
-                    let lamExpr =
-                        let ident = Identifier.create "$x"
-                        LambdaExpr {
-                            Identifier = ident
-                            Body =
-                                ApplicationExpr {
-                                    Function =
-                                        ApplicationExpr {
-                                            Function = f
-                                            Argument = FixExpr f
-                                        }
-                                    Argument = VariableExpr ident
-                                }
-                        }
-                    return! evalExpr env lamExpr
-
                 | AnnotationExpr ann ->
                     return! evalExpr env ann.Expression
         }

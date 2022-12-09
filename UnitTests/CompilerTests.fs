@@ -45,11 +45,10 @@ type CompilerTests() =
     member _.Factorial() =
         let text =
             """
-            let factorial = fix (fun fact -> fun n ->
+            let factorial = fun n ->
                 if n = 0 then 1
-                else n * fact (n - 1)) in
-
-           factorial 6
+                else n * factorial (n - 1) in
+            factorial 6
             """
         Assert.AreEqual(Ok "720", run text)
 
