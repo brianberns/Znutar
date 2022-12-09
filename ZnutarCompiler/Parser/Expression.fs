@@ -22,21 +22,33 @@ module Expression =
             }
         }
 
+    /// From: let f arg0 arg1 = binding in body
+    /// To:   let f = fun arg0 -> fun arg1 -> binding in body
     let private parseLetBinding =
         parse {
+
             do! skipString "let" >>. spaces
             let! recurisive =
                 opt (skipString "rec" .>> spaces)
                     |>> Option.isSome
-            let! ident = Identifier.parse
-            do! spaces >>. skipChar '=' >>. spaces
-            let! arg = parseExpression
+            let! ident = Identifier.parse .>> spaces
+            let! argIdents = many (Identifier.parse .>> spaces)
+            do! skipChar '=' >>. spaces
+            let! binding = parseExpression
             do! spaces >>. skipString "in" >>. spaces
             let! body = parseExpression
+
+            let binding' =
+                (argIdents, binding)
+                    ||> Seq.foldBack (fun argIdent acc ->
+                        LambdaExpr {
+                            Identifier = argIdent
+                            Body = acc
+                        })
             return {
                 Recursive = recurisive
                 Identifier = ident
-                Argument = arg
+                Argument = binding'
                 Body = body
             }
         }

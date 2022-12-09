@@ -36,7 +36,7 @@ type CompilerTests() =
     member _.Plus1() =
         let text =
             """
-            let plus1 = fun x -> x + 1 in
+            let plus1 x = x + 1 in
             plus1 5
             """
         Assert.AreEqual(Ok "6", run text)
@@ -52,7 +52,7 @@ type CompilerTests() =
     member _.Factorial() =
         let text =
             """
-            let rec factorial = fun n ->
+            let rec factorial n =
                 if n = 0 then 1
                 else n * factorial (n - 1) in
             factorial 6
@@ -63,11 +63,11 @@ type CompilerTests() =
     member _.GreatestCommonDivisor() =
         let text =
             """
-            let abs = fun x ->
+            let abs x =
                 if x > 0 then x
                 else 0 - x in
             
-            let rec gcd = fun a -> fun b ->
+            let rec gcd a b =
                 if b = 0 then abs a
                 else gcd b (a % b) in
  
@@ -79,7 +79,7 @@ type CompilerTests() =
     member _.Identity() =
         let text =
             """
-            let id = fun x -> x in
+            let id x = x in
             id true
             """
         Assert.AreEqual(Ok "True", run text)
@@ -88,7 +88,7 @@ type CompilerTests() =
     member _.Identity2() =
         let text =
             """
-            let id = fun x -> x in
+            let id x = x in
             let value = id 0 in
             if value = 0 then id true
             else id false
@@ -99,7 +99,7 @@ type CompilerTests() =
     member _.Const() =
         let text =
             """
-            let const = fun x -> fun y -> x in
+            let const x y = x in
             const false 6
             """
         Assert.AreEqual(Ok "False", run text)
