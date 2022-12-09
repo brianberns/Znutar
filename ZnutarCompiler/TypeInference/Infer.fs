@@ -128,21 +128,31 @@ module Infer =   // to-do: replace with constraint-based inference
         /// Infers the type of a let binding.
         let private inferLet env letb =
             result {
-                    // infer argument type
+
+                    // add placeholder argument type in case of recursion
+                    // e.g. let f = arg_refers_to_f
+                let env' =
+                    let scheme =
+                        createFreshTypeVariable "arg"
+                            |> generalize env
+                    TypeEnvironment.add
+                        letb.Identifier scheme env   // to-do: allow mutual recursion
+
+                    // infer actual argument type
                 let! argSubst, argAnnex =
-                    infer env letb.Argument
-                let env' = TypeEnvironment.apply argSubst env
+                    infer env' letb.Argument
+                let env'' = TypeEnvironment.apply argSubst env'
 
                     // generalize argument ("let polymorphism")
                     // e.g. let id = fun x -> x in ...
-                let scheme = generalize env' argAnnex.Type
+                let scheme = generalize env'' argAnnex.Type
 
                     // infer body type using argument type
                 let! bodySubst, bodyAnnex =
-                    let env'' =
+                    let env''' =
                         TypeEnvironment.add
-                            letb.Identifier scheme env'
-                    infer env'' letb.Body
+                            letb.Identifier scheme env''
+                    infer env''' letb.Body
 
                     // gather result
                 let annex =
@@ -186,12 +196,12 @@ module Infer =   // to-do: replace with constraint-based inference
                     infer env bop.Left
                 let! rightSubst, rightAnnex =
                     infer env bop.Right
-                let freshType = createFreshTypeVariable "bop"
+                let resultType = createFreshTypeVariable "bop"
                 let! arrowSubst =
                     unify
-                        (leftAnnex.Type ^=> rightAnnex.Type ^=> freshType)
+                        (leftAnnex.Type ^=> rightAnnex.Type ^=> resultType)
                         binOpMap[bop.Operator]
-                let typ = Type.apply arrowSubst freshType
+                let typ = Type.apply arrowSubst resultType
                 let annex =
                     BinaryOperationExpr {
                         Operator = bop.Operator

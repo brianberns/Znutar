@@ -42,6 +42,13 @@ type CompilerTests() =
         Assert.AreEqual(Ok "6", run text)
 
     [<TestMethod>]
+    member _.InfiniteRecursion() =
+        let text = "let x = x in 0"
+        let actual = run text
+        printfn "%A" actual
+        Assert.IsTrue(Result.isError actual)
+
+    [<TestMethod>]
     member _.Factorial() =
         let text =
             """
