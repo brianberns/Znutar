@@ -128,7 +128,6 @@ module Infer =   // to-do: replace with constraint-based inference
         /// Infers the type of a let binding.
         let private inferLet env letb =
             result {
-
                     // add placeholder argument type in case of recursion
                     // e.g. let f = arg_refers_to_f
                 let env' =
