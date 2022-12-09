@@ -6,7 +6,7 @@ module Program =
     result {
         let text =
             """
-            (fun x -> fun y -> x) 1 true
+            fun x -> x + 1
             """
         let assemblyName = "Test"
         do! Transpiler.transpile assemblyName text

@@ -82,19 +82,13 @@ type CompilerTests() =
         Assert.AreEqual(Ok "False", run text)
 
     [<TestMethod>]
-    member _.AnonymousLambda1() =
-
-        let text =
-            """
-            fun x -> fun y -> x
-            """
+    member _.AnonymousLambda() =
+        let text = "(fun x -> fun y -> x) 1 true"
         Assert.AreEqual(Ok "1", run text)
 
     [<TestMethod>]
-    member _.AnonymousLambda2() =
-
-        let text =
-            """
-            (fun x -> fun y -> x) 1 true
-            """
-        Assert.AreEqual(Ok "1", run text)
+    member _.AnonymousLambdaInvalid() =
+        let text = "fun x -> fun y -> x"
+        Assert.AreEqual(
+            cerror (Unsupported "Invalid program type"),
+            run text)

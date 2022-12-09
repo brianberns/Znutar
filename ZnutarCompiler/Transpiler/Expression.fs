@@ -157,22 +157,26 @@ module Expression =
             }
         transpileExpr expr
 
-    let transpile expr =
+    let transpile (expr : AnnotatedExpression) =
         result {
-            let! mainStmtNodes, mainExprNode =
-                transpileExpr expr
-
             let typeNode = Type.transpile expr.Type
-            let stmts =
-                [|
-                    yield! mainStmtNodes
-                    yield ReturnStatement(mainExprNode)
-                |]
-            return MethodDeclaration(
-                returnType = typeNode,
-                identifier = "main")
-                .AddModifiers(
-                    Token(SyntaxKind.StaticKeyword))
-                .WithBody(
-                    Block(stmts))
+            if typeNode.IsKind(SyntaxKind.PredefinedType) then
+
+                let! mainStmtNodes, mainExprNode =
+                    transpileExpr expr
+
+                let stmts =
+                    [|
+                        yield! mainStmtNodes
+                        yield ReturnStatement(mainExprNode)
+                    |]
+                return MethodDeclaration(
+                    returnType = typeNode,
+                    identifier = "main")
+                    .AddModifiers(
+                        Token(SyntaxKind.StaticKeyword))
+                    .WithBody(
+                        Block(stmts))
+            else
+                return! cerror (Unsupported "Invalid program type")
         }
