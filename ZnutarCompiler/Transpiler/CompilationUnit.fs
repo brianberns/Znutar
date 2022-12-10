@@ -9,7 +9,7 @@ module CompilationUnit =
     (*
         static void Main()
         {
-            System.Console.Write($node);
+            System.Console.Write(Expression());
         }
     *)
     let private mainMethod =
@@ -35,9 +35,9 @@ module CompilationUnit =
                                 ArgumentList(
                                     SingletonSeparatedList(
                                         Argument(InvocationExpression(
-                                            IdentifierName("main")))))))))
+                                            IdentifierName("Expression")))))))))
 
-    let create assemblyName memberNode =
+    let create assemblyName exprNode =
         let classNode =
             ClassDeclaration($"{assemblyName}Type")
                 .AddModifiers(
@@ -46,7 +46,7 @@ module CompilationUnit =
                     [|
                         mainMethod
                             :> Syntax.MemberDeclarationSyntax
-                        memberNode
+                        exprNode
                     |])
         let namespaceNode =
             NamespaceDeclaration(

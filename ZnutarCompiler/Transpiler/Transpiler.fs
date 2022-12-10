@@ -14,12 +14,12 @@ open Znutar.TypeInference
 
 module Transpiler =
 
-    let private transpileWithMember assemblyName memberNode =
+    let private transpileNode assemblyName exprNode =
 
         let emitResult =
 
             let compilationUnit, mainTypeName =
-                CompilationUnit.create assemblyName memberNode
+                CompilationUnit.create assemblyName exprNode
 #if DEBUG
             printfn "%A" <| compilationUnit.NormalizeWhitespace()
 #endif
@@ -59,9 +59,6 @@ module Transpiler =
         result {
             let! expr = Parser.run Expression.parse text
             let! expr' = Infer.inferExpression expr
-            let! methodNode = Expression.transpile expr'
-            do!
-                transpileWithMember
-                    assemblyName
-                    methodNode
+            let! exprNode = Expression.transpile expr'
+            do! transpileNode assemblyName exprNode
         }
