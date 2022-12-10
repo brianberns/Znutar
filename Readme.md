@@ -4,6 +4,8 @@ Znutar is a functional language for the .NET platform.
 
 ## Goals
 
+This is a hobby project, so take the following with large grains of salt.
+
 ### Short term
 
 * Integrate into the .NET ecosystem cleanly. Build Znutar projects from Visual Studio, Visual Studio Code, or the `dotnet` command line.
