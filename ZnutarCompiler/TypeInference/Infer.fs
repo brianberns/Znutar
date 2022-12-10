@@ -133,7 +133,7 @@ module Infer =   // to-do: replace with constraint-based inference
         let private inferLet env letb =
             result {
                     // add placeholder argument type in case of recursion?
-                    // e.g. let f = arg_refers_to_f
+                    // e.g. let rec f = arg_refers_to_f in ...
                 let env' =
                     if letb.Recursive then
                         let scheme =
