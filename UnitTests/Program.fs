@@ -12,6 +12,6 @@ module Program =
             factorial 6
             """
         let assemblyName = "Test"
-        do! Transpiler.transpile assemblyName text
+        do! Compiler.compile assemblyName text
         return! Process.run assemblyName
     } |> printfn "%A"

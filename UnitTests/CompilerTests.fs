@@ -11,7 +11,7 @@ type CompilerTests() =
     let run text =
         let assemblyName = "Test"
         result {
-            do! Transpiler.transpile assemblyName text
+            do! Compiler.compile assemblyName text
             return! Process.run assemblyName
         }
 

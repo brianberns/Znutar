@@ -9,10 +9,10 @@ module CompilationUnit =
     (*
         static void Main()
         {
-            System.Console.Write(Expression());
+            System.Console.Write($exprNode);
         }
     *)
-    let private mainMethod =
+    let private mainMethod (exprNode : Syntax.MethodDeclarationSyntax) =
         MethodDeclaration(
             returnType =
                 PredefinedType(
@@ -35,16 +35,16 @@ module CompilationUnit =
                                 ArgumentList(
                                     SingletonSeparatedList(
                                         Argument(InvocationExpression(
-                                            IdentifierName("Expression")))))))))
+                                            IdentifierName(exprNode.Identifier)))))))))
 
-    let create assemblyName exprNode =
+    let create assemblyName (exprNode : Syntax.MethodDeclarationSyntax) =
         let classNode =
             ClassDeclaration($"{assemblyName}Type")
                 .AddModifiers(
                     Token(SyntaxKind.StaticKeyword))
                 .AddMembers(
                     [|
-                        mainMethod
+                        mainMethod exprNode
                             :> Syntax.MemberDeclarationSyntax
                         exprNode
                     |])

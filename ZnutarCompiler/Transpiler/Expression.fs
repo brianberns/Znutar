@@ -29,7 +29,7 @@ module Expression =
                     LiteralExpression(kind)
         Ok ([], node)
 
-    let rec private transpileExpr = function
+    let rec transpile = function
         | VariableExpr var -> transpileIdentifier var.Identifier
         | ApplicationExpr app -> transpileApplication app
         | LetExpr letb -> transpileLet letb
@@ -41,7 +41,7 @@ module Expression =
     and private transpileApplication app =
         app
             |> FunctionCall.create
-            |> FunctionCall.transpile transpileExpr
+            |> FunctionCall.transpile transpile
 
     and private transpileLet letb =
         match Function.tryCreate letb with
@@ -66,8 +66,8 @@ module Expression =
     and private transpileLetRaw letb =
         result {
             let typeNode = Type.transpile letb.Argument.Type
-            let! argStmtNodes, argExprNode = transpileExpr letb.Argument   // argStmtNodes: int x = 1, argExprNode: 2 * x
-            let! bodyStmtNodes, bodyExprNode = transpileExpr letb.Body     // bodyStmtNodes: int z = 3, bodyExprNode: y + z
+            let! argStmtNodes, argExprNode = transpile letb.Argument   // argStmtNodes: int x = 1, argExprNode: 2 * x
+            let! bodyStmtNodes, bodyExprNode = transpile letb.Body     // bodyStmtNodes: int z = 3, bodyExprNode: y + z
             let stmtNode : Syntax.StatementSyntax =                        // stmtNode: int y = 2 * x
                 LocalDeclarationStatement(
                     VariableDeclaration(typeNode)
@@ -88,14 +88,14 @@ module Expression =
         }
 
     and private transpileFunction func =
-        Function.transpile transpileExpr func
+        Function.transpile transpile func
 
     and transpileIf iff =
         result {
 
-            let! condStmtNodes, condExprNode = transpileExpr iff.Condition
-            let! trueStmtNodes, trueExprNode = transpileExpr iff.TrueBranch
-            let! falseStmtNodes, falseExprNode = transpileExpr iff.FalseBranch
+            let! condStmtNodes, condExprNode = transpile iff.Condition
+            let! trueStmtNodes, trueExprNode = transpile iff.TrueBranch
+            let! falseStmtNodes, falseExprNode = transpile iff.FalseBranch
 
             let ifStmtNodes =
                 condStmtNodes @ trueStmtNodes @ falseStmtNodes
@@ -117,8 +117,8 @@ module Expression =
                 | Divide -> SyntaxKind.DivideExpression
                 | Modulo -> SyntaxKind.ModuloExpression
         result {
-            let! leftStmtNodes, leftExprNode = transpileExpr bop.Left
-            let! rightStmtNodes, rightExprNode = transpileExpr bop.Right
+            let! leftStmtNodes, leftExprNode = transpile bop.Left
+            let! rightStmtNodes, rightExprNode = transpile bop.Right
             let stmtNodes =
                 [
                     yield! leftStmtNodes
@@ -159,28 +159,4 @@ module Expression =
                 Body = VariableExpr var
                 Type = lam.Type
             }
-        transpileExpr expr
-
-    let transpile (expr : AnnotatedExpression) =
-        result {
-            let typeNode = Type.transpile expr.Type
-            if typeNode.IsKind(SyntaxKind.PredefinedType) then
-
-                let! mainStmtNodes, mainExprNode =
-                    transpileExpr expr
-
-                let stmts =
-                    [|
-                        yield! mainStmtNodes
-                        yield ReturnStatement(mainExprNode)
-                    |]
-                return MethodDeclaration(
-                    returnType = typeNode,
-                    identifier = "main")
-                    .AddModifiers(
-                        Token(SyntaxKind.StaticKeyword))
-                    .WithBody(
-                        Block(stmts))
-            else
-                return! cerror (Unsupported "Invalid program type")
-        }
+        transpile expr

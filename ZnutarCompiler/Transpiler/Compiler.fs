@@ -5,6 +5,7 @@ open System.Reflection
 
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
+open type SyntaxFactory
 
 open Basic.Reference.Assemblies
 
@@ -12,9 +13,35 @@ open Znutar
 open Znutar.Parser
 open Znutar.TypeInference
 
-module Transpiler =
+module Compiler =
 
-    let private transpileNode assemblyName exprNode =
+    /// Creates a method node for the given expression.
+    let private transpile (expr : AnnotatedExpression) =
+        result {
+            let typeNode = Type.transpile expr.Type
+            if typeNode.IsKind(SyntaxKind.PredefinedType) then
+
+                let! mainStmtNodes, mainExprNode =
+                    Expression.transpile expr
+
+                let stmts =
+                    [|
+                        yield! mainStmtNodes
+                        yield ReturnStatement(mainExprNode)
+                    |]
+                return MethodDeclaration(
+                    returnType = typeNode,
+                    identifier = "Expression")
+                    .AddModifiers(
+                        Token(SyntaxKind.StaticKeyword))
+                    .WithBody(
+                        Block(stmts))
+            else
+                return! cerror (Unsupported "Invalid program type")
+        }
+
+    /// Compiles the given node into an assembly.
+    let private compileNode assemblyName exprNode =
 
         let emitResult =
 
@@ -55,10 +82,17 @@ module Transpiler =
                     |> cerror
         }
 
-    let transpile assemblyName text =
+    /// Compiles the given text into an an assembly.
+    let compile assemblyName text =
         result {
+
+                // parse the text
             let! expr = Parser.run Expression.parse text
+
+                // infer types of the resulting syntax tree
             let! expr' = Infer.inferExpression expr
-            let! exprNode = Expression.transpile expr'
-            do! transpileNode assemblyName exprNode
+
+                // compile tree into an assembly
+            let! exprNode = transpile expr'
+            do! compileNode assemblyName exprNode
         }
