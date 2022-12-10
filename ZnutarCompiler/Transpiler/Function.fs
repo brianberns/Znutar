@@ -13,6 +13,9 @@ type ExpressionTranspiler =
             List<Syntax.StatementSyntax> * Syntax.ExpressionSyntax,
             ICompilerError>
 
+type InternalError = InternalError of string
+    with interface ICompilerError
+
 /// A function definition.
 /// E.g. let const x y = x in next.
 type Function =
@@ -72,7 +75,7 @@ module Function =
         match List.rev types with
             | [] | [_] ->
                 cerror (
-                    Unsupported $"Invalid function type: \
+                    InternalError $"Invalid function type: \
                         {func.Scheme.Type.Unparse()}")
             | returnType :: parmTypesRev ->
                 Ok (List.rev parmTypesRev, returnType)
@@ -141,7 +144,8 @@ module Function =
                     ]
                 return stmtNodes, nextExprNode
             else
-                return! cerror (Unsupported "Function arity mismatch")
+                return! cerror (
+                    InternalError "Function arity mismatch")
         }
 
 type FunctionCall =

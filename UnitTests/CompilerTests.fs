@@ -112,6 +112,4 @@ type CompilerTests() =
     [<TestMethod>]
     member _.AnonymousLambdaInvalid() =
         let text = "fun x -> fun y -> x"
-        Assert.AreEqual(
-            cerror (Unsupported "Invalid program type"),
-            run text)
+        Assert.IsTrue(run text |> Result.isError)

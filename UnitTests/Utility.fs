@@ -39,4 +39,6 @@ module Process =
                     .ReadToEnd()
                     .Replace("\r", "")
             }
-        with exn -> cerror (Unsupported exn.Message)
+        with exn ->
+            cerror (
+                Znutar.Transpiler.InternalError exn.Message)
