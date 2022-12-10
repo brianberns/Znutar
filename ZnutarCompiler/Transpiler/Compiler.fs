@@ -85,7 +85,6 @@ module Compiler =
     /// Compiles the given text into an an assembly.
     let compile assemblyName text =
         result {
-
                 // parse the text
             let! expr = Parser.run Expression.parse text
 
