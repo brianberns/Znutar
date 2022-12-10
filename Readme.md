@@ -17,6 +17,8 @@ This is a hobby project, so take the following with large grains of salt.
 * Provide an alternative to F#. There's room for more than one functional language in .NET!
 * Explore the possibility of type classes, higher-kinded types, and other powerful functional concepts.
 
-## Where does the name come from?
+## Frequently asked questions
 
-[🆉🅽](http://www.sjgames.com/awfulgreen/)
+Q. Where does the name come from?
+
+A. [🆉🅽](http://www.sjgames.com/awfulgreen/)
