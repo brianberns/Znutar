@@ -8,6 +8,7 @@ type Identifier =
 
 module Identifier =
 
+    /// Creates an identifier with the given name.
     let create name =
         { Name = name }
 
@@ -16,9 +17,11 @@ type TypeVariable = Identifier
 
 module TypeVariable =
 
+    /// Creates a type variable with the given name.
     let create name : TypeVariable =
         { Name = name }
 
+    /// Unparses the given type variable.
     let unparse tv =
         $"'{tv.Name}"   // apostrophe is implicit
 
@@ -36,6 +39,8 @@ type Type =
     | TypeArrow of Type * Type
 
     with
+
+    /// Unparses the given type.
     member typ.Unparse() =
         match typ with
             | TypeConstant ident -> ident.Name
@@ -50,13 +55,20 @@ type Type =
 
 module Type =
 
+    /// Unparses the given type.
     let unparse (typ : Type) =
         typ.Unparse()
 
+    /// Creates a type variable with the given name.
     let variable = Identifier.create >> TypeVariable
+
+    /// Creates a type constant with the given name.
     let constant = Identifier.create >> TypeConstant
 
+    /// Primitive integer type.
     let int = constant "int"
+
+    /// Primitive Boolean type.
     let bool = constant "bool"
 
     /// Free type variables in the given type.

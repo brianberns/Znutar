@@ -113,3 +113,8 @@ type CompilerTests() =
     member _.AnonymousLambdaInvalid() =
         let text = "fun x -> fun y -> x"
         Assert.IsTrue(run text |> Result.isError)
+
+    [<TestMethod>]
+    member _.CSharpKeyword() =
+        let text = "let class = 0 in class"
+        Assert.AreEqual(Ok "0", run text)

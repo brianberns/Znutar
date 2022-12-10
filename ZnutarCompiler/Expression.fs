@@ -13,6 +13,7 @@ type BinaryOperator =
 
 module BinaryOperator =
 
+    /// Unparses the given operator.
     let unparse = function
         | Plus -> "+"
         | Minus -> "-"
@@ -35,6 +36,8 @@ type Expression =
     | AnnotationExpr of Annotation
 
     with
+
+    /// Unparses the given expression.
     member expr.Unparse() =
         match expr with
             | VariableExpr ident ->
@@ -111,5 +114,6 @@ and Annotation =
 
 module Expression =
 
+    /// Unparses the given expression.
     let rec unparse (expr : Expression) =
         expr.Unparse()
