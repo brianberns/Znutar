@@ -12,11 +12,13 @@
 	<UsingTask TaskName="Znc"
 		AssemblyFile="..\Znutar.MSBuild\bin\Debug\Net7.0\Znutar.MSBuild.dll" />
 	<Target Name="CoreCompile">
-		<Znc OutputAssembly="@(IntermediateAssembly)" />
+		<Znc
+			OutputAssembly="@(IntermediateAssembly)"
+			Sources="@(Compile)" />
 	</Target>
 
     <ItemGroup>
-        <Compile Include="Factorial.zn" />
-    </ItemGroup>
+		<Compile Include="Factorial.zn" />
+	</ItemGroup>
 
 </Project>

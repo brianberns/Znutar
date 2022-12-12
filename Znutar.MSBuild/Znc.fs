@@ -1,5 +1,8 @@
 ﻿namespace Znutar.MSBuild
 
+open System
+open System.IO
+
 open Microsoft.Build.Utilities
 open Znutar.Transpiler
 
@@ -7,10 +10,21 @@ open Znutar.Transpiler
 type Znc() =
     inherit Task()
     member val OutputAssembly = "" with get, set
-    member val OutputRefAssembly = "" with get, set
+    member val Sources = "" with get, set
     override this.Execute() =
-        match Compiler.compile "Sample" this.OutputAssembly "1 + 1" with
-            | Ok () -> true
-            | Error err ->
-                printfn "%A" err
-                false
+        try
+            let assemblyName =
+                Path.GetFileNameWithoutExtension(this.Sources)
+            let result =
+                Compiler.compileFile
+                    assemblyName
+                    this.OutputAssembly
+                    this.Sources
+            match result with
+                | Ok () -> true
+                | Error err ->
+                    this.Log.LogError(string err)
+                    false
+        with exn ->
+            this.Log.LogError(exn.Message)
+            false

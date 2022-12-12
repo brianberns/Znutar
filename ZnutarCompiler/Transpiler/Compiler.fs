@@ -1,8 +1,5 @@
 ﻿namespace Znutar.Transpiler
 
-open System.IO
-open System.Reflection
-
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open type SyntaxFactory
@@ -50,9 +47,7 @@ module Compiler =
 
             let compilationUnit, mainTypeName =
                 CompilationUnit.create assemblyName exprNode
-#if DEBUG
-            printfn "%A" <| compilationUnit.NormalizeWhitespace()
-#endif
+
             let compilation =
                 let options =
                     CSharpCompilationOptions(OutputKind.ConsoleApplication)
