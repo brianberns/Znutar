@@ -1,8 +1,6 @@
 ﻿namespace Znutar.MSBuild
 
-open System
 open System.IO
-
 open Microsoft.Build.Utilities
 open Znutar.Transpiler
 
