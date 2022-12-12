@@ -24,10 +24,23 @@ type Assert private () =
 module Process =
 
     open System.Diagnostics
+    open System.IO
+    open System.Reflection
 
     let run assemblyName =
         try
             result {
+
+                let sourcePath =
+                    Path.Combine(
+                        Path.GetDirectoryName(
+                            Assembly.GetExecutingAssembly().Location),
+                        "App.runtimeconfig.json")
+                File.Copy(
+                    sourcePath,
+                    $"{assemblyName}.runtimeconfig.json",
+                    overwrite = true)
+
                 let psi =
                     ProcessStartInfo(
                         FileName = "dotnet",

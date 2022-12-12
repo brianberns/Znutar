@@ -44,9 +44,7 @@ type CompilerTests() =
     [<TestMethod>]
     member _.InfiniteRecursion() =
         let text = "let x = x in 0"
-        let actual = run text
-        printfn "%A" actual
-        Assert.IsTrue(Result.isError actual)
+        Assert.IsTrue(run text |> Result.isError)
 
     [<TestMethod>]
     member _.Factorial() =

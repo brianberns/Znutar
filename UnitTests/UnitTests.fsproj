@@ -8,6 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="App.runtimeconfig.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Compile Include="Utility.fs" />
     <Compile Include="ParserTests.fs" />
     <Compile Include="UnifyTests.fs" />
@@ -16,6 +19,8 @@
     <Compile Include="FuzzTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
+
+  <ItemGroup />
 
   <ItemGroup>
     <PackageReference Include="FsCheck" Version="2.16.5" />

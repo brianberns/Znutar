@@ -67,17 +67,7 @@ module Compiler =
             compilation.Emit(outputPath : string)
 
         result {
-            if emitResult.Success then
-                let sourcePath =
-                    Path.Combine(
-                        Path.GetDirectoryName(
-                            Assembly.GetExecutingAssembly().Location),
-                        "App.runtimeconfig.json")
-                File.Copy(
-                    sourcePath,
-                    $"{assemblyName}.runtimeconfig.json",
-                    overwrite = true)
-            else
+            if not emitResult.Success then
                 return! emitResult.Diagnostics
                     |> Seq.map string
                     |> String.concat "\n"
@@ -98,3 +88,9 @@ module Compiler =
             let! exprNode = transpile expr'
             do! compileNode assemblyName outputPath exprNode
         }
+
+    /// Compiles the given file into an an assembly.
+    let compileFile assemblyName outputPath (path : string) =
+        use rdr = new System.IO.StreamReader(path)
+        rdr.ReadToEnd()
+            |> compile assemblyName outputPath

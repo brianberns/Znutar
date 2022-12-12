@@ -5,9 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="App.runtimeconfig.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Compile Include="Result.fs" />
     <Compile Include="Type.fs" />
     <Compile Include="Expression.fs" />
