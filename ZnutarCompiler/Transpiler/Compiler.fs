@@ -44,7 +44,7 @@ module Compiler =
         }
 
     /// Compiles the given node into an assembly.
-    let private compileNode assemblyName exprNode =
+    let private compileNode assemblyName outputPath exprNode =
 
         let emitResult =
 
@@ -64,7 +64,7 @@ module Compiler =
                         Net60.References.SystemConsole)
                     .AddSyntaxTrees(compilationUnit.SyntaxTree)
                     .WithOptions(options)
-            compilation.Emit($"{assemblyName}.dll")
+            compilation.Emit(outputPath : string)
 
         result {
             if emitResult.Success then
@@ -86,7 +86,7 @@ module Compiler =
         }
 
     /// Compiles the given text into an an assembly.
-    let compile assemblyName text =
+    let compile assemblyName outputPath text =
         result {
                 // parse the text
             let! expr = Parser.run Expression.parse text
@@ -96,5 +96,5 @@ module Compiler =
 
                 // compile tree into an assembly
             let! exprNode = transpile expr'
-            do! compileNode assemblyName exprNode
+            do! compileNode assemblyName outputPath exprNode
         }
