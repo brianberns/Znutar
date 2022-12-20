@@ -1,15 +1,25 @@
 ﻿namespace Znutar.MSBuild
 
 open System.IO
+
 open Microsoft.Build.Utilities
+open Microsoft.Build.Framework
+
 open Znutar.Transpiler
 
 /// Znutar compiler task.
+/// See https://learn.microsoft.com/en-us/visualstudio/msbuild/tutorial-custom-task-code-generation.
 type Znc() =
     inherit Task()
+
+    [<Required>]
     member val OutputAssembly = "" with get, set
+
+    [<Required>]
     member val Sources = "" with get, set
+
     override this.Execute() =
+
         try
             let assemblyName =
                 Path.GetFileNameWithoutExtension(this.Sources)
@@ -19,10 +29,10 @@ type Znc() =
                     this.OutputAssembly
                     this.Sources
             match result with
-                | Ok () -> true
+                | Ok () -> ()
                 | Error err ->
                     this.Log.LogError(string err)
-                    false
         with exn ->
-            this.Log.LogError(exn.Message)
-            false
+            this.Log.LogErrorFromException(exn)
+
+        not this.Log.HasLoggedErrors
