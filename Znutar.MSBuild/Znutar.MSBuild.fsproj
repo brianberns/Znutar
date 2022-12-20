@@ -17,6 +17,8 @@
 
 	<ItemGroup>
 		<Compile Include="Znc.fs" />
+		<Content Include="Znutar.MSBuild.props" PackagePath="build\" />
+		<Content Include="Znutar.MSBuild.targets" PackagePath="build\" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -25,11 +27,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\ZnutarCompiler\ZnutarCompiler.fsproj" PrivateAssets="all" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Content Include="build\Znutar.MSBuild.props" PackagePath="build\" />
-		<Content Include="build\Znutar.MSBuild.targets" PackagePath="build\" />
 	</ItemGroup>
 	
 	<Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
