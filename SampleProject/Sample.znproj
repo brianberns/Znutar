@@ -9,8 +9,6 @@
 
 	<Target Name="CreateManifestResourceNames"/>
 
-	<UsingTask TaskName="Znc"
-		AssemblyFile="..\Znutar.MSBuild\bin\Debug\Net7.0\Znutar.MSBuild.dll" />
 	<Target Name="CoreCompile">
 		<Znc
 			OutputAssembly="@(IntermediateAssembly)"
@@ -21,4 +19,8 @@
 		<Compile Include="Factorial.zn" />
 	</ItemGroup>
 
-</Project>
+	<ItemGroup>
+		<PackageReference Include="Znutar.MSBuild" Version="1.0.0" PrivateAssets="All" />
+	</ItemGroup>
+
+	</Project>
