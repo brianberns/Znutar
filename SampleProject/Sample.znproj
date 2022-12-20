@@ -1,26 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Znutar.Sdk/1.0.0">
 
     <PropertyGroup>
 		<OutputType>Exe</OutputType>
 		<TargetFramework>net7.0</TargetFramework>
-        <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-		<ProduceReferenceAssembly>false</ProduceReferenceAssembly>
 	</PropertyGroup>
-
-	<Target Name="CreateManifestResourceNames"/>
-
-	<Target Name="CoreCompile">
-		<Znc
-			OutputAssembly="@(IntermediateAssembly)"
-			Sources="@(Compile)" />
-	</Target>
 
     <ItemGroup>
 		<Compile Include="Factorial.zn" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="Znutar.MSBuild" Version="1.0.0" PrivateAssets="All" />
 	</ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-﻿namespace Znutar.MSBuild
+﻿namespace Znutar.Sdk
 
 open System.IO
 

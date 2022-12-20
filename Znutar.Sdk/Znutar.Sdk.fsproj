@@ -6,7 +6,7 @@
 		<TargetFramework>net7.0</TargetFramework>
 		<IsPackable>true</IsPackable>
 		<Version>1.0.0</Version>
-		<Title>Znutar.MSBuild</Title>
+		<Title>Znutar.Sdk</Title>
 		<Authors>Brian Berns</Authors>
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 		<TargetsForTfmSpecificBuildOutput>
@@ -17,8 +17,8 @@
 
 	<ItemGroup>
 		<Compile Include="Znc.fs" />
-		<Content Include="Znutar.MSBuild.props" PackagePath="build\" />
-		<Content Include="Znutar.MSBuild.targets" PackagePath="build\" />
+		<Content Include="Sdk.props" PackagePath="Sdk\" />
+		<Content Include="Sdk.targets" PackagePath="Sdk\" />
 	</ItemGroup>
 
 	<ItemGroup>

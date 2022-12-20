@@ -1,9 +1,8 @@
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
 	<Target Name="CreateManifestResourceNames" />
 
-	<UsingTask TaskName="Znc"
-		AssemblyFile="Znutar.MSBuild.dll" />
+	<UsingTask TaskName="Znc" AssemblyFile="Znutar.Sdk.dll" />
 	<Target Name="CoreCompile">
 		<Znc
 			OutputAssembly="@(IntermediateAssembly)"

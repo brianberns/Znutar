@@ -1,3 +1,10 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<PropertyGroup>
+		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+		<ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+	</PropertyGroup>
+	
 	<UsingTask TaskName="Znc" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\net7.0\Znutar.MSBuild.dll" />
+	
 </Project>
