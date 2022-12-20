@@ -3,7 +3,6 @@
 open Microsoft.VisualStudio.TestTools.UnitTesting
 
 open Znutar
-open Znutar.Transpiler
 
 [<TestClass>]
 type CompilerTests() =
