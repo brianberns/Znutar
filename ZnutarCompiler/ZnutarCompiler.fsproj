@@ -19,7 +19,7 @@
     <Compile Include="Transpiler\Function.fs" />
     <Compile Include="Transpiler\Expression.fs" />
     <Compile Include="Transpiler\CompilationUnit.fs" />
-    <Compile Include="Transpiler\Compiler.fs" />
+    <Compile Include="Compiler.fs" />
   </ItemGroup>
 
   <ItemGroup>

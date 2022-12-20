@@ -5,7 +5,7 @@ open System.IO
 open Microsoft.Build.Utilities
 open Microsoft.Build.Framework
 
-open Znutar.Transpiler
+open Znutar
 
 /// Znutar compiler task.
 /// See https://learn.microsoft.com/en-us/visualstudio/msbuild/tutorial-custom-task-code-generation.

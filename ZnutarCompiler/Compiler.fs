@@ -1,4 +1,4 @@
-﻿namespace Znutar.Transpiler
+﻿namespace Znutar
 
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
@@ -6,8 +6,8 @@ open type SyntaxFactory
 
 open Basic.Reference.Assemblies
 
-open Znutar
 open Znutar.Parser
+open Znutar.Transpiler
 open Znutar.TypeInference
 
 type InvalidProgramType = InvalidProgramType of Type
