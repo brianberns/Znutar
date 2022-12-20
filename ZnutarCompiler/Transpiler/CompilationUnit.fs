@@ -6,10 +6,12 @@ open type SyntaxFactory
 
 module CompilationUnit =
 
+    /// Creates a Main method that writes the result of invoking the
+    /// given expression method to the console.
     (*
         static void Main()
         {
-            System.Console.Write($exprNode);
+            System.Console.Write($exprNode());
         }
     *)
     let private mainMethod (exprNode : Syntax.MethodDeclarationSyntax) =
@@ -37,7 +39,8 @@ module CompilationUnit =
                                         Argument(InvocationExpression(
                                             IdentifierName(exprNode.Identifier)))))))))
 
-    let create assemblyName (exprNode : Syntax.MethodDeclarationSyntax) =
+    /// Creates a compilation unit.
+    let create assemblyName exprNode =
         let classNode =
             ClassDeclaration($"{assemblyName}Type")
                 .AddModifiers(
