@@ -7,6 +7,7 @@ module Expression =
 
     open Common
 
+    /// Parses any expression.
     let private parseExpression, private parseExpressionRef =
         createParserForwardedToRef ()
 
@@ -90,6 +91,7 @@ module Expression =
                 |> parseParens
                 |> attempt
 
+        /// E.g. (expr) -> expr.
         let private parseParenExpression =
             parseParens parseExpression
 
@@ -107,7 +109,7 @@ module Expression =
 
     /// Parses one or more simple expressions, folding them
     /// together as function applications.
-    /// E.g. "a b c" -> "((a b) c)".
+    /// E.g. a b c -> ((a b) c).
     let private parseSimpleExprs =
 
         let gather = function
