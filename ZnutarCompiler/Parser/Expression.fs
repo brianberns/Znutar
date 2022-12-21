@@ -107,10 +107,30 @@ module Expression =
                 parseParenExpression
             ]
 
-    /// Parses one or more simple expressions, folding them
+    /// Parses a complex expression, which consists of a simple
+    /// expression and its trailing member accesses (if any).
+    let private parseComplexExpr =
+
+        let parseAccess =
+            skipChar '.'
+                >>. spaces
+                >>. Identifier.parse
+
+        parse {
+            let! expr = SimpleExpr.parse .>> spaces
+            let! idents = many parseAccess
+            return (expr, idents)
+                ||> List.fold (fun acc ident ->
+                    MemberAccessExpr {
+                        Expression = acc
+                        Identifier = ident
+                    })
+        }
+
+    /// Parses one or more complex expressions, folding them
     /// together as function applications.
     /// E.g. a b c -> ((a b) c).
-    let private parseSimpleExprs =
+    let private parseComplexExprs =
 
         let gather = function
             | [] -> failwith "Unexpected"
@@ -123,9 +143,10 @@ module Expression =
                                 Argument = arg
                             })
 
-        many1 (SimpleExpr.parse .>> spaces)
+        many1 (parseComplexExpr .>> spaces)
             |>> gather
 
+    /// Parses any expression.
     let private parseExprImpl =
 
         let create (str, op) =
@@ -154,7 +175,7 @@ module Expression =
                 |> choice
 
         chainl1
-            (parseSimpleExprs .>> spaces)
+            (parseComplexExprs .>> spaces)
             (parseOp .>> spaces)
 
     do parseExpressionRef.Value <- parseExprImpl

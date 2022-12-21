@@ -34,6 +34,7 @@ type Expression =
     | IfExpr of If
     | BinaryOperationExpr of BinaryOperation
     | AnnotationExpr of Annotation
+    | MemberAccessExpr of MemberAccess
 
     with
 
@@ -65,6 +66,8 @@ type Expression =
                     {bop.Right.Unparse()})"
             | AnnotationExpr ann ->
                 $"({ann.Expression.Unparse()} : {ann.Type.Unparse()})"
+            | MemberAccessExpr ma ->
+                $"{ma.Expression.Unparse()}.{ma.Identifier.Name}"
 
 /// func arg
 and Application =
@@ -110,6 +113,13 @@ and Annotation =
     {
         Expression : Expression
         Type : Type
+    }
+
+/// expr.ident
+and MemberAccess =
+    {
+        Expression : Expression
+        Identifier : Identifier
     }
 
 module Expression =
