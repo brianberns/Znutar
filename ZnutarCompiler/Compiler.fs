@@ -55,8 +55,8 @@ module Compiler =
                 CSharpCompilation
                     .Create(assemblyName)
                     .WithReferences(
-                        Net60.References.SystemRuntime,
-                        Net60.References.SystemConsole)
+                        Net70.References.SystemRuntime,
+                        Net70.References.SystemConsole)
                     .AddSyntaxTrees(compilationUnit.SyntaxTree)
                     .WithOptions(options)
             compilation.Emit(outputPath : string)
