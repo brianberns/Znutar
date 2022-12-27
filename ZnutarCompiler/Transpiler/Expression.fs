@@ -30,7 +30,7 @@ module Expression =
         Ok ([], node)
 
     let rec transpile = function
-        | VariableExpr var -> transpileIdentifier var.Identifier
+        | IdentifierExpr ai -> transpileIdentifier ai.Identifier
         | ApplicationExpr app -> transpileApplication app
         | LetExpr letb -> transpileLet letb
         | IfExpr iff -> transpileIf iff
@@ -147,7 +147,7 @@ module Expression =
                 TypeVariables = typeVars
                 Type = lam.Type
             }
-        let var =
+        let annIdent =
             {
                 Identifier = ident
                 Type = lam.Type
@@ -157,7 +157,7 @@ module Expression =
                 Identifier = ident
                 Scheme = scheme
                 Argument = LambdaExpr lam
-                Body = VariableExpr var
+                Body = IdentifierExpr annIdent
                 Type = lam.Type
             }
         transpile expr

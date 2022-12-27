@@ -98,7 +98,7 @@ module Expression =
         /// Parses a simple (non-left-recursive) expression.
         let parse : Parser<_, _> =
             choice [
-                Identifier.parse |>> VariableExpr
+                Identifier.parse |>> IdentifierExpr
                 parseLambdaAbstraction |>> LambdaExpr
                 parseLetBinding |>> LetExpr
                 parseLiteral |>> LiteralExpr

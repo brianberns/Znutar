@@ -48,7 +48,7 @@ module Infer =   // to-do: replace with constraint-based inference
         /// * Substitution used to infer the type
         /// * Equivalent expression fully annotated with inferred types
         let infer env = function
-            | Expression.VariableExpr ident -> inferVariable env ident
+            | Expression.IdentifierExpr ident -> inferIdent env ident
             | Expression.LambdaExpr lam -> inferLambda env lam
             | Expression.ApplicationExpr app -> inferApplication env app
             | Expression.LetExpr letb -> inferLet env letb
@@ -61,13 +61,13 @@ module Infer =   // to-do: replace with constraint-based inference
             | Expression.MemberAccessExpr ma ->
                 inferMemberAccess env ma
 
-        /// Infers the type of a variable by looking it up in the
+        /// Infers the type of a identifier by looking it up in the
         /// given environment.
-        let private inferVariable env ident =
+        let private inferIdent env ident =
             result {
                 let! scheme = TypeEnvironment.tryFind ident env
                 let annex =
-                    VariableExpr {
+                    IdentifierExpr {
                         Identifier = ident
                         Type = instantiate scheme
                     }

@@ -5,7 +5,7 @@ open Znutar
 /// An expression annotated with its inferred type.
 [<System.Diagnostics.DebuggerDisplay("{Unparse()}")>]
 type AnnotatedExpression =
-    | VariableExpr of AnnotatedVariable
+    | IdentifierExpr of AnnotatedIdentifier
     | ApplicationExpr of AnnotatedApplication
     | LambdaExpr of AnnotatedLambdaAbstraction
     | LetExpr of AnnotatedLetBinding
@@ -19,7 +19,7 @@ type AnnotatedExpression =
     /// Result type.
     member annex.Type =
         match annex with
-            | VariableExpr var -> var.Type
+            | IdentifierExpr ai -> ai.Type
             | ApplicationExpr app -> app.Type
             | LambdaExpr lam -> lam.Type
             | LetExpr letb -> letb.Type
@@ -31,8 +31,8 @@ type AnnotatedExpression =
 
     member annex.Unparse() =
         match annex with
-            | VariableExpr var ->
-                var.Identifier.Name
+            | IdentifierExpr ai ->
+                ai.Identifier.Name
             | ApplicationExpr app ->
                 $"({app.Function.Unparse()} {app.Argument.Unparse()})"
             | LambdaExpr lam ->
@@ -57,7 +57,7 @@ type AnnotatedExpression =
                 $"({ma.Expression}).{ma.Identifier}"
 
 /// x
-and AnnotatedVariable =
+and AnnotatedIdentifier =
     {
         Identifier : Identifier
 

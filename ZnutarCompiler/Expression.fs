@@ -26,7 +26,7 @@ module BinaryOperator =
 
 [<System.Diagnostics.DebuggerDisplay("{Unparse()}")>]
 type Expression =
-    | VariableExpr of Identifier
+    | IdentifierExpr of Identifier
     | ApplicationExpr of Application
     | LambdaExpr of LambdaAbstraction
     | LetExpr of LetBinding
@@ -41,7 +41,7 @@ type Expression =
     /// Unparses the given expression.
     member expr.Unparse() =
         match expr with
-            | VariableExpr ident ->
+            | IdentifierExpr ident ->
                 ident.Name
             | ApplicationExpr app ->
                 $"({app.Function.Unparse()} {app.Argument.Unparse()})"
