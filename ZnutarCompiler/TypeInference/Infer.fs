@@ -58,6 +58,8 @@ module Infer =   // to-do: replace with constraint-based inference
             | Expression.LiteralExpr lit ->
                 Ok (Substitution.empty, LiteralExpr lit)
             | AnnotationExpr ann -> inferAnnotation env ann
+            | Expression.MemberAccessExpr ma ->
+                inferMemberAccess env ma
 
         /// Infers the type of a variable by looking it up in the
         /// given environment.
@@ -247,6 +249,12 @@ module Infer =   // to-do: replace with constraint-based inference
                 return
                     exprSubst ++ typeSubst,
                     exprAnnex
+            }
+
+        /// Infers the type of member access expression.
+        let private inferMemberAccess env ma =
+            result {
+                return! Error { new ICompilerError }
             }
 
     /// Infers the type of the given expression.

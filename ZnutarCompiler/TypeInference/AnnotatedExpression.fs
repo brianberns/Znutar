@@ -12,6 +12,7 @@ type AnnotatedExpression =
     | LiteralExpr of Literal
     | IfExpr of AnnotatedIf
     | BinaryOperationExpr of AnnotatedBinaryOperation
+    | MemberAccessExpr of AnnotatedMemberAccess
 
     with
 
@@ -26,6 +27,7 @@ type AnnotatedExpression =
             | LiteralExpr (BoolLiteral b) -> Type.bool
             | IfExpr iff -> iff.Type
             | BinaryOperationExpr bop -> bop.Type
+            | MemberAccessExpr ma -> ma.Type
 
     member annex.Unparse() =
         match annex with
@@ -51,6 +53,8 @@ type AnnotatedExpression =
                 $"({bop.Left.Unparse()} \
                     {BinaryOperator.unparse bop.Operator} \
                     {bop.Right.Unparse()})"
+            | MemberAccessExpr ma ->
+                $"({ma.Expression}).{ma.Identifier}"
 
 /// x
 and AnnotatedVariable =
@@ -115,6 +119,16 @@ and AnnotatedBinaryOperation =
         Right : AnnotatedExpression
 
         /// Result type. E.g. ((1 = 1) : bool).
+        Type : Type
+    }
+
+/// expr.ident
+and AnnotatedMemberAccess =
+    {
+        Expression : AnnotatedExpression
+        Identifier : Identifier
+
+        /// Result type. E.g. (expr.ident : int).
         Type : Type
     }
 

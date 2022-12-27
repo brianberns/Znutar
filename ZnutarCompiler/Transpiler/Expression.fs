@@ -37,6 +37,7 @@ module Expression =
         | BinaryOperationExpr bop -> transpileBinaryOperation bop
         | LiteralExpr lit -> transpileLiteral lit
         | LambdaExpr lam -> transpileLambda lam
+        | MemberAccessExpr ma -> transpileMemberAccess ma
 
     and private transpileApplication app =
         app
@@ -160,3 +161,8 @@ module Expression =
                 Type = lam.Type
             }
         transpile expr
+
+    and private transpileMemberAccess ma =
+        result {
+            return! Error { new ICompilerError }
+        }
