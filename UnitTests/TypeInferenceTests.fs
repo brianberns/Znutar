@@ -9,13 +9,15 @@ open Znutar.TypeInference
 [<TestClass>]
 type TypeInferenceTests() =
 
+    let infer = Infer.inferExpression Array.empty
+
     [<TestMethod>]
     member _.Let() =
         let text = "let x = 2 in 3 * x"
         result {
             let! expr = Parser.run Expression.parse text
             let expected = Type.int
-            let! expr' = Infer.inferExpression expr
+            let! expr' = infer expr
             let actual = expr'.Type
             Assert.AreEqual(expected, actual, actual.Unparse())
         } |> Assert.Ok
@@ -26,7 +28,7 @@ type TypeInferenceTests() =
         result {
             let! expr = Parser.run Expression.parse text
             let expected = Type.int ^=> Type.int
-            let! expr' = Infer.inferExpression expr
+            let! expr' = infer expr
             let actual = expr'.Type
             Assert.AreEqual(expected, actual, actual.Unparse())
         } |> Assert.Ok
@@ -43,7 +45,7 @@ type TypeInferenceTests() =
         result {
             let! expr = Parser.run Expression.parse text
             let expected = Type.bool
-            let! expr' = Infer.inferExpression expr
+            let! expr' = infer expr
             let actual = expr'.Type
             Assert.AreEqual(expected, actual, actual.Unparse())
         } |> Assert.Ok
@@ -56,7 +58,7 @@ type TypeInferenceTests() =
         result {
             let! expr = Parser.run Expression.parse text
             let! expected = Parser.run Type.parse sType
-            let! expr' = Infer.inferExpression expr
+            let! expr' = infer expr
             let actual = expr'.Type
             let! subst = Substitution.unify expected actual
             let (KeyValue(tv, typ)) = Seq.exactlyOne subst
@@ -78,7 +80,7 @@ type TypeInferenceTests() =
         result {
             let! expr = Parser.run Expression.parse text
             let expected = Type.bool
-            let! expr' = Infer.inferExpression expr
+            let! expr' = infer expr
             let actual = expr'.Type
             Assert.AreEqual(expected, actual, actual.Unparse())
         } |> Assert.Ok
@@ -91,6 +93,6 @@ type TypeInferenceTests() =
             let expected =
                 cerror (
                     UnificationFailure (Type.bool, Type.int))
-            let actual = Infer.inferExpression expr
+            let actual = infer expr
             Assert.AreEqual(expected, actual)
         } |> Assert.Ok

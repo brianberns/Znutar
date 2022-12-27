@@ -1,5 +1,7 @@
 ﻿namespace Znutar
 
+open System.Reflection
+
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open type SyntaxFactory
@@ -77,7 +79,11 @@ module Compiler =
             let! expr = Parser.run Expression.parse text
 
                 // infer types of the resulting syntax tree
-            let! expr' = Infer.inferExpression expr
+            let! expr' =
+                let refAssemblies =
+                    references
+                        |> Array.map Assembly.LoadFrom
+                Infer.inferExpression refAssemblies expr
 
                 // compile tree into an assembly
             let! exprNode = transpile expr'
