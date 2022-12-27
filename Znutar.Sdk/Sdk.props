@@ -5,6 +5,6 @@
 		<ProduceReferenceAssembly>false</ProduceReferenceAssembly>
 	</PropertyGroup>
 	
-	<UsingTask TaskName="Znc" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\net7.0\Znutar.MSBuild.dll" />
+	<UsingTask TaskName="Znc" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\net7.0\Znutar.Sdk.dll" />
 	
 </Project>
