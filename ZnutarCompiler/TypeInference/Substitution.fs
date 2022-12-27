@@ -117,6 +117,11 @@ module Substitution =
                     Type = Type.apply subst ann.Type
                     Expression = apply subst ann.Expression
                 }
+            | MemberAccessExpr ma ->
+                MemberAccessExpr {
+                    ma with
+                        Expression = apply subst ma.Expression
+                }
 
     module Scheme =
 
