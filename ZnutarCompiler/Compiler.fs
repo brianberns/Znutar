@@ -71,7 +71,7 @@ module Compiler =
         }
 
     /// Compiles the given text into an an assembly.
-    let compile assemblyName outputPath text =
+    let compile (references : string[]) assemblyName outputPath text =
         result {
                 // parse the text
             let! expr = Parser.run Expression.parse text
@@ -85,7 +85,7 @@ module Compiler =
         }
 
     /// Compiles the given file into an an assembly.
-    let compileFile assemblyName outputPath (path : string) =
+    let compileFile references assemblyName outputPath (path : string) =
         use rdr = new System.IO.StreamReader(path)
         rdr.ReadToEnd()
-            |> compile assemblyName outputPath
+            |> compile references assemblyName outputPath

@@ -12,6 +12,7 @@ type CompilerTests() =
         result {
             do!
                 Compiler.compile
+                    Array.empty
                     assemblyName
                     $"{assemblyName}.dll"
                     text

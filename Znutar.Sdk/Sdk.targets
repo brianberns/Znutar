@@ -8,6 +8,7 @@
 	<Target Name="CoreCompile">
 		<Znc
 			OutputAssembly="@(IntermediateAssembly)"
+			References="@(ReferencePathWithRefAssemblies)"
 			Sources="@(Compile)" />
 	</Target>
 

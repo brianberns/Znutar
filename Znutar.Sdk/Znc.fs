@@ -16,6 +16,9 @@ type Znc() =
     member val OutputAssembly = "" with get, set
 
     [<Required>]
+    member val References : ITaskItem[] = [||] with get, set
+
+    [<Required>]
     member val Sources = "" with get, set
 
     override this.Execute() =
@@ -23,8 +26,12 @@ type Znc() =
         try
             let assemblyName =
                 Path.GetFileNameWithoutExtension(this.Sources)
+            let references =
+                this.References
+                    |> Array.map (fun ref -> ref.ItemSpec)
             let result =
                 Compiler.compileFile
+                    references
                     assemblyName
                     this.OutputAssembly
                     this.Sources
