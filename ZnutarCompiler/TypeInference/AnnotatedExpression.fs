@@ -23,8 +23,8 @@ type AnnotatedExpression =
             | ApplicationExpr app -> app.Type
             | LambdaExpr lam -> lam.Type
             | LetExpr letb -> letb.Type
-            | LiteralExpr (IntLiteral n) -> Type.int
-            | LiteralExpr (BoolLiteral b) -> Type.bool
+            | LiteralExpr (IntLiteral _) -> Type.int
+            | LiteralExpr (BoolLiteral _) -> Type.bool
             | IfExpr iff -> iff.Type
             | BinaryOperationExpr bop -> bop.Type
             | MemberAccessExpr ma -> ma.Type
@@ -136,34 +136,3 @@ module AnnotatedExpression =
 
     let rec unparse (annex : AnnotatedExpression) =
         annex.Unparse()
-
-/// Top-level declaration.
-/// E.g. let add x y = x + y ^=> let add = \x -> \y -> x + y
-type AnnotatedDeclaration =
-    {
-        Identifier : Identifier
-        Body : AnnotatedExpression
-    }
-
-module AnnotatedDeclaration =
-
-    let unparse decl =
-        let ident = decl.Identifier.Name
-        let body = AnnotatedExpression.unparse decl.Body
-        $"decl {ident} = {body};"
-
-type AnnotatedProgram =
-    {
-        Declarations : List<AnnotatedDeclaration>
-        Main : AnnotatedExpression
-    }
-
-module AnnotatedProgram =
-
-    let unparse program =
-        let decls =
-            program.Declarations
-                |> Seq.map AnnotatedDeclaration.unparse
-                |> String.concat "\n\n"
-        let main = AnnotatedExpression.unparse program.Main
-        $"{decls}\n\n{main}"
