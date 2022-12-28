@@ -24,6 +24,7 @@ module BinaryOperator =
         | Divide -> "/"
         | Modulo -> "%"
 
+/// Abstract syntax tree for an expression.
 [<System.Diagnostics.DebuggerDisplay("{Unparse()}")>]
 type Expression =
     | IdentifierExpr of Identifier
