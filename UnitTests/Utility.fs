@@ -53,5 +53,4 @@ module Process =
                     .Replace("\r", "")
             }
         with exn ->
-            cerror (
-                Znutar.Transpiler.InternalError exn.Message)
+            Error (InternalError exn.Message)

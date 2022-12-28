@@ -164,5 +164,5 @@ module Expression =
 
     and private transpileMemberAccess ma =
         result {
-            return! Error { new ICompilerError }
+            return! Error (InternalError "oops")
         }

@@ -9,12 +9,8 @@ open Znutar.TypeInference
 
 type ExpressionTranspiler =
     AnnotatedExpression ->
-        Result<
-            List<Syntax.StatementSyntax> * Syntax.ExpressionSyntax,
-            ICompilerError>
-
-type InternalError = InternalError of string
-    with interface ICompilerError
+        CompilerResult<
+            List<Syntax.StatementSyntax> * Syntax.ExpressionSyntax>
 
 /// A function definition.
 /// E.g. let const x y = x in next.
@@ -74,7 +70,7 @@ module Function =
         let types = gatherTypes func.Scheme.Type
         match List.rev types with
             | [] | [_] ->
-                cerror (
+                Error (
                     InternalError $"Invalid function type: \
                         {func.Scheme.Type.Unparse()}")
             | returnType :: parmTypesRev ->
@@ -144,7 +140,7 @@ module Function =
                     ]
                 return stmtNodes, nextExprNode
             else
-                return! cerror (
+                return! Error (
                     InternalError "Function arity mismatch")
         }
 

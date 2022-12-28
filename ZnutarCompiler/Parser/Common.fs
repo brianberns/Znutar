@@ -3,9 +3,6 @@
 open FParsec
 open Znutar
 
-type SyntaxError = SyntaxError of string
-    with interface ICompilerError
-
 /// Common parser functions.
 module private Common =
 
@@ -67,4 +64,4 @@ module Parser =
                 .>> eof
         match runParserOnString parser' () "" text with
             | Success (result, _, _) -> Result.Ok result
-            | Failure (msg, _, _) -> cerror (SyntaxError msg)
+            | Failure (msg, _, _) -> Result.Error (InvalidSyntax msg)

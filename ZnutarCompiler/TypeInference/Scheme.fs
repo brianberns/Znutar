@@ -38,9 +38,6 @@ module Scheme =
         Type.freeTypeVariables scheme.Type
             - set scheme.TypeVariables
 
-type UnboundVariable = UnboundVariable of Identifier
-    with interface ICompilerError
-
 type private TypeEnvironment = Map<Identifier, Scheme>
 
 module private TypeEnvironment =
@@ -55,7 +52,7 @@ module private TypeEnvironment =
             | Some scheme ->
                 Ok scheme
             | None ->
-                cerror (UnboundVariable ident)
+                Error (UnboundIdentifier ident)
 
     /// Free type variables in the given environment.
     let freeTypeVariables (env : TypeEnvironment) =

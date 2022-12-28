@@ -253,14 +253,7 @@ module Infer =   // to-do: replace with constraint-based inference
 
         /// Infers the type of member access expression.
         let private inferMemberAccess env ma =
-            match infer env ma.Expression with
-                | Ok (exprSubst, exprAnnex) ->
-                    Error { new ICompilerError }
-                | Error cerr ->
-                    match cerr with
-                        | :? UnboundVariable as UnboundVariable ident ->
-                            Error { new ICompilerError }
-                        | _ -> Error cerr
+            Error (InternalError "oops")
 
     type MethodTree =
         {

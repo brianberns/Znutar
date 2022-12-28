@@ -5,10 +5,6 @@ open Znutar
 /// Substitute types for type variables.
 type Substitution = Map<TypeVariable, Type>
 
-type UnificationFailure =
-    UnificationFailure of Type * Type
-    with interface ICompilerError
-
 module Substitution =
 
     let empty : Substitution = Map.empty
@@ -58,28 +54,29 @@ module Substitution =
         let occurs tv typ =
             Set.contains tv (Type.freeTypeVariables typ)
 
-        match type1, type2 with
-            | TypeArrow (left1, right1), TypeArrow (left2, right2) ->
-                result {
+        result {
+            match type1, type2 with
+                | TypeArrow (left1, right1), TypeArrow (left2, right2) ->
                     let! subst1 = unify left1 left2
                     let! subst2 =
                         unify
                             (Type.apply subst1 right1)
                             (Type.apply subst1 right2)
                     return subst1 ++ subst2
-                }
-            | TypeVariable tv, typ
-            | typ, TypeVariable tv ->
-                if typ = TypeVariable tv then
-                    Ok empty
-                elif occurs tv typ then
-                    cerror (UnificationFailure (type1, type2))
-                else
-                    Ok (Map [tv, typ])
-            | (TypeConstant ident1), (TypeConstant ident2)
-                when ident1 = ident2 ->
-                Ok empty
-            | _ -> cerror (UnificationFailure (type1, type2))
+                | TypeVariable tv, typ
+                | typ, TypeVariable tv ->
+                    if typ = TypeVariable tv then
+                        return empty
+                    elif occurs tv typ then
+                        return! Error (UnificationFailure (type1, type2))
+                    else
+                        return Map [tv, typ]
+                | (TypeConstant ident1), (TypeConstant ident2)
+                    when ident1 = ident2 ->
+                    return empty
+                | _ ->
+                    return! Error (UnificationFailure (type1, type2))
+        }
 
     module Expression =
 

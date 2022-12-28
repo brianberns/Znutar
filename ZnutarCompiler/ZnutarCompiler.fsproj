@@ -8,6 +8,7 @@
     <Compile Include="Result.fs" />
     <Compile Include="Type.fs" />
     <Compile Include="Expression.fs" />
+    <Compile Include="Error.fs" />
     <Compile Include="Parser\Common.fs" />
     <Compile Include="Parser\Type.fs" />
     <Compile Include="Parser\Expression.fs" />

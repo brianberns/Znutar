@@ -91,7 +91,7 @@ type TypeInferenceTests() =
         result {
             let! expr = Parser.run Expression.parse text
             let expected =
-                cerror (
+                Error (
                     UnificationFailure (Type.bool, Type.int))
             let actual = infer expr
             Assert.AreEqual(expected, actual)

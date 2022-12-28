@@ -12,9 +12,6 @@ open Znutar.Parser
 open Znutar.Transpiler
 open Znutar.TypeInference
 
-type InvalidProgramType = InvalidProgramType of Type
-    with interface ICompilerError
-
 module Compiler =
 
     /// Creates a method node for the given expression.
@@ -39,7 +36,7 @@ module Compiler =
                     .WithBody(
                         Block(stmts))
             else
-                return! cerror (InvalidProgramType expr.Type)
+                return! Error (InvalidProgramType expr.Type)
         }
 
     /// Compiles the given node into an assembly.
@@ -69,7 +66,7 @@ module Compiler =
                     |> Seq.map string
                     |> String.concat "\n"
                     |> InternalError
-                    |> cerror
+                    |> Error
         }
 
     /// Compiles the given text into an an assembly.

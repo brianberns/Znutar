@@ -27,10 +27,7 @@ type ParserTests() =
         let text = "invalid?"
         let actual = Parser.run Expression.parse text
         match actual with
-            | Error cerr ->
-                match cerr with
-                    | :? SyntaxError -> ()
-                    | _ -> Assert.Fail()
+            | Error (InvalidSyntax _) -> ()
             | _ -> Assert.Fail()
 
     [<TestMethod>]

@@ -40,7 +40,7 @@ type UnifyTests() =
         let t1 = Type.int ^=> TypeVariable x
         let t2 = Type.bool ^=> TypeVariable y
         let expected =
-            cerror (UnificationFailure (Type.int, Type.bool))
+            Error (UnificationFailure (Type.int, Type.bool))
         let actual = Substitution.unify t1 t2
         Assert.AreEqual(expected, actual)
 
@@ -48,6 +48,6 @@ type UnifyTests() =
     member this.UnifyFail2() =
         let t1 = TypeVariable x
         let t2 = TypeVariable x ^=> TypeVariable y
-        let expected = cerror (UnificationFailure (t1, t2))
+        let expected = Error (UnificationFailure (t1, t2))
         let actual = Substitution.unify t1 t2
         Assert.AreEqual(expected, actual)
