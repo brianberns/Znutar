@@ -3,6 +3,7 @@
 open Znutar
 open Znutar.TypeInference
 
+/// Type inference.
 module Infer =   // to-do: replace with constraint-based inference
 
     open Substitution
@@ -255,61 +256,8 @@ module Infer =   // to-do: replace with constraint-based inference
         let private inferMemberAccess env ma =
             Error (InternalError "oops")
 
-    type MethodTree =
-        {
-            Methods : List<System.Reflection.MethodInfo>
-            Children : Map<Identifier, MethodTree>
-        }
-
-    module MethodTree =
-
-        open System.Reflection
-
-        let empty =
-            {
-                Methods = List.empty
-                Children = Map.empty
-            }
-
-        let rec add path method tree =
-            match path with
-                | [] ->
-                    { tree with
-                        Methods = method :: tree.Methods }
-                | ident :: idents ->
-                    let child =
-                        tree.Children
-                            |> Map.tryFind ident
-                            |> Option.defaultValue empty
-                    let child' = add idents method child
-                    { tree with
-                        Children = 
-                            Map.add ident child' tree.Children }
-
-        let fromAssemblies asms =
-            let pairs =
-                [|
-                    for (asm : Assembly) in asms do
-                        for typ in asm.ExportedTypes do
-                            let namespaceParts = typ.Namespace.Split('.')
-                            for method in typ.GetMethods() do
-                                if method.IsStatic then
-                                    let path =
-                                        [
-                                            yield! namespaceParts
-                                            yield typ.Name
-                                            yield method.Name
-                                        ] |> List.map Identifier.create
-                                    yield path, method
-                |]
-            (empty, pairs)
-                ||> Seq.fold (fun tree (path, method) ->
-                    add path method tree)
-
     /// Infers the type of the given expression.
     let inferExpression refAssemblies expr =
-        let tree = MethodTree.fromAssemblies refAssemblies
-        printfn "%A" tree
         expr
             |> Expression.infer TypeEnvironment.empty
             |> Result.map snd
