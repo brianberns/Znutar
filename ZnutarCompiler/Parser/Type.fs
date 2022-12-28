@@ -4,6 +4,7 @@ open FParsec
 
 open Znutar
 
+/// Parses types. E.g. "'a -> int".
 module Type =
 
     open Common
@@ -47,4 +48,5 @@ module Type =
 
     do parseTypeRef.Value <- parseTypeImpl
 
+    /// Parses a type. E.g. "'a -> int".
     let parse = parseType

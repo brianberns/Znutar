@@ -180,4 +180,5 @@ module Expression =
 
     do parseExpressionRef.Value <- parseExprImpl
 
+    /// Parses an expression.
     let parse = parseExpression
