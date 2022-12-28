@@ -7,6 +7,7 @@ type Substitution = Map<TypeVariable, Type>
 
 module Substitution =
 
+    /// Empty substitution.
     let empty : Substitution = Map.empty
 
     let toString (subst : Substitution) =
@@ -80,6 +81,7 @@ module Substitution =
 
     module Expression =
 
+        /// Applies the given substitution to the given expression.
         let rec apply subst = function
             | IdentifierExpr _
             | LiteralExpr _ as expr -> expr
