@@ -2,8 +2,9 @@
 
 open System
 
+/// Monadic result builder.
 type ResultBuilder() =
-    member _.Return(x) = Ok x
+    member _.Return(value) = Ok value
     member _.ReturnFrom(res : Result<_, _>) = res
     member _.Bind(res, f) = Result.bind f res
     member _.Zero() = Ok ()
@@ -12,7 +13,7 @@ type ResultBuilder() =
     member _.Run(f : unit -> Result<_, _>) = f ()
 
     member this.While(guard, body) =
-        if not (guard())
+        if not (guard ())
         then this.Zero()
         else this.Bind(body (), fun () ->
             this.While(guard, body))
