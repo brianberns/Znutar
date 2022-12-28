@@ -7,10 +7,13 @@ open type SyntaxFactory
 open Znutar
 open Znutar.TypeInference
 
+/// Signature for a function that transpiles an expression
+/// to Roslyn.
 type ExpressionTranspiler =
     AnnotatedExpression ->
         CompilerResult<
-            List<Syntax.StatementSyntax> * Syntax.ExpressionSyntax>
+            List<Syntax.StatementSyntax>
+                * Syntax.ExpressionSyntax>
 
 /// A function definition.
 /// E.g. let const x y = x in next.

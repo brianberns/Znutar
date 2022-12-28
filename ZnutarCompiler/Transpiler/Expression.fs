@@ -10,11 +10,13 @@ open Znutar.TypeInference
 
 module Expression =
 
+    /// Transpiles an identifier.
     let private transpileIdentifier ident =
         let node : Syntax.ExpressionSyntax =
             IdentifierName(ident.Name)
         Ok ([], node)
 
+    /// Transpiles a literal.
     let private transpileLiteral lit =
         let node : Syntax.ExpressionSyntax =
             match lit with
@@ -29,6 +31,7 @@ module Expression =
                     LiteralExpression(kind)
         Ok ([], node)
 
+    /// Transpiles an expression.
     let rec transpile = function
         | IdentifierExpr ai -> transpileIdentifier ai.Identifier
         | ApplicationExpr app -> transpileApplication app
