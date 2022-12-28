@@ -18,24 +18,25 @@ type TypeVariable = Identifier
 module TypeVariable =
 
     /// Creates a type variable with the given name.
-    let create name : TypeVariable =
+    let create (name : string) : TypeVariable =
+        assert(name.Contains('\'') |> not)   // apostrophe is implicit
         { Name = name }
 
     /// Unparses the given type variable.
-    let unparse tv =
-        $"'{tv.Name}"   // apostrophe is implicit
+    let unparse (tv : TypeVariable) =
+        $"'{tv.Name}"                        // apostrophe is implicit
 
 /// The type of a value or function.
 [<System.Diagnostics.DebuggerDisplay("{Unparse()}")>]
 type Type =
 
-    /// Type constant. E.g. "int", "bool".
+    /// Type constant. E.g. int, bool.
     | TypeConstant of Identifier
 
-    /// Type variable. E.g. "'a".
+    /// Type variable. E.g. 'a.
     | TypeVariable of TypeVariable
 
-    /// Function type. E.g. "'a -> int".
+    /// Function type. E.g. 'a -> int.
     | TypeArrow of Type * Type
 
     with
@@ -50,8 +51,8 @@ type Type =
 
     /// Constructs a type arrow. Right associative.
     // https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/symbol-and-operator-reference/#operator-precedence
-    static member (^=>) (type1, type2) =
-        TypeArrow (type1, type2)
+    static member (^=>) (inpType, outType) =
+        TypeArrow (inpType, outType)
 
 module Type =
 
