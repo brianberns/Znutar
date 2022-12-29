@@ -1,5 +1,7 @@
 ﻿namespace Znutar
 
+open System.Reflection
+
 /// Name of a value or type.
 type Identifier =
     {
@@ -91,3 +93,24 @@ module Type =
             types
                 |> Seq.map freeTypeVariables
                 |> Set.unionMany
+
+    let private ofSystemType (typ : System.Type) =
+        constant typ.Name
+
+    let ofMethod (method : MethodInfo) =
+        let inpType =
+            let inpTypes =
+                method.GetParameters()
+                    |> Seq.map (fun parm ->
+                        ofSystemType parm.ParameterType)
+                    |> Seq.toList
+            match inpTypes with
+                | [] -> failwith "oops"
+                | [typ] -> typ
+                | type0 :: type1 :: rest ->
+                    MultiItemList.create type0 type1 rest
+                        |> TypeTuple
+        let outType =
+            method.ReturnType
+                |> ofSystemType
+        inpType ^=> outType
