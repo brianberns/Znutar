@@ -120,3 +120,8 @@ type CompilerTests() =
     member _.CSharpKeyword() =
         let text = "let class = 0 in class"
         Assert.AreEqual(Ok "0", run text)
+
+    [<TestMethod>]
+    member _.StringLiteral() =
+        let text = "\"This is a string\""
+        Assert.AreEqual(Ok "This is a string", run text)

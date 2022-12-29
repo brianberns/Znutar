@@ -26,6 +26,7 @@ module Type =
         Map [
             Type.int, SyntaxKind.IntKeyword
             Type.bool, SyntaxKind.BoolKeyword
+            Type.string, SyntaxKind.StringKeyword
         ]
 
     /// Transpiles the given type.

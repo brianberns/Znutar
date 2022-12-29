@@ -55,7 +55,6 @@ type ParserTests() =
     member _.InvalidString() =
         let text = "\"unterminated"
         let actual = Parser.run Expression.parse text
-        printfn "%A" actual
         match actual with
             | Error (InvalidSyntax _) -> ()
             | _ -> Assert.Fail()
