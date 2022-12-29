@@ -1,7 +1,6 @@
 ﻿namespace Znutar.Parser
 
 open FParsec
-
 open Znutar
 
 /// Parses types. E.g. "'a -> int".
