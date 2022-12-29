@@ -103,7 +103,6 @@ module Expression =
                     (skipChar quote)
                     (many parseChar)
                     |>> List.toArray
-                    |> attempt
 
             let parse =
                 choice [
