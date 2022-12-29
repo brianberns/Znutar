@@ -17,12 +17,10 @@ module private Common =
 #endif
 
     let parseBrackets cOpen cClose parser =
-        parse {
-            do! skipChar cOpen >>. spaces
-            let! value = parser
-            do! spaces >>. skipChar cClose
-            return value
-        }
+        between
+            (skipChar cOpen >>. spaces)
+            (spaces >>. skipChar cClose)
+            parser
 
     let parseParens parser =
         parseBrackets '(' ')' parser

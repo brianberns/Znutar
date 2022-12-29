@@ -2,8 +2,9 @@
 
 /// A literal value, such as 1 or true.
 type Literal =
-    | IntLiteral of int
     | BoolLiteral of bool
+    | IntLiteral of int
+    | StringLiteral of char[]   // prevent null
 
 /// Binary operator.
 type BinaryOperator =
@@ -57,6 +58,8 @@ type Expression =
             | LiteralExpr (IntLiteral n) -> string n
             | LiteralExpr (BoolLiteral b) ->
                 if b then "true" else "false"
+            | LiteralExpr (StringLiteral chars) ->
+                $"\"{System.String(chars)}\""
             | IfExpr iff ->
                 $"(if {iff.Condition.Unparse()} \
                     then {iff.TrueBranch.Unparse()} \

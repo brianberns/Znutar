@@ -56,11 +56,22 @@ module Expression =
                 }
             }
 
+        let private parseString =
+            let quote = '"'
+            between
+                (skipChar quote)
+                (skipChar quote)
+                (many (satisfy (fun c -> c <> quote)))
+                |>> List.toArray
+
         let private parseLiteral =
             choice [
-                pint32 |>> IntLiteral
                 skipString "true" >>% BoolLiteral true
                 skipString "false" >>% BoolLiteral false
+
+                pint32 |>> IntLiteral
+
+                parseString |>> StringLiteral
             ]
 
         let private parseIf =

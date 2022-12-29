@@ -77,11 +77,11 @@ module Type =
     /// Creates a type constant with the given name.
     let constant = Identifier.create >> TypeConstant
 
-    /// Primitive integer type.
-    let int = constant "int"
-
-    /// Primitive Boolean type.
+    /// Primitive types.
     let bool = constant "bool"
+    let int = constant "int"
+    let string = constant "string"
+    let unit = constant "unit"
 
     /// Free type variables in the given type.
     let rec freeTypeVariables = function
@@ -95,7 +95,12 @@ module Type =
                 |> Set.unionMany
 
     let private ofSystemType (typ : System.Type) =
-        constant typ.Name
+        if typ = typeof<System.Void> then
+            unit
+        elif typ = typeof<System.String> then
+            string
+        else
+            constant typ.Name
 
     let ofMethod (method : MethodInfo) =
         let inpType =

@@ -1,5 +1,7 @@
 ﻿namespace Znutar.Transpiler
 
+open System
+
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open type SyntaxFactory
@@ -29,6 +31,10 @@ module Expression =
                         if b then SyntaxKind.TrueLiteralExpression
                         else SyntaxKind.FalseLiteralExpression
                     LiteralExpression(kind)
+                | StringLiteral chars ->
+                    LiteralExpression(
+                        SyntaxKind.StringLiteralExpression,
+                        Literal(String(chars)))
         Ok ([], node)
 
     /// Transpiles an expression.

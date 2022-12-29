@@ -25,6 +25,7 @@ type AnnotatedExpression =
             | LetExpr letb -> letb.Type
             | LiteralExpr (IntLiteral _) -> Type.int
             | LiteralExpr (BoolLiteral _) -> Type.bool
+            | LiteralExpr (StringLiteral _) -> Type.string
             | IfExpr iff -> iff.Type
             | BinaryOperationExpr bop -> bop.Type
             | MemberAccessExpr ma -> ma.Type
@@ -45,6 +46,8 @@ type AnnotatedExpression =
             | LiteralExpr (IntLiteral n) -> string n
             | LiteralExpr (BoolLiteral b) ->
                 if b then "true" else "false"
+            | LiteralExpr (StringLiteral chars) ->
+                $"\"{System.String(chars)}\""
             | IfExpr iff ->
                 $"(if {iff.Condition.Unparse()} \
                     then {iff.TrueBranch.Unparse()} \
