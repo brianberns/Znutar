@@ -158,14 +158,14 @@ module Expression =
 
         let create (str, op) =
             parse {
-                do! skipString str >>. spaces
+                do! spaces >>. skipString str >>. spaces
                 return (fun left right ->
                     BinaryOperationExpr {
                         Operator = op
                         Left = left
                         Right = right
                     })
-            }
+            } |> attempt
 
         let parseOp =
             [
@@ -181,9 +181,7 @@ module Expression =
                 |> List.map create
                 |> choice
 
-        chainl1
-            (parseComplexExprs .>> spaces)
-            (parseOp .>> spaces)
+        chainl1 parseComplexExprs parseOp
 
     do parseExpressionRef.Value <- parseExprImpl
 
