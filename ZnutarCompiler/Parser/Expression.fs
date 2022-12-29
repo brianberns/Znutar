@@ -112,13 +112,13 @@ module Expression =
     let private parseComplexExpr =
 
         let parseAccess =
-            skipChar '.'
-                >>. spaces
-                >>. Identifier.parse
-                .>> spaces
+            parse {
+                do! spaces >>. skipChar '.' >>. spaces
+                return! Identifier.parse
+            } |> attempt
 
         parse {
-            let! expr = SimpleExpr.parse .>> spaces
+            let! expr = SimpleExpr.parse
             let! idents = many parseAccess
             return (expr, idents)
                 ||> List.fold (fun acc ident ->
@@ -133,19 +133,25 @@ module Expression =
     /// E.g. a b c -> ((a b) c).
     let private parseComplexExprs =
 
-        let gather = function
-            | [] -> failwith "Unexpected"
-            | [expr] -> expr
-            | func :: exprs ->
-                (func, exprs)
+        let parseArgs =
+            parse {
+                do! spaces
+                return! parseComplexExpr
+            } |> attempt
+
+        parse {
+            let! expr = parseComplexExpr
+            let! args = many parseArgs
+            if args.IsEmpty then
+                return expr
+            else
+                return (expr, args)
                     ||> List.fold (fun func arg ->
                             ApplicationExpr {
                                 Function = func
                                 Argument = arg
                             })
-
-        many1 (parseComplexExpr .>> spaces)
-            |>> gather
+        }
 
     /// Parses any expression.
     let private parseExprImpl =

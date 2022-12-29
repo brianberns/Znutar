@@ -38,13 +38,13 @@ module Type =
     let private parseComplexType =
 
         let parseItem =
-            skipChar '*'
-                >>. spaces
-                >>. parseSimpleType
-                .>> spaces
+            parse {
+                do! spaces .>> skipChar '*' >>. spaces
+                return! parseSimpleType
+            } |> attempt
 
         parse {
-            let! typ = parseSimpleType .>> spaces
+            let! typ = parseSimpleType
             match! many parseItem with
                 | [] -> return typ
                 | head :: items ->
@@ -56,14 +56,12 @@ module Type =
 
         let create =
             parse {
-                do! skipString "->" >>. spaces
+                do! spaces >>. skipString "->" >>. spaces
                 return (fun inpType outType ->
                     inpType ^=> outType)
-            }
+            } |> attempt
 
-        chainr1   // type arrow is right-associative
-            (parseComplexType .>> spaces)
-            (create .>> spaces)
+        chainr1 parseComplexType create   // type arrow is right-associative
 
     do parseTypeRef.Value <- parseTypeImpl
 
