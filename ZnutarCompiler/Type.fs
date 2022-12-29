@@ -39,6 +39,9 @@ type Type =
     /// Function type. E.g. 'a -> int.
     | TypeArrow of Type * Type
 
+    /// Tuple type. e.g. int * 'a * bool.
+    | TypeTuple of MultiItemList<Type>
+
     with
 
     /// Unparses the given type.
@@ -48,6 +51,12 @@ type Type =
             | TypeVariable tv -> TypeVariable.unparse tv
             | TypeArrow (inpType, outType) ->
                 $"({inpType.Unparse()} -> {outType.Unparse()})"
+            | TypeTuple types ->
+                let sTypes =
+                    types
+                        |> Seq.map (fun typ -> typ.Unparse())
+                        |> String.concat " * "
+                $"({sTypes})"
 
     /// Constructs a type arrow. Right associative.
     // https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/symbol-and-operator-reference/#operator-precedence
@@ -78,3 +87,7 @@ module Type =
         | TypeVariable tv -> Set.singleton tv
         | TypeArrow (type1, type2) ->
             freeTypeVariables type1 + freeTypeVariables type2
+        | TypeTuple types ->
+            types
+                |> Seq.map freeTypeVariables
+                |> Set.unionMany

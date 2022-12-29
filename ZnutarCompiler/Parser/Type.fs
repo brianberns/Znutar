@@ -33,6 +33,25 @@ module Type =
             parseParenType
         ]
 
+    /// Parses one or more simple types, folding them into a
+    /// tuple if necessary. E.g. a * b * c.
+    let private parseComplexType =
+
+        let parseItem =
+            skipChar '*'
+                >>. spaces
+                >>. parseSimpleType
+                .>> spaces
+
+        parse {
+            let! typ = parseSimpleType .>> spaces
+            match! many parseItem with
+                | [] -> return typ
+                | head :: items ->
+                    return MultiItemList.create typ head items
+                        |> TypeTuple
+        }
+
     let private parseTypeImpl =
 
         let create =
@@ -43,7 +62,7 @@ module Type =
             }
 
         chainr1   // type arrow is right-associative
-            (parseSimpleType .>> spaces)
+            (parseComplexType .>> spaces)
             (create .>> spaces)
 
     do parseTypeRef.Value <- parseTypeImpl

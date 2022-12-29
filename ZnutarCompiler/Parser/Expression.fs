@@ -115,6 +115,7 @@ module Expression =
             skipChar '.'
                 >>. spaces
                 >>. Identifier.parse
+                .>> spaces
 
         parse {
             let! expr = SimpleExpr.parse .>> spaces

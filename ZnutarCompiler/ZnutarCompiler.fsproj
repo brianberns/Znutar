@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <Compile Include="Result.fs" />
+    <Compile Include="MultiItemList.fs" />
     <Compile Include="Type.fs" />
     <Compile Include="Expression.fs" />
     <Compile Include="Error.fs" />
