@@ -1,5 +1,8 @@
 ﻿namespace Znutar.Parser
 
+open System
+open System.Globalization
+
 open FParsec
 open Znutar
 
@@ -56,13 +59,43 @@ module Expression =
                 }
             }
 
+        /// \uHHHH
+        let private parseHexEscapedChar =
+            parse {
+                do! skipString "\u"
+                let! c0 = hex
+                let! c1 = hex
+                let! c2 = hex
+                let! c3 = hex
+                let n =
+                    let str = String([| c0; c1; c2 ; c3 |])
+                    Int32.Parse(str, NumberStyles.HexNumber)
+                return Convert.ToChar(n)
+            }
+
+        let private quote = '"'
+
+        let private parseEscapedChar =
+            skipChar '\\'
+                >>. choice [
+                    pchar quote
+                    pchar '\\'
+                ]
+
+        let private parseChar =
+            choice [
+                parseHexEscapedChar
+                parseEscapedChar
+                satisfy (fun c -> c <> quote)
+            ]
+
         let private parseString =
-            let quote = '"'
             between
                 (skipChar quote)
                 (skipChar quote)
-                (many (satisfy (fun c -> c <> quote)))
+                (many parseChar)
                 |>> List.toArray
+                |> attempt
 
         let private parseLiteral =
             choice [

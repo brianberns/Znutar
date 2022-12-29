@@ -6,6 +6,27 @@ type Literal =
     | IntLiteral of int
     | StringLiteral of char[]   // prevent null
 
+module Literal =
+
+    let toString = function
+        | BoolLiteral b ->
+            if b then "true" else "false"
+        | IntLiteral n -> string n
+        | StringLiteral chars ->
+            let str =
+                chars
+                    |> Seq.map (fun c ->
+                        match c with
+                            | '"' -> "\\\""   // slash, quote
+                            | '\\' -> "\\\\"  // slash, slash
+                            | _ ->
+                                if System.Char.IsControl(c) then
+                                    let str = (int c).ToString("x4")
+                                    $"\u{str}"
+                                else string c)
+                    |> String.concat ""
+            $"\"{str}\""
+
 /// Binary operator.
 type BinaryOperator =
     | Plus | Minus | Times
@@ -55,11 +76,7 @@ type Expression =
                 $"(let {sRec}{letb.Identifier.Name} = \
                     {letb.Argument.Unparse()} in \
                     {letb.Body.Unparse()})"
-            | LiteralExpr (IntLiteral n) -> string n
-            | LiteralExpr (BoolLiteral b) ->
-                if b then "true" else "false"
-            | LiteralExpr (StringLiteral chars) ->
-                $"\"{System.String(chars)}\""
+            | LiteralExpr literal -> Literal.toString literal
             | IfExpr iff ->
                 $"(if {iff.Condition.Unparse()} \
                     then {iff.TrueBranch.Unparse()} \

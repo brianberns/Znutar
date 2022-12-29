@@ -43,11 +43,7 @@ type AnnotatedExpression =
                 $"(let {letb.Identifier.Name} = \
                     {letb.Argument.Unparse()} in \
                     {letb.Body.Unparse()})"
-            | LiteralExpr (IntLiteral n) -> string n
-            | LiteralExpr (BoolLiteral b) ->
-                if b then "true" else "false"
-            | LiteralExpr (StringLiteral chars) ->
-                $"\"{System.String(chars)}\""
+            | LiteralExpr literal -> Literal.toString literal
             | IfExpr iff ->
                 $"(if {iff.Condition.Unparse()} \
                     then {iff.TrueBranch.Unparse()} \
