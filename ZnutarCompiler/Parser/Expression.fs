@@ -59,53 +59,58 @@ module Expression =
                 }
             }
 
-        /// \uHHHH
-        let private parseHexEscapedChar =
-            parse {
-                do! skipString "\u"
-                let! c0 = hex
-                let! c1 = hex
-                let! c2 = hex
-                let! c3 = hex
-                let n =
-                    let str = String([| c0; c1; c2 ; c3 |])
-                    Int32.Parse(str, NumberStyles.HexNumber)
-                return Convert.ToChar(n)
-            }
+        module private Literal =
 
-        let private quote = '"'
-
-        let private parseEscapedChar =
-            skipChar '\\'
-                >>. choice [
-                    pchar quote
-                    pchar '\\'
+            let private parseBool =
+                choice [
+                    skipString "true" >>% true
+                    skipString "false" >>% false
                 ]
 
-        let private parseChar =
-            choice [
-                parseHexEscapedChar
-                parseEscapedChar
-                satisfy (fun c -> c <> quote)
-            ]
+            /// \uHHHH
+            let private parseHexEscapedChar =
+                parse {
+                    do! skipString "\u"
+                    let! c0 = hex
+                    let! c1 = hex
+                    let! c2 = hex
+                    let! c3 = hex
+                    let n =
+                        let str = String([| c0; c1; c2 ; c3 |])
+                        Int32.Parse(str, NumberStyles.HexNumber)
+                    return Convert.ToChar(n)
+                }
 
-        let private parseString =
-            between
-                (skipChar quote)
-                (skipChar quote)
-                (many parseChar)
-                |>> List.toArray
-                |> attempt
+            let private quote = '"'
 
-        let private parseLiteral =
-            choice [
-                skipString "true" >>% BoolLiteral true
-                skipString "false" >>% BoolLiteral false
+            let private parseEscapedChar =
+                skipChar '\\'
+                    >>. choice [
+                        pchar quote
+                        pchar '\\'
+                    ]
 
-                pint32 |>> IntLiteral
+            let private parseChar =
+                choice [
+                    parseHexEscapedChar
+                    parseEscapedChar
+                    satisfy (fun c -> c <> quote)
+                ]
 
-                parseString |>> StringLiteral
-            ]
+            let private parseString =
+                between
+                    (skipChar quote)
+                    (skipChar quote)
+                    (many parseChar)
+                    |>> List.toArray
+                    |> attempt
+
+            let parse =
+                choice [
+                    parseBool |>> BoolLiteral
+                    pint32 |>> IntLiteral
+                    parseString |>> StringLiteral
+                ]
 
         let private parseIf =
             parse {
@@ -145,7 +150,7 @@ module Expression =
                 Identifier.parse |>> IdentifierExpr
                 parseLambdaAbstraction |>> LambdaExpr
                 parseLetBinding |>> LetExpr
-                parseLiteral |>> LiteralExpr
+                Literal.parse |>> LiteralExpr
                 parseIf |>> IfExpr
                 parseAnnotation |>> AnnotationExpr
                 parseParenExpression
