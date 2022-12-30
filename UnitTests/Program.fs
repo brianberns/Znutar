@@ -5,8 +5,9 @@ module Program =
         let text =
             """
             let x =
-                let a = 3;
-                a;
+                let a = 1;
+                let b = 2;
+                a + b;
             x * 2;
             """
         let assemblyName = "Test"
