@@ -125,6 +125,10 @@ module Substitution =
                     ma with
                         Expression = apply subst ma.Expression
                 }
+            | TupleExpr exprs ->
+                exprs
+                    |> MultiItemList.map (apply subst)
+                    |> TupleExpr
 
     module Scheme =
 

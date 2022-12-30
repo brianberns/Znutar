@@ -13,6 +13,7 @@ type AnnotatedExpression =
     | IfExpr of AnnotatedIf
     | BinaryOperationExpr of AnnotatedBinaryOperation
     | MemberAccessExpr of AnnotatedMemberAccess
+    | TupleExpr of AnnotatedTuple
 
     with
 
@@ -30,6 +31,7 @@ type AnnotatedExpression =
             | IfExpr iff -> iff.Type
             | BinaryOperationExpr bop -> bop.Type
             | MemberAccessExpr ma -> ma.Type
+            | TupleExpr tuple -> tuple.Type
 
     member annex.Unparse() =
         match annex with
@@ -55,6 +57,12 @@ type AnnotatedExpression =
                     {bop.Right.Unparse()})"
             | MemberAccessExpr ma ->
                 $"({ma.Expression}).{ma.Identifier}"
+            | TupleExpr tuple ->
+                let str =
+                    tuple.Expressions
+                        |> Seq.map (fun expr -> expr.Unparse())
+                        |> String.concat ", "
+                $"({str})"
 
 /// x
 and AnnotatedIdentifier =
@@ -129,6 +137,15 @@ and AnnotatedMemberAccess =
         Identifier : Identifier
 
         /// Result type. E.g. (expr.ident : int).
+        Type : Type
+    }
+
+/// a, b
+and AnnotatedTuple =
+    {
+        Expressions : MultiItemList<AnnotatedExpression>
+
+        /// Result type. E.g. int * string.
         Type : Type
     }
 

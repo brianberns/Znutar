@@ -60,6 +60,7 @@ type Expression =
     | BinaryOperationExpr of BinaryOperation
     | AnnotationExpr of Annotation
     | MemberAccessExpr of MemberAccess
+    | TupleExpr of MultiItemList<Expression>
 
     with
 
@@ -91,6 +92,12 @@ type Expression =
                 $"({ann.Expression.Unparse()} : {ann.Type.Unparse()})"
             | MemberAccessExpr ma ->
                 $"{ma.Expression.Unparse()}.{ma.Identifier.Name}"
+            | TupleExpr exprs ->
+                let str =
+                    exprs
+                        |> Seq.map (fun expr -> expr.Unparse())
+                        |> String.concat ", "
+                $"({str})"
 
 /// func arg
 and Application =
