@@ -127,8 +127,12 @@ type CompilerTests() =
         Assert.AreEqual(Ok "This is a string", run text)
 
     [<TestMethod>]
-    member _.UnitLiteral() =
-        let text = "()"
+    member _.Ignore() =
+        let text =
+            """
+            let ignore x = ()
+            in ignore 3
+            """
         Assert.AreEqual(Ok "()", run text)
 
     [<TestMethod>]
