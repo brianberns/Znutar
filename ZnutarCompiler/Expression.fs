@@ -5,6 +5,7 @@ type Literal =
     | BoolLiteral of bool
     | IntLiteral of int
     | StringLiteral of char[]   // prevent null
+    | UnitLiteral
 
 module Literal =
 
@@ -26,6 +27,7 @@ module Literal =
                                 else string c)
                     |> String.concat ""
             $"\"{str}\""
+        | UnitLiteral -> "()"
 
 /// Binary operator.
 type BinaryOperator =

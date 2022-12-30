@@ -26,6 +26,7 @@ type AnnotatedExpression =
             | LiteralExpr (IntLiteral _) -> Type.int
             | LiteralExpr (BoolLiteral _) -> Type.bool
             | LiteralExpr (StringLiteral _) -> Type.string
+            | LiteralExpr UnitLiteral -> Type.unit
             | IfExpr iff -> iff.Type
             | BinaryOperationExpr bop -> bop.Type
             | MemberAccessExpr ma -> ma.Type

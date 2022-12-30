@@ -104,11 +104,15 @@ module Expression =
                     (many parseChar)
                     |>> List.toArray
 
+            let private parseUnit =
+                skipString "()"
+
             let parse =
                 choice [
                     parseBool |>> BoolLiteral
                     pint32 |>> IntLiteral
                     parseString |>> StringLiteral
+                    parseUnit >>% UnitLiteral
                 ]
 
         let private parseIf =
