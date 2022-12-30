@@ -130,3 +130,12 @@ type CompilerTests() =
     member _.UnitLiteral() =
         let text = "()"
         Assert.AreEqual(Ok "()", run text)
+
+    [<TestMethod>]
+    member _.Tuple() =
+        let text =
+            """
+            let f x = x, 2 * x
+            in f 3
+            """
+        Assert.AreEqual(Ok "(3, 6)", run text)
