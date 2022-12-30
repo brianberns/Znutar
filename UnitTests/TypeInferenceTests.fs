@@ -74,8 +74,8 @@ type TypeInferenceTests() =
     member _.Const() =
         let text =
             """
-            let const = fun x -> fun y -> x
-            in const false 6
+            let const = fun x -> fun y -> x;
+            const false 6;
             """
         result {
             let! expr = Parser.run Expression.parse text

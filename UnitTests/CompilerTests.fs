@@ -130,8 +130,8 @@ type CompilerTests() =
     member _.Ignore() =
         let text =
             """
-            let ignore x = ()
-            in ignore 3
+            let ignore x = ();
+            ignore 3;
             """
         Assert.AreEqual(Ok "()", run text)
 
@@ -139,7 +139,7 @@ type CompilerTests() =
     member _.Tuple() =
         let text =
             """
-            let f x = x, 2 * x
-            in f 3
+            let f x = x, 2 * x;
+            f 3;
             """
         Assert.AreEqual(Ok "(3, 6)", run text)

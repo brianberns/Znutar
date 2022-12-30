@@ -31,6 +31,13 @@ module Expression =
         /// From: let f arg0 arg1 = binding in body
         /// To:   let f = fun arg0 -> fun arg1 -> binding in body
         let private parseLetBinding =
+
+            let skipIn =
+                choice [
+                    skipString "in"
+                    skipChar ';'      // allow semicolon as a synonym for "in"
+                ]
+
             parse {
 
                 do! skipString "let" >>. spaces
@@ -41,8 +48,11 @@ module Expression =
                 let! argIdents = many (Identifier.parse .>> spaces)
                 do! skipChar '=' >>. spaces
                 let! binding = parseExpression
-                do! spaces >>. skipString "in" >>. spaces
+                do! spaces >>. skipIn >>. spaces
                 let! body = parseExpression
+                do! (spaces >>. skipChar ';')   // ignore terminating semicolon
+                    |> attempt
+                    |> optional
 
                 let binding' =
                     (argIdents, binding)
