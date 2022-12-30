@@ -4,6 +4,7 @@ open Znutar
 open Znutar.TypeInference
 
 /// Type inference.
+// https://web.archive.org/web/20220524212025/http://dev.stephendiehl.com/fun/WYAH.pdf
 module Infer =   // to-do: replace with constraint-based inference
 
     open Substitution
