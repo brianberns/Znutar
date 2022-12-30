@@ -1,4 +1,4 @@
 ﻿namespace Znutar.Runtime
 
-type private Unit() =
+type Unit private () =
     static member val Value = Unit()

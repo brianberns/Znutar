@@ -9,6 +9,7 @@ open type SyntaxFactory
 open Basic.Reference.Assemblies
 
 open Znutar.Parser
+open Znutar.Runtime
 open Znutar.Transpiler
 open Znutar.TypeInference
 
@@ -50,7 +51,9 @@ module Compiler =
                     .Create(assemblyName)
                     .WithReferences(
                         Net70.References.SystemRuntime,
-                        Net70.References.SystemConsole)
+                        Net70.References.SystemConsole,
+                        MetadataReference.CreateFromFile(
+                            typeof<Unit>.Assembly.Location))
                     .AddSyntaxTrees(compilationUnit.SyntaxTree)
                     .WithOptions(options)
             compilation.Emit(outputPath : string)
