@@ -61,6 +61,8 @@ module Infer =   // to-do: replace with constraint-based inference
             | AnnotationExpr ann -> inferAnnotation env ann
             | Expression.MemberAccessExpr ma ->
                 inferMemberAccess env ma
+            | Expression.TupleExpr exprs ->
+                inferTuple env exprs
 
         /// Infers the type of a identifier by looking it up in the
         /// given environment.
@@ -174,7 +176,7 @@ module Infer =   // to-do: replace with constraint-based inference
                 return argSubst ++ bodySubst, annex
             }
 
-        /// Infers the type of an if expression.
+        /// Infers the type of an if.
         let private inferIf env iff =
             result {
                     // infer sub-expression types
@@ -236,7 +238,7 @@ module Infer =   // to-do: replace with constraint-based inference
                     annex
             }
 
-        /// Infers the type of an annotation expression.
+        /// Checks the type of an annotation.
         let private inferAnnotation env ann =
             result {
                     // infer acutal sub-expression type
@@ -252,9 +254,44 @@ module Infer =   // to-do: replace with constraint-based inference
                     exprAnnex
             }
 
-        /// Infers the type of member access expression.
+        /// Infers the type of a member access.
         let private inferMemberAccess env ma =
             Error (InternalError "oops")
+
+        /// Infers the type of a tuple.
+        let private inferTuple env exprs =
+            result {
+
+                    // infer first item's type
+                let! subst0, annex0 =
+                    infer env exprs.Item0
+
+                    // infer second item's type
+                let! subst1, annex1 =
+                    infer env exprs.Item1
+
+                    // infer subsequent items' types
+                let! pairs =
+                    exprs.Rest
+                        |> Result.traverse (infer env)
+                let restSubsts, restAnnexs = List.unzip pairs
+
+                    // gather results
+                let subst =
+                    subst0 :: subst1 :: restSubsts
+                        |> List.reduce Substitution.compose
+                let annexs =
+                    MultiItemList.create annex0 annex1 restAnnexs
+                let annex =
+                    TupleExpr {
+                        Expressions = annexs
+                        Type =
+                            annexs
+                                |> MultiItemList.map (fun annex -> annex.Type)
+                                |> TypeTuple
+                    }
+                return subst, annex
+            }
 
     /// Infers the type of the given expression.
     let inferExpression refAssemblies expr =

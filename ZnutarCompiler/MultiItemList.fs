@@ -34,9 +34,9 @@ module MultiItemList =
             Rest = rest
         }
 
-    let map mapping list =
+    let map mapping milist =
         {
-            Item0 = mapping list.Item0
-            Item1 = mapping list.Item1
-            Rest = List.map mapping list.Rest
+            Item0 = mapping milist.Item0
+            Item1 = mapping milist.Item1
+            Rest = List.map mapping milist.Rest
         }
