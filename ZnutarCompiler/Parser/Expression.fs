@@ -50,9 +50,6 @@ module Expression =
                 let! binding = parseExpression
                 do! spaces >>. skipIn >>. spaces
                 let! body = parseExpression
-                do! (spaces >>. skipChar ';')   // ignore terminating semicolon
-                    |> attempt
-                    |> optional
 
                 let binding' =
                     (argIdents, binding)
@@ -266,4 +263,11 @@ module Expression =
     do parseExpressionRef.Value <- parseTupleExpr
 
     /// Parses an expression.
-    let parse = parseExpression
+    let parse =
+        parse {
+            let! expr = parseExpression
+            do! (spaces >>. skipChar ';')   // ignore terminating semicolon
+                |> attempt
+                |> optional
+            return expr
+        }

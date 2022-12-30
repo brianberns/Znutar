@@ -4,8 +4,10 @@ module Program =
     result {
         let text =
             """
-            let f x = x, 2 * x;
-            f 3;
+            let x =
+                let a = 3;
+                a;
+            x * 2;
             """
         let assemblyName = "Test"
         do! Compiler.compile

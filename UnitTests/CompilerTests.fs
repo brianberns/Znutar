@@ -143,3 +143,14 @@ type CompilerTests() =
             f 3;
             """
         Assert.AreEqual(Ok "(3, 6)", run text)
+
+    [<TestMethod>]
+    member _.Semicolon() =
+        let text =
+            """
+            let x =
+                let a = 3;
+                a;
+            x * 2;
+            """
+        Assert.AreEqual(Ok "6", run text)
