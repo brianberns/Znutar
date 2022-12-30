@@ -235,11 +235,25 @@ module Expression =
 
         chainl1 parseApplicationExpr parseOp
 
-    /// Parses any expression.
-    let private parseExprImpl =
-        parseBinaryOperationExpr
+    /// Parses a tuple.
+    let private parseTupleExpr =
 
-    do parseExpressionRef.Value <- parseExprImpl
+        let parseItem =
+            parse {
+                do! spaces .>> skipChar ',' >>. spaces
+                return! parseBinaryOperationExpr
+            } |> attempt
+
+        parse {
+            let! typ = parseBinaryOperationExpr
+            match! many parseItem with
+                | [] -> return typ
+                | head :: items ->
+                    return MultiItemList.create typ head items
+                        |> TupleExpr
+        }
+
+    do parseExpressionRef.Value <- parseTupleExpr
 
     /// Parses an expression.
     let parse = parseExpression
