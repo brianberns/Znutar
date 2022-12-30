@@ -18,25 +18,20 @@ module Compiler =
     let private transpile (expr : AnnotatedExpression) =
         result {
             let typeNode = Type.transpile expr.Type
-            if typeNode.IsKind(SyntaxKind.PredefinedType) then
-
-                let! mainStmtNodes, mainExprNode =
-                    Expression.transpile expr
-
-                let stmts =
-                    [|
-                        yield! mainStmtNodes
-                        yield ReturnStatement(mainExprNode)
-                    |]
-                return MethodDeclaration(
-                    returnType = typeNode,
-                    identifier = "Expression")
-                    .AddModifiers(
-                        Token(SyntaxKind.StaticKeyword))
-                    .WithBody(
-                        Block(stmts))
-            else
-                return! Error (InvalidProgramType expr.Type)
+            let! mainStmtNodes, mainExprNode =
+                Expression.transpile expr
+            let stmts =
+                [|
+                    yield! mainStmtNodes
+                    yield ReturnStatement(mainExprNode)
+                |]
+            return MethodDeclaration(
+                returnType = typeNode,
+                identifier = "Expression")
+                .AddModifiers(
+                    Token(SyntaxKind.StaticKeyword))
+                .WithBody(
+                    Block(stmts))
         }
 
     /// Compiles the given node into an assembly.

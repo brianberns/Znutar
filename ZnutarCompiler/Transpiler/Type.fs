@@ -22,19 +22,22 @@ module private Syntax =
 
 module Type =
 
-    let private predefinedTypeMap =
+    let private primitiveTypeMap : Map<_, Syntax.TypeSyntax> =
         Map [
-            Type.int, SyntaxKind.IntKeyword
-            Type.bool, SyntaxKind.BoolKeyword
-            Type.string, SyntaxKind.StringKeyword
+            Type.bool,
+                PredefinedType(Token(SyntaxKind.BoolKeyword))
+            Type.int,
+                PredefinedType(Token(SyntaxKind.IntKeyword))
+            Type.string,
+                PredefinedType(Token(SyntaxKind.StringKeyword))
+            Type.unit,
+                IdentifierName("Unit")
         ]
 
     /// Transpiles the given type.
     let rec transpile = function
         | TypeConstant _ as typ ->
-            let kind = predefinedTypeMap[typ]
-            PredefinedType(Token(kind))
-                : Syntax.TypeSyntax
+            primitiveTypeMap[typ]
         | TypeVariable tv ->
             IdentifierName(tv.Name)
         | TypeArrow (inpType, outType) ->
