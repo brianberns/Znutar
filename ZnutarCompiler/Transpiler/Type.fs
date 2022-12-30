@@ -55,3 +55,9 @@ module Type =
                         TypeArgumentList(
                             Syntax.separatedList(
                                 [inpNode; outNode]))))
+        | TypeTuple types ->
+            let nodes =
+                types
+                    |> Seq.map (transpile >> TupleElement)
+                    |> Syntax.separatedList
+            TupleType(nodes)
