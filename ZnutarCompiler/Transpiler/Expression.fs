@@ -35,6 +35,17 @@ module Expression =
                     LiteralExpression(
                         SyntaxKind.StringLiteralExpression,
                         Literal(String(chars)))
+                | UnitLiteral ->
+                    MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        MemberAccessExpression(
+                            SyntaxKind.SimpleMemberAccessExpression,
+                            MemberAccessExpression(
+                                SyntaxKind.SimpleMemberAccessExpression,
+                                IdentifierName("Znutar"),
+                                IdentifierName("Runtime")),
+                            IdentifierName("Unit")),
+                        IdentifierName("Value"))
         Ok ([], node)
 
     /// Transpiles an expression.

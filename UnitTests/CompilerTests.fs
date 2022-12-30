@@ -125,3 +125,8 @@ type CompilerTests() =
     member _.StringLiteral() =
         let text = "\"This is a string\""
         Assert.AreEqual(Ok "This is a string", run text)
+
+    [<TestMethod>]
+    member _.UnitLiteral() =
+        let text = "()"
+        Assert.AreEqual(Ok "()", run text)
