@@ -281,15 +281,17 @@ module Infer =   // to-do: replace with constraint-based inference
                 let subst =
                     subst0 :: subst1 :: restSubsts
                         |> List.reduce Substitution.compose
-                let annexs =
-                    MultiItemList.create annex0 annex1 restAnnexs
                 let annex =
+                    let annexs =
+                        MultiItemList.create annex0 annex1 restAnnexs
+                    let typ =
+                        annexs
+                            |> MultiItemList.map (fun annex -> annex.Type)
+                            |> TypeTuple
+                            |> Type.apply subst
                     TupleExpr {
                         Expressions = annexs
-                        Type =
-                            annexs
-                                |> MultiItemList.map (fun annex -> annex.Type)
-                                |> TypeTuple
+                        Type = typ
                     }
                 return subst, annex
             }
