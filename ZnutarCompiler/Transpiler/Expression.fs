@@ -58,6 +58,7 @@ module Expression =
         | LiteralExpr lit -> transpileLiteral lit
         | LambdaExpr lam -> transpileLambda lam
         | MemberAccessExpr ma -> transpileMemberAccess ma
+        | TupleExpr tuple -> transpileTuple tuple
 
     and private transpileApplication app =
         app
@@ -185,4 +186,25 @@ module Expression =
     and private transpileMemberAccess ma =
         result {
             return! Error (InternalError "oops")
+        }
+
+    /// Transpiles a tuple.
+    and private transpileTuple tuple =
+        result {
+                // transpile each item
+            let! pairs =
+                tuple.Expressions
+                    |> Seq.toList
+                    |> Result.traverse transpile
+            let stmtNodeLists, exprNodes =
+                List.unzip pairs
+
+                // gather results
+            let stmtNodes = List.concat stmtNodeLists
+            let exprNode =
+                exprNodes
+                    |> Seq.map Argument
+                    |> Syntax.separatedList
+                    |> TupleExpression
+            return stmtNodes, exprNode
         }

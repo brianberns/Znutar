@@ -42,7 +42,9 @@ module Compiler =
 
             let compilationUnit, mainTypeName =
                 CompilationUnit.create assemblyName exprNode
-
+#if DEBUG
+            printfn "%A" <| compilationUnit.NormalizeWhitespace()
+#endif
             let compilation =
                 let options =
                     CSharpCompilationOptions(OutputKind.ConsoleApplication)
