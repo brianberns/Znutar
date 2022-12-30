@@ -34,7 +34,7 @@ module Type =
 
     /// Parses one or more simple types, folding them into a
     /// tuple if necessary. E.g. a * b * c.
-    let private parseComplexType =
+    let private parseTupleType =
 
         let parseItem =
             parse {
@@ -51,7 +51,9 @@ module Type =
                         |> TypeTuple
         }
 
-    let private parseTypeImpl =
+    /// Parses a type arrow, if necessary.
+    /// E.g. a * b -> c.
+    let private parseTypeArrow =
 
         let create =
             parse {
@@ -60,9 +62,9 @@ module Type =
                     inpType ^=> outType)
             } |> attempt
 
-        chainr1 parseComplexType create   // type arrow is right-associative
+        chainr1 parseTupleType create   // type arrow is right-associative
 
-    do parseTypeRef.Value <- parseTypeImpl
+    do parseTypeRef.Value <- parseTypeArrow
 
     /// Parses a type. E.g. "'a -> int".
     let parse = parseType

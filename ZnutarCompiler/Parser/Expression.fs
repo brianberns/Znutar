@@ -159,9 +159,9 @@ module Expression =
                 parseParenExpression
             ]
 
-    /// Parses a complex expression, which consists of a simple
+    /// Parses an expression that consists of a simple
     /// expression and its trailing member accesses (if any).
-    let private parseComplexExpr =
+    let private parseMemberAccessExpr =
 
         let parseAccess =
             parse {
@@ -180,19 +180,19 @@ module Expression =
                     })
         }
 
-    /// Parses one or more complex expressions, folding them
-    /// together as function applications.
+    /// Parses one or more expressions, folding them
+    /// together as function applications (if necessary).
     /// E.g. a b c -> ((a b) c).
-    let private parseComplexExprs =
+    let private parseApplicationExpr =
 
         let parseArgs =
             parse {
                 do! spaces
-                return! parseComplexExpr
+                return! parseMemberAccessExpr
             } |> attempt
 
         parse {
-            let! expr = parseComplexExpr
+            let! expr = parseMemberAccessExpr
             let! args = many parseArgs
             if args.IsEmpty then
                 return expr
@@ -205,8 +205,8 @@ module Expression =
                             })
         }
 
-    /// Parses any expression.
-    let private parseExprImpl =
+    /// Parses a chain of binary operations (if any).
+    let private parseBinaryOperationExpr =
 
         let create (str, op) =
             parse {
@@ -233,7 +233,11 @@ module Expression =
                 |> List.map create
                 |> choice
 
-        chainl1 parseComplexExprs parseOp
+        chainl1 parseApplicationExpr parseOp
+
+    /// Parses any expression.
+    let private parseExprImpl =
+        parseBinaryOperationExpr
 
     do parseExpressionRef.Value <- parseExprImpl
 
