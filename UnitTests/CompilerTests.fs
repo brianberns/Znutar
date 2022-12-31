@@ -29,10 +29,10 @@ type CompilerTests() =
         let text =
             """
             let y =
-                let x = 1 in
-                2 * x in
-            let z = 3 in
-            y + z
+                let x = 1;
+                2 * x;
+            let z = 3;
+            y + z;
             """
         Assert.AreEqual(Ok "5", run text)
 
@@ -40,8 +40,8 @@ type CompilerTests() =
     member _.Plus1() =
         let text =
             """
-            let plus1 x = x + 1 in
-            plus1 5
+            let plus1 x = x + 1;
+            plus1 5;
             """
         Assert.AreEqual(Ok "6", run text)
 
@@ -56,7 +56,7 @@ type CompilerTests() =
             """
             let rec factorial n =
                 if n = 0 then 1
-                else n * factorial (n - 1) in
+                else n * factorial (n - 1);
             factorial 6
             """
         Assert.AreEqual(Ok "720", run text)
@@ -67,11 +67,11 @@ type CompilerTests() =
             """
             let abs x =
                 if x > 0 then x
-                else 0 - x in
+                else 0 - x;
             
             let rec gcd a b =
                 if b = 0 then abs a
-                else gcd b (a % b) in
+                else gcd b (a % b);
  
             gcd 400 600
             """
@@ -81,7 +81,7 @@ type CompilerTests() =
     member _.Identity() =
         let text =
             """
-            let id x = x in
+            let id x = x;
             id true
             """
         Assert.AreEqual(Ok "True", run text)
@@ -90,10 +90,10 @@ type CompilerTests() =
     member _.Identity2() =
         let text =
             """
-            let id x = x in
-            let value = id 0 in
+            let id x = x;
+            let value = id 0;
             if value = 0 then id true
-            else id false
+            else id false;
             """
         Assert.AreEqual(Ok "True", run text)
 
@@ -101,8 +101,8 @@ type CompilerTests() =
     member _.Const() =
         let text =
             """
-            let const x y = x in
-            const false 6
+            let const x y = x;
+            const false 6;
             """
         Assert.AreEqual(Ok "False", run text)
 
@@ -143,15 +143,3 @@ type CompilerTests() =
             f 3;
             """
         Assert.AreEqual(Ok "(3, 6)", run text)
-
-    [<TestMethod>]
-    member _.Semicolon() =
-        let text =
-            """
-            let x =
-                let a = 1;
-                let b = 2;
-                a + b;
-            x * 2;
-            """
-        Assert.AreEqual(Ok "6", run text)

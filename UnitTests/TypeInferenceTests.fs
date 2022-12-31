@@ -38,8 +38,8 @@ type TypeInferenceTests() =
     member _.Polymorphic() =
         let text =
             """
-            let id = fun x -> x in
-            let a = id 0 in
+            let id = fun x -> x;
+            let a = id 0;
             id true
             """
         result {
