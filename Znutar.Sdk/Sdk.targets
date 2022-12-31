@@ -4,7 +4,6 @@
 	
 	<Target Name="CreateManifestResourceNames" />
 
-	<UsingTask TaskName="Znc" AssemblyFile="Znutar.Sdk.dll" />
 	<Target Name="CoreCompile">
 		<Znc
 			OutputAssembly="@(IntermediateAssembly)"
