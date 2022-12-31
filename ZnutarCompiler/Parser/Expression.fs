@@ -263,11 +263,4 @@ module Expression =
     do parseExpressionRef.Value <- parseTupleExpr
 
     /// Parses an expression.
-    let parse =
-        parse {
-            let! expr = parseExpression
-            do! (spaces >>. skipChar ';')   // ignore terminating semicolon
-                |> attempt
-                |> optional
-            return expr
-        }
+    let parse = parseExpression

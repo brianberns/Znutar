@@ -32,7 +32,7 @@ type CompilerTests() =
                 let x = 1;
                 2 * x;
             let z = 3;
-            y + z;
+            y + z
             """
         Assert.AreEqual(Ok "5", run text)
 
@@ -41,7 +41,7 @@ type CompilerTests() =
         let text =
             """
             let plus1 x = x + 1;
-            plus1 5;
+            plus1 5
             """
         Assert.AreEqual(Ok "6", run text)
 
@@ -93,7 +93,7 @@ type CompilerTests() =
             let id x = x;
             let value = id 0;
             if value = 0 then id true
-            else id false;
+            else id false
             """
         Assert.AreEqual(Ok "True", run text)
 
@@ -102,7 +102,7 @@ type CompilerTests() =
         let text =
             """
             let const x y = x;
-            const false 6;
+            const false 6
             """
         Assert.AreEqual(Ok "False", run text)
 
@@ -131,7 +131,7 @@ type CompilerTests() =
         let text =
             """
             let ignore x = ();
-            ignore 3;
+            ignore 3
             """
         Assert.AreEqual(Ok "()", run text)
 
@@ -140,6 +140,6 @@ type CompilerTests() =
         let text =
             """
             let f x = x, 2 * x;
-            f 3;
+            f 3
             """
         Assert.AreEqual(Ok "(3, 6)", run text)
