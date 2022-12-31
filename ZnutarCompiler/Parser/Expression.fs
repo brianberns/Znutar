@@ -16,7 +16,7 @@ module Expression =
 
     module private SimpleExpr =
 
-        let private parseLambdaAbstraction =   // to-do: fold multiple arguments
+        let private parseLambdaAbstraction =
             parse {
                 do! skipString "fun" >>. spaces
                 let! ident = Identifier.parse
