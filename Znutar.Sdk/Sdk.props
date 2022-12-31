@@ -8,5 +8,9 @@
 	</PropertyGroup>
 	
 	<UsingTask TaskName="Znc" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\net7.0\Znutar.Sdk.dll" />
-	
+
+	<ItemGroup>
+		<PackageReference Include="Znutar.Runtime" Version="1.0.0" />
+	</ItemGroup>
+
 </Project>
