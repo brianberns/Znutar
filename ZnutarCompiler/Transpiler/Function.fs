@@ -63,13 +63,15 @@ module Function =
                 ExpressionBody = letb.Body
             }
 
-    let rec private gatherTypes = function
-        | TypeArrow (inpType, outType) ->
-            inpType :: gatherTypes outType
-        | typ -> [typ]
-
     /// Creates function signature from its scheme.
     let private getSignature func =
+
+        /// E.g. 'a -> ('b -> 'a) => [ 'a; 'b; 'a ]
+        let rec gatherTypes = function
+            | TypeArrow (inpType, outType) ->
+                inpType :: gatherTypes outType
+            | typ -> [typ]
+
         let types = gatherTypes func.Scheme.Type
         match List.rev types with
             | [] | [_] ->
