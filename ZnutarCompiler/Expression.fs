@@ -9,6 +9,8 @@ type Literal =
 
 module Literal =
 
+    open System
+
     let toString = function
         | BoolLiteral b ->
             if b then "true" else "false"
@@ -16,15 +18,14 @@ module Literal =
         | StringLiteral chars ->
             let str =
                 chars
-                    |> Seq.map (fun c ->
-                        match c with
-                            | '"' -> "\\\""   // slash, quote
-                            | '\\' -> "\\\\"  // slash, slash
-                            | _ ->
-                                if System.Char.IsControl(c) then
-                                    let str = (int c).ToString("x4")
-                                    $"\u{str}"
-                                else string c)
+                    |> Seq.map (function
+                        | '"' -> "\\\""   // slash, quote
+                        | '\\' -> "\\\\"  // slash, slash
+                        | c ->
+                            if Char.IsControl(c) then
+                                let str = (int c).ToString("x4")
+                                $"\u{str}"
+                            else string c)
                     |> String.concat ""
             $"\"{str}\""
         | UnitLiteral -> "()"
