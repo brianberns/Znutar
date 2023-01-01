@@ -73,9 +73,8 @@ module Expression =
     (*
         From:
             let y =
-                let x = 1
-                in 2 * x
-            in
+                let x = 1 in
+                2 * x in
             let z = 3 in
             y + z
 
@@ -90,7 +89,7 @@ module Expression =
             let typeNode = Type.transpile letb.Argument.Type
             let! argStmtNodes, argExprNode = transpile letb.Argument   // argStmtNodes: int x = 1, argExprNode: 2 * x
             let! bodyStmtNodes, bodyExprNode = transpile letb.Body     // bodyStmtNodes: int z = 3, bodyExprNode: y + z
-            let stmtNode : Syntax.StatementSyntax =                        // stmtNode: int y = 2 * x
+            let stmtNode : Syntax.StatementSyntax =                    // stmtNode: int y = 2 * x
                 LocalDeclarationStatement(
                     VariableDeclaration(typeNode)
                         .WithVariables(
