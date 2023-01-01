@@ -5,9 +5,9 @@ Znutar is a hobby language for the .NET platform. I created it because I wanted 
 * Hindley–Milner type inference.
 * Creating a new .NET language from scratch.
 
-## Examples
+## Hello world
 
-Znutar is a functional programming language that can also call methods in external .NET libraries. Here's "Hello world":
+Znutar is a functional programming language that can also call methods in external .NET libraries:
 
 ```znutar
 System.Console.WriteLine("Hello world")
