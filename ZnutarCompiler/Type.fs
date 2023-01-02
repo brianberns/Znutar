@@ -84,6 +84,7 @@ module Type =
     let unit = constant "unit"
 
     /// Free type variables in the given type.
+    /// (Note: All type variables in a type are free.)
     let rec freeTypeVariables = function
         | TypeConstant _ -> Set.empty
         | TypeVariable tv -> Set.singleton tv

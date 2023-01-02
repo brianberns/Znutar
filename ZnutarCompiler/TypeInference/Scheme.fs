@@ -34,6 +34,8 @@ module Scheme =
         scheme.Unparse()
 
     /// Free type variables in the given scheme.
+    /// E.g. 'b is free in <'a>('a -> 'b), and is
+    /// presumably bound by the enclosing environment.
     let freeTypeVariables scheme =
         Type.freeTypeVariables scheme.Type
             - set scheme.TypeVariables
