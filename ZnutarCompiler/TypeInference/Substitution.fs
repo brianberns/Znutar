@@ -96,6 +96,7 @@ module Substitution =
 
     and private unifyTuples types1 types2 =
         let pairs =
+            assert(types1.Length = types2.Length)
             Seq.zip types1 types2
                 |> Seq.toList
         (empty, pairs)
