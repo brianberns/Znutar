@@ -99,7 +99,7 @@ type TypeInferenceTests() =
 
     // http://www.cs.rpi.edu/~milanova/csci4450/Lecture23.pdf, slide 10
     [<TestMethod>]
-    member _.NotGeneralizable() =
+    member _.Ungeneralizable() =
         let text = "(fun f -> fun x -> let g = f in g x) (fun y -> y + 1) true"
         result {
             let! expr = Parser.run Expression.parse text
@@ -108,4 +108,19 @@ type TypeInferenceTests() =
                     UnificationFailure (Type.int, Type.bool))
             let actual = infer expr
             Assert.AreEqual(expected, actual)
+        } |> Assert.Ok
+
+    // https://cstheory.stackexchange.com/questions/39814/what-is-the-difference-between-system-f-and-hindley-milner-type-system
+    [<TestMethod>]
+    member _.Untypable() =
+        result {
+
+            let text = "let f = fun x -> x in fun x -> f f x"
+            let! expr = Parser.run Expression.parse text
+            Assert.IsTrue(infer expr |> Result.isOk)   // f : 'a -> 'a
+
+            let text = "(fun f -> fun x -> f f x) (fun x -> x)"
+            let! expr = Parser.run Expression.parse text
+            Assert.IsTrue(infer expr |> Result.isError)   // can't unify 'a with 'a -> 'b
+
         } |> Assert.Ok
