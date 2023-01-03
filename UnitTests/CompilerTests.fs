@@ -48,7 +48,9 @@ type CompilerTests() =
     [<TestMethod>]
     member _.InfiniteRecursion() =
         let text = "let x = x in 0"
-        Assert.IsTrue(run text |> Result.isError)
+        let expected = Error (UnboundIdentifier { Name = "x" })
+        let actual = run text
+        Assert.AreEqual(expected, actual)
 
     [<TestMethod>]
     member _.Factorial() =
