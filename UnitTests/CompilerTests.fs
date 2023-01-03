@@ -48,7 +48,6 @@ type CompilerTests() =
     [<TestMethod>]
     member _.InfiniteRecursion() =
         let text = "let rec f x = f x in f 0"
-        let expected = Error (UnboundIdentifier { Name = "x" })
         match run text with
             | Error (InternalError _) -> ()   // to-do: improve this
             | res -> Assert.Fail(sprintf "%A" res)
