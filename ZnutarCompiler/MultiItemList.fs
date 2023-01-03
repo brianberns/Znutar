@@ -43,13 +43,3 @@ module MultiItemList =
             Item2 = mapping milist.Item2
             Rest = List.map mapping milist.Rest
         }
-
-    let zip milist1 milist2 =
-        {
-            Item1 = milist1.Item1, milist2.Item1
-            Item2 = milist1.Item2, milist2.Item2
-            Rest = List.zip milist1.Rest milist2.Rest
-        }
-
-    let toList (milist : MultiItemList<_>) =
-        Seq.toList milist.Items

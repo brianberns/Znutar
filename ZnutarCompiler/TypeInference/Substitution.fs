@@ -96,8 +96,8 @@ module Substitution =
 
     and private unifyTuples types1 types2 =
         let pairs =
-            MultiItemList.zip types1 types2
-                |> MultiItemList.toList
+            Seq.zip types1 types2
+                |> Seq.toList
         (empty, pairs)
             ||> Result.foldM (fun acc (type1, type2) ->
                 result {
