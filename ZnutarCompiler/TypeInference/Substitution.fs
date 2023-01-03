@@ -79,6 +79,16 @@ module Substitution =
                 | (TypeConstant ident1), (TypeConstant ident2)
                     when ident1 = ident2 ->
                     return empty
+                | TypeTuple types1, TypeTuple types2
+                    when types1.Length = types2.Length ->
+                    return!
+                        MultiItemList.zip types1 types2
+                            |> MultiItemList.toList
+                            |> Result.foldM (fun acc (type1, type2) ->
+                                result {
+                                    let! subst = unify type1 type2
+                                    return acc ++ subst
+                                }) empty
                 | _ ->
                     return! Error (UnificationFailure (type1, type2))
         }

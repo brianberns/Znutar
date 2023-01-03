@@ -97,6 +97,33 @@ type TypeInferenceTests() =
             Assert.AreEqual(expected, actual)
         } |> Assert.Ok
 
+    // https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tldi10-vytiniotis.pdf
+    [<TestMethod>]
+    member _.Generalizable() =
+        let text =
+            """
+            let f x =
+                let g y = (x,y);
+                g;
+            f 0
+            """
+        result {
+
+            let! expr = Parser.run Expression.parse text
+            let expected =
+                Type.variable "a" ^=>
+                    TypeTuple (
+                        MultiItemList.create
+                            Type.int
+                            (Type.variable "a")
+                            [])
+            let! expr' = infer expr
+            let actual = expr'.Type
+
+            let! subst = Substitution.unify expected actual
+            Assert.AreEqual(1, subst.Count)
+        } |> Assert.Ok
+
     // http://www.cs.rpi.edu/~milanova/csci4450/Lecture23.pdf, slide 10
     [<TestMethod>]
     member _.Ungeneralizable() =

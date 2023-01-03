@@ -264,12 +264,12 @@ module Infer =   // to-do: replace with constraint-based inference
             result {
 
                     // infer first item's type
-                let! subst0, annex0 =
-                    infer env exprs.Item0
-
-                    // infer second item's type
                 let! subst1, annex1 =
                     infer env exprs.Item1
+
+                    // infer second item's type
+                let! subst2, annex2 =
+                    infer env exprs.Item2
 
                     // infer subsequent items' types
                 let! pairs =
@@ -279,11 +279,11 @@ module Infer =   // to-do: replace with constraint-based inference
 
                     // gather results
                 let subst =
-                    subst0 :: subst1 :: restSubsts
+                    subst1 :: subst2 :: restSubsts
                         |> List.reduce Substitution.compose
                 let annex =
                     let annexs =
-                        MultiItemList.create annex0 annex1 restAnnexs
+                        MultiItemList.create annex1 annex2 restAnnexs
                     let typ =
                         annexs
                             |> MultiItemList.map (fun annex -> annex.Type)
