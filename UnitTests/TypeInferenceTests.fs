@@ -108,7 +108,6 @@ type TypeInferenceTests() =
             f 0
             """
         result {
-
             let! expr = Parser.run Expression.parse text
             let expected =
                 Type.variable "a" ^=>
@@ -119,7 +118,6 @@ type TypeInferenceTests() =
                             [])
             let! expr' = infer expr
             let actual = expr'.Type
-
             let! subst = Substitution.unify expected actual
             Assert.AreEqual(1, subst.Count)
         } |> Assert.Ok
@@ -144,10 +142,23 @@ type TypeInferenceTests() =
 
             let text = "let f = fun x -> x in fun x -> f f x"
             let! expr = Parser.run Expression.parse text
-            Assert.IsTrue(infer expr |> Result.isOk)   // f : 'a -> 'a
+            let expected =
+                Type.variable "a" ^=> Type.variable "a"
+            let! expr' = infer expr
+            let actual = expr'.Type
+            let! subst = Substitution.unify expected actual
+            Assert.AreEqual(1, subst.Count)
 
             let text = "(fun f -> fun x -> f f x) (fun x -> x)"
             let! expr = Parser.run Expression.parse text
-            Assert.IsTrue(infer expr |> Result.isError)   // can't unify 'a with 'a -> 'b
-
+            match infer expr with
+                | Error (
+                    UnificationFailure (
+                        TypeVariable tv1,
+                        TypeArrow (
+                            TypeVariable tv2,
+                            TypeVariable tv3))) as err ->   // can't unify 'a with 'a -> 'b
+                    Assert.AreEqual(tv1, tv2)
+                    Assert.AreNotEqual(tv1, tv3)
+                | _ -> Assert.Fail()
         } |> Assert.Ok
