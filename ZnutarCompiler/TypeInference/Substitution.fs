@@ -61,6 +61,7 @@ module Substitution =
 
         result {
             match type1, type2 with
+
                 | TypeArrow (left1, right1), TypeArrow (left2, right2) ->
                     let! subst1 = unify left1 left2
                     let! subst2 =
@@ -68,6 +69,7 @@ module Substitution =
                             (Type.apply subst1 right1)
                             (Type.apply subst1 right2)
                     return subst1 ++ subst2
+
                 | TypeVariable tv, typ
                 | typ, TypeVariable tv ->
                     if typ = TypeVariable tv then
@@ -76,9 +78,11 @@ module Substitution =
                         return! Error (UnificationFailure (type1, type2))
                     else
                         return Map [tv, typ]
+
                 | (TypeConstant ident1), (TypeConstant ident2)
                     when ident1 = ident2 ->
                     return empty
+
                 | TypeTuple types1, TypeTuple types2
                     when types1.Length = types2.Length ->
                     return!
@@ -89,6 +93,7 @@ module Substitution =
                                     let! subst = unify type1 type2
                                     return acc ++ subst
                                 }) empty
+
                 | _ ->
                     return! Error (UnificationFailure (type1, type2))
         }
