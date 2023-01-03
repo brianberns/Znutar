@@ -59,44 +59,51 @@ module Substitution =
         let occurs tv typ =
             Set.contains tv (Type.freeTypeVariables typ)
 
+        match type1, type2 with
+
+            | TypeVariable tv, typ
+            | typ, TypeVariable tv ->
+                if typ = TypeVariable tv then
+                    Ok empty
+                elif occurs tv typ then
+                    Error (UnificationFailure (type1, type2))
+                else
+                    Ok (Map [tv, typ])
+
+            | (TypeConstant ident1), (TypeConstant ident2)
+                when ident1 = ident2 ->
+                Ok empty
+
+            | TypeArrow (left1, right1), TypeArrow (left2, right2) ->
+                unifyArrows (left1, right1) (left2, right2)
+
+            | TypeTuple types1, TypeTuple types2
+                when types1.Length = types2.Length ->
+                unifyTuples types1 types2
+
+            | _ ->
+                Error (UnificationFailure (type1, type2))
+
+    and private unifyArrows (left1, right1) (left2, right2) =
         result {
-            match type1, type2 with
-
-                | TypeArrow (left1, right1), TypeArrow (left2, right2) ->
-                    let! subst1 = unify left1 left2
-                    let! subst2 =
-                        unify
-                            (Type.apply subst1 right1)
-                            (Type.apply subst1 right2)
-                    return subst1 ++ subst2
-
-                | TypeVariable tv, typ
-                | typ, TypeVariable tv ->
-                    if typ = TypeVariable tv then
-                        return empty
-                    elif occurs tv typ then
-                        return! Error (UnificationFailure (type1, type2))
-                    else
-                        return Map [tv, typ]
-
-                | (TypeConstant ident1), (TypeConstant ident2)
-                    when ident1 = ident2 ->
-                    return empty
-
-                | TypeTuple types1, TypeTuple types2
-                    when types1.Length = types2.Length ->
-                    return!
-                        MultiItemList.zip types1 types2
-                            |> MultiItemList.toList
-                            |> Result.foldM (fun acc (type1, type2) ->
-                                result {
-                                    let! subst = unify type1 type2
-                                    return acc ++ subst
-                                }) empty
-
-                | _ ->
-                    return! Error (UnificationFailure (type1, type2))
+            let! subst1 = unify left1 left2
+            let! subst2 =
+                unify
+                    (Type.apply subst1 right1)
+                    (Type.apply subst1 right2)
+            return subst1 ++ subst2
         }
+
+    and private unifyTuples types1 types2 =
+        let pairs =
+            MultiItemList.zip types1 types2
+                |> MultiItemList.toList
+        (empty, pairs)
+            ||> Result.foldM (fun acc (type1, type2) ->
+                result {
+                    let! subst = unify type1 type2
+                    return acc ++ subst
+                })
 
     module Expression =
 
