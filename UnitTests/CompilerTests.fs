@@ -47,7 +47,7 @@ type CompilerTests() =
 
     [<TestMethod>]
     member _.InfiniteRecursion() =
-        let text = "let rec f x = f x in f 0"
+        let text = "let rec f x = f (x : int) in f 0"
         match run text with
             | Error (InternalError _) -> ()   // to-do: improve this
             | res -> Assert.Fail(sprintf "%A" res)
@@ -116,7 +116,9 @@ type CompilerTests() =
     [<TestMethod>]
     member _.AnonymousLambdaInvalid() =
         let text = "fun x -> fun y -> x"
-        Assert.IsTrue(run text |> Result.isError)
+        match run text with
+            | Error (InternalError _) -> ()   // to-do: improve this
+            | res -> Assert.Fail(sprintf "%A" res)
 
     [<TestMethod>]
     member _.CSharpKeyword() =
