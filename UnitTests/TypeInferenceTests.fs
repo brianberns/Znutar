@@ -96,3 +96,16 @@ type TypeInferenceTests() =
             let actual = infer expr
             Assert.AreEqual(expected, actual)
         } |> Assert.Ok
+
+    // http://www.cs.rpi.edu/~milanova/csci4450/Lecture23.pdf
+    [<TestMethod>]
+    member _.NotGeneralizable() =
+        let text = "(fun f -> fun x -> let g = f in g x) (fun y -> y + 1) true"
+        result {
+            let! expr = Parser.run Expression.parse text
+            let expected =
+                Error (
+                    UnificationFailure (Type.int, Type.bool))
+            let actual = infer expr
+            Assert.AreEqual(expected, actual)
+        } |> Assert.Ok
