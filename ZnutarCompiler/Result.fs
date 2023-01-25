@@ -48,6 +48,8 @@ module ResultBuilder =
 
 module Result =
 
+    /// Maps a list of items, with the possibility of error along
+    /// the way.
     // https://stackoverflow.com/a/53029378/344223
     let traverse f items = 
         let folder head tail =
@@ -59,10 +61,12 @@ module Result =
         let empty = result { return List.empty }
         List.foldBack folder items empty
 
+    /// Converts a list of results into a list result.
     let sequence items =
         traverse id items
 
     // https://hoogle.haskell.org/?hoogle=foldM
+    /// Monadic fold.
     let foldM f state items =
 
         let rec loop state = function
