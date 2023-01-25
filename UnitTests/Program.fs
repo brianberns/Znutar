@@ -4,15 +4,11 @@ module Program =
     result {
         let text =
             """
-            let x =
-                let a = 1;
-                let b = 2;
-                a + b;
-            x * 2;
+            System.Console.WriteLine("Hello world")
             """
         let assemblyName = "Test"
         do! Compiler.compile
-                Array.empty
+                [| @"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\7.0.2\ref\net7.0\System.Console.dll" |]
                 assemblyName
                 $"{assemblyName}.dll"
                 text
