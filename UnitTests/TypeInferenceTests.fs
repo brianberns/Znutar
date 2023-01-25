@@ -98,6 +98,15 @@ type TypeInferenceTests() =
         } |> Assert.Ok
 
     // https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tldi10-vytiniotis.pdf
+    (*
+    The definition for g is typed in an environment in which x has type
+    'a, and the inferred scheme for g is <'b>('b -> 'a * 'b). This scheme
+    is polymorphic in 'b, but not in 'a, because the latter is free in the
+    type environment at the definition of g. This side condition, that g
+    should be generalised only over variables that are not free in the
+    type environment, is the only tricky point in the entire Hindley-
+    Milner type system.
+    *)
     [<TestMethod>]
     member _.Generalizable() =
         let text =
