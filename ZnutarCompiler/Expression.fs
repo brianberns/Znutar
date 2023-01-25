@@ -11,7 +11,8 @@ module Literal =
 
     open System
 
-    let toString = function
+    /// Unparses a literal.
+    let unparse = function
         | BoolLiteral b ->
             if b then "true" else "false"
         | IntLiteral n -> string n
@@ -19,8 +20,8 @@ module Literal =
             let str =
                 chars
                     |> Seq.map (function
-                        | '"' -> "\\\""   // slash, quote
-                        | '\\' -> "\\\\"  // slash, slash
+                        | '"' -> "\\\""   // backslash, quote
+                        | '\\' -> "\\\\"  // backslash, backslash
                         | c ->
                             if Char.IsControl(c) then
                                 let str = (int c).ToString("x4")
@@ -78,7 +79,7 @@ type Expression =
                 $"(let {sRec}{letb.Identifier.Name} = \
                     {letb.Argument.Unparse()} in \
                     {letb.Body.Unparse()})"
-            | LiteralExpr literal -> Literal.toString literal
+            | LiteralExpr literal -> Literal.unparse literal
             | IfExpr iff ->
                 $"(if {iff.Condition.Unparse()} \
                     then {iff.TrueBranch.Unparse()} \
