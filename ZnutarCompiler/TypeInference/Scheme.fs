@@ -7,10 +7,14 @@ open Znutar
 [<System.Diagnostics.DebuggerDisplay("{Unparse()}")>]
 type Scheme =
     {
+        /// Type variables bound by this scheme.
         TypeVariables : List<TypeVariable>
+
+        /// Type defined by this scheme.
         Type : Type
     }
 
+    /// Unparses the given scheme.
     member scheme.Unparse() =
         let typeVars =
             if scheme.TypeVariables.IsEmpty then ""
@@ -23,12 +27,14 @@ type Scheme =
 
 module Scheme =
 
+    /// Creates a scheme.
     let create typeVars typ =
         {
             TypeVariables = typeVars
             Type = typ
         }
 
+    /// Unparses the given scheme.
     let unparse (scheme : Scheme) =
         scheme.Unparse()
 
