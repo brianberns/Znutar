@@ -69,7 +69,8 @@ module Infer =   // to-do: replace with constraint-based inference
         /// given environment.
         let private inferIdent env ident =
             result {
-                let! scheme = TypeEnvironment.tryFind ident env
+                let! scheme =
+                    TypeEnvironment.tryFindFunc ident env
                 let annex =
                     IdentifierExpr {
                         Identifier = ident
@@ -297,7 +298,8 @@ module Infer =   // to-do: replace with constraint-based inference
             }
 
     /// Infers the type of the given expression.
-    let inferExpression refAssemblies expr =
+    let inferExpression assemblies expr =
+        let env = TypeEnvironment.create assemblies
         expr
-            |> Expression.infer TypeEnvironment.empty
+            |> Expression.infer env
             |> Result.map snd

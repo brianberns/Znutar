@@ -171,5 +171,7 @@ module Substitution =
 
         /// Applies the given substitution to the given environment.
         let apply subst (env : TypeEnvironment) : TypeEnvironment =
-            Map.map (fun _ value ->
-                Scheme.apply subst value) env
+            let funcTypeEnv =
+                Map.map (fun _ value ->
+                    Scheme.apply subst value) env.FuncTypeEnv
+            { env with FuncTypeEnv = funcTypeEnv }
