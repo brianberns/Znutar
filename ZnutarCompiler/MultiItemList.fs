@@ -7,7 +7,6 @@ type MultiItemList<'t> =
         Item2 : 't
         Rest : List<'t>
     }
-    with
 
     member this.Length =
         this.Rest.Length + 2

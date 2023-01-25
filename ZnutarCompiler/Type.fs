@@ -44,8 +44,6 @@ type Type =
     /// Tuple type. e.g. int * 'a * bool.
     | TypeTuple of MultiItemList<Type>
 
-    with
-
     /// Unparses the given type.
     member typ.Unparse() =
         match typ with

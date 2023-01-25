@@ -11,7 +11,6 @@ type Scheme =
         Type : Type
     }
 
-    with
     member scheme.Unparse() =
         let typeVars =
             if scheme.TypeVariables.IsEmpty then ""

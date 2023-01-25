@@ -15,8 +15,6 @@ type AnnotatedExpression =
     | MemberAccessExpr of AnnotatedMemberAccess
     | TupleExpr of AnnotatedTuple
 
-    with
-
     /// Result type.
     member annex.Type =
         match annex with

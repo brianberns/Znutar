@@ -63,8 +63,6 @@ type Expression =
     | MemberAccessExpr of MemberAccess
     | TupleExpr of MultiItemList<Expression>
 
-    with
-
     /// Unparses the given expression.
     member expr.Unparse() =
         match expr with
