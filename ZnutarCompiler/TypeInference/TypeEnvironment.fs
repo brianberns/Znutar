@@ -34,8 +34,7 @@ module private FunctionTypeEnvironment =
 
 type private MethodTypeEnvironment =
     {
-        // Schemes : Scheme[]
-        Methods : List<MethodInfo>
+        Schemes : List<Scheme>
         Children : Map<Identifier, MethodTypeEnvironment>
     }
 
@@ -43,13 +42,15 @@ module private MethodTypeEnvironment =
 
     let empty =
         {
-            Methods = List.empty
+            Schemes = List.empty
             Children = Map.empty
         }
 
     let rec add path method env =
         match path with
-            | [] -> { env with Methods = method :: env.Methods }
+            | [] ->
+                let scheme = Scheme.create List.empty (Type.ofMethod method)
+                { env with Schemes = scheme :: env.Schemes }
             | ident :: tail ->
                 let child =
                     env.Children
@@ -64,16 +65,17 @@ module private MethodTypeEnvironment =
             [|
                 for (assembly : Assembly) in assemblies do
                     for typ in assembly.ExportedTypes do
-                        let namespaceParts = typ.Namespace.Split('.')
-                        for method in typ.GetMethods() do
-                            if method.IsStatic then
-                                let path =
-                                    [
-                                        yield! namespaceParts
-                                        yield typ.Name
-                                        yield method.Name
-                                    ] |> List.map Identifier.create
-                                yield path, method
+                        if not typ.IsGenericType then
+                            let namespaceParts = typ.Namespace.Split('.')
+                            for method in typ.GetMethods() do
+                                if method.IsStatic then
+                                    let path =
+                                        [
+                                            yield! namespaceParts
+                                            yield typ.Name
+                                            yield method.Name
+                                        ] |> List.map Identifier.create
+                                    yield path, method
             |]
         (empty, pairs)
             ||> Seq.fold (fun tree (path, method) ->

@@ -1,5 +1,6 @@
 ﻿namespace Znutar
 
+open System
 open System.Reflection
 
 /// Name of a value or type.
@@ -100,15 +101,16 @@ module Type =
                 |> Seq.map freeTypeVariables
                 |> Set.unionMany
 
-    let private ofSystemType (typ : System.Type) =
-        if typ = typeof<System.Void> then
-            unit
-        elif typ = typeof<System.String> then
-            string
+    let private ofSystemType (sysType : System.Type) =
+        if sysType = typeof<bool> then bool
+        elif sysType = typeof<int> then int
+        elif sysType = typeof<string> then string
+        elif sysType = typeof<Void> then unit
         else
-            constant typ.Name
+            constant sysType.Name
 
     let ofMethod (method : MethodInfo) =
+        assert(not method.IsGenericMethod)
         let inpType =
             let inpTypes =
                 method.GetParameters()
@@ -116,7 +118,7 @@ module Type =
                         ofSystemType parm.ParameterType)
                     |> Seq.toList
             match inpTypes with
-                | [] -> failwith "oops"
+                | [] -> unit
                 | [typ] -> typ
                 | type0 :: type1 :: rest ->
                     MultiItemList.create type0 type1 rest
