@@ -4,9 +4,9 @@ open Znutar
 
 /// Tracks schemes by name.
 /// E.g. "const" is mapped to <'a, 'b>('a -> 'b -> 'a).
-type FunctionTypeEnvironment = Map<Identifier, Scheme>
+type private FunctionTypeEnvironment = Map<Identifier, Scheme>
 
-module FunctionTypeEnvironment =
+module private FunctionTypeEnvironment =
 
     /// Empty type environment.
     let empty : FunctionTypeEnvironment = Map.empty
@@ -31,9 +31,27 @@ module FunctionTypeEnvironment =
             (Map.values env)
             |> set
 
+type private MethodTypeEnvironmentNode =
+    {
+        Schemes : Scheme[]
+        Children : Map<Identifier, MethodTypeEnvironmentNode>
+    }
+
+type private MethodTypeEnvironment =
+    Map<Identifier, MethodTypeEnvironmentNode>
+
+module private MethodTypeEnvironment =
+
+    let create assemblies =
+        {
+            Schemes = Array.empty
+            Children = Map.empty
+        }
+
 type TypeEnvironment =
     private {
         FuncTypeEnv : FunctionTypeEnvironment
+        MethodTypeEnv : MethodTypeEnvironment
     }
 
 module TypeEnvironment =
@@ -41,6 +59,7 @@ module TypeEnvironment =
     let create (assemblies : System.Reflection.Assembly[]) =
         {
             FuncTypeEnv = FunctionTypeEnvironment.empty
+            MethodTypeEnv = Map.empty
         }
 
     /// Adds the given scheme with the given identifier to
