@@ -117,6 +117,8 @@ type TypeInferenceTests() =
             f 0
             """
         result {
+
+                // overall type is 'a -> int * 'a
             let! expr = Parser.run Expression.parse text
             let expected =
                 Type.variable "a" ^=>
@@ -129,6 +131,31 @@ type TypeInferenceTests() =
             let actual = expr'.Type
             let! subst = Substitution.unify expected actual
             Assert.AreEqual(1, subst.Count)
+
+                // g has scheme <'b>('b -> 'a * 'b)
+            match expr' with
+                | LetExpr letF ->
+                    match letF.Argument with
+                        | LambdaExpr lam ->
+                            match lam.Body with
+                                | LetExpr letG ->
+                                    let expected =
+                                        Type.variable "b" ^=>
+                                            TypeTuple (
+                                                MultiItemList.create
+                                                    (Type.variable "a")
+                                                    (Type.variable "b")
+                                                    [])
+                                    let actual = letG.Scheme.Type
+                                    let! subst = Substitution.unify expected actual
+                                    Assert.AreEqual(2, subst.Count)
+                                    Assert.AreEqual(
+                                        [subst[TypeVariable.create "b"]],
+                                        List.map TypeVariable letG.Scheme.TypeVariables)
+                                | _ -> Assert.Fail()
+                        | _ -> Assert.Fail()
+                | _ -> Assert.Fail()
+
         } |> Assert.Ok
 
     // http://www.cs.rpi.edu/~milanova/csci4450/Lecture23.pdf, slide 10
