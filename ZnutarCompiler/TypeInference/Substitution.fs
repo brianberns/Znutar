@@ -85,6 +85,7 @@ module Substitution =
             | _ ->
                 Error (UnificationFailure (type1, type2))
 
+    /// Attempts to unify the given arrows.
     and private unifyArrows (left1, right1) (left2, right2) =
         result {
             let! subst1 = unify left1 left2
@@ -95,6 +96,7 @@ module Substitution =
             return subst1 ++ subst2
         }
 
+    /// Attempts to unify the given tuples.
     and private unifyTuples types1 types2 =
         let pairs =
             assert(types1.Length = types2.Length)
