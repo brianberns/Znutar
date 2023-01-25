@@ -71,7 +71,7 @@ type FuzzTests() =
                 sprintf "\nType 1: %s\nType 2: %s\nSubstitution: %s\nType 1': %s\nType 2': %s"
                     (Type.unparse type1)
                     (Type.unparse type2)
-                    (Substitution.toString subst)
+                    (Substitution.unparse subst)
                     (Type.unparse type1')
                     (Type.unparse type2')
             type1' = type2' |@ msg

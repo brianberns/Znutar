@@ -10,7 +10,8 @@ module Substitution =
     /// Empty substitution.
     let empty : Substitution = Map.empty
 
-    let toString (subst : Substitution) =
+    /// Unparses the given substitution.
+    let unparse (subst : Substitution) =
         subst
             |> Map.toSeq
             |> Seq.map (fun (tv, typ) ->
