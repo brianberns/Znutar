@@ -21,12 +21,12 @@ module TypeVariable =
 
     /// Creates a type variable with the given name.
     let create (name : string) : TypeVariable =
-        assert(name.Contains('\'') |> not)   // apostrophe is implicit
+        assert(name.StartsWith("'") |> not)   // apostrophe is implicit
         { Name = name }
 
     /// Unparses the given type variable.
     let unparse (tv : TypeVariable) =
-        $"'{tv.Name}"                        // apostrophe is implicit
+        $"'{tv.Name}"                         // apostrophe is implicit
 
 /// The type of a value or function.
 [<System.Diagnostics.DebuggerDisplay("{Unparse()}")>]
@@ -75,14 +75,21 @@ module Type =
     /// Creates a type constant with the given name.
     let constant = Identifier.create >> TypeConstant
 
-    /// Primitive types.
+    /// Primitive Boolean type.
     let bool = constant "bool"
+
+    /// Primitive integer type.
     let int = constant "int"
+
+    /// Primitive string type.
     let string = constant "string"
+
+    /// Primitive unit type.
     let unit = constant "unit"
 
-    /// Free type variables in the given type.
-    /// (Note: All type variables in a type are free.)
+    /// Free type variables in the given type. (Note: *All*
+    /// the type variables in a type are free. They only get
+    /// bound in a scheme.)
     let rec freeTypeVariables = function
         | TypeConstant _ -> Set.empty
         | TypeVariable tv -> Set.singleton tv
