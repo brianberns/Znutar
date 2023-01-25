@@ -1,5 +1,6 @@
 ﻿namespace Znutar.TypeInference
 
+open System.Reflection
 open Znutar
 
 /// Tracks schemes by name.
@@ -31,22 +32,52 @@ module private FunctionTypeEnvironment =
             (Map.values env)
             |> set
 
-type private MethodTypeEnvironmentNode =
-    {
-        Schemes : Scheme[]
-        Children : Map<Identifier, MethodTypeEnvironmentNode>
-    }
-
 type private MethodTypeEnvironment =
-    Map<Identifier, MethodTypeEnvironmentNode>
+    {
+        // Schemes : Scheme[]
+        Methods : List<MethodInfo>
+        Children : Map<Identifier, MethodTypeEnvironment>
+    }
 
 module private MethodTypeEnvironment =
 
-    let create assemblies =
+    let empty =
         {
-            Schemes = Array.empty
+            Methods = List.empty
             Children = Map.empty
         }
+
+    let rec add path method env =
+        match path with
+            | [] -> { env with Methods = method :: env.Methods }
+            | ident :: tail ->
+                let child =
+                    env.Children
+                        |> Map.tryFind ident
+                        |> Option.defaultValue empty
+                let child' = add tail method child
+                { env with
+                    Children = Map.add ident child' env.Children }
+
+    let create assemblies =
+        let pairs =
+            [|
+                for (assembly : Assembly) in assemblies do
+                    for typ in assembly.ExportedTypes do
+                        let namespaceParts = typ.Namespace.Split('.')
+                        for method in typ.GetMethods() do
+                            if method.IsStatic then
+                                let path =
+                                    [
+                                        yield! namespaceParts
+                                        yield typ.Name
+                                        yield method.Name
+                                    ] |> List.map Identifier.create
+                                yield path, method
+            |]
+        (empty, pairs)
+            ||> Seq.fold (fun tree (path, method) ->
+                add path method tree)
 
 type TypeEnvironment =
     private {
@@ -56,10 +87,10 @@ type TypeEnvironment =
 
 module TypeEnvironment =
 
-    let create (assemblies : System.Reflection.Assembly[]) =
+    let create assemblies =
         {
             FuncTypeEnv = FunctionTypeEnvironment.empty
-            MethodTypeEnv = Map.empty
+            MethodTypeEnv = MethodTypeEnvironment.create assemblies
         }
 
     /// Adds the given scheme with the given identifier to
