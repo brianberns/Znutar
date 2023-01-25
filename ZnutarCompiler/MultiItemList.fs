@@ -8,9 +8,11 @@ type MultiItemList<'t> =
         Rest : List<'t>
     }
 
+    /// Number of items in this list.
     member this.Length =
         this.Rest.Length + 2
 
+    /// All items in this list.
     member this.Items =
         seq {
             yield this.Item1
@@ -20,15 +22,18 @@ type MultiItemList<'t> =
 
     interface System.Collections.Generic.IEnumerable<'t> with
 
+        /// Supports iteration.
         member this.GetEnumerator() = 
             this.Items.GetEnumerator()
                 :> System.Collections.IEnumerator
 
+        /// Supports iteration.
         member this.GetEnumerator() =
             this.Items.GetEnumerator()
 
 module MultiItemList =
 
+    /// Creates a multi-item list.
     let create item1 item2 rest =
         {
             Item1 = item1
@@ -36,6 +41,8 @@ module MultiItemList =
             Rest = rest
         }
 
+    /// Maps the given function over the given multi-item
+    /// list.
     let map mapping milist =
         {
             Item1 = mapping milist.Item1
