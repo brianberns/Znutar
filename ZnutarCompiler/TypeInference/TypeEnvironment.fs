@@ -81,6 +81,15 @@ module private MethodTypeEnvironment =
             ||> Seq.fold (fun tree (path, method) ->
                 add path method tree)
 
+    let rec tryFind path env =
+        match path with
+            | [] -> env.Schemes
+            | ident :: tail ->
+                env.Children
+                    |> Map.tryFind ident
+                    |> Option.map (tryFind tail)
+                    |> Option.defaultValue List.empty
+
 type TypeEnvironment =
     private {
         FuncTypeEnv : FunctionTypeEnvironment
@@ -107,6 +116,9 @@ module TypeEnvironment =
 
     let tryFindFunc ident env =
         FunctionTypeEnvironment.tryFind ident env.FuncTypeEnv
+
+    let tryFindMethod path env =
+        MethodTypeEnvironment.tryFind path env.MethodTypeEnv
 
     let freeTypeVariables env =
         FunctionTypeEnvironment.freeTypeVariables env.FuncTypeEnv

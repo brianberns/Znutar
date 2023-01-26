@@ -258,6 +258,16 @@ module Infer =   // to-do: replace with constraint-based inference
 
         /// Infers the type of a member access.
         let private inferMemberAccess env ma =
+
+            let rec getPath acc = function
+                | Expression.IdentifierExpr ident -> ident :: acc
+                | Expression.MemberAccessExpr ma ->
+                    getPath (ma.Identifier :: acc) ma.Expression
+                | _ -> failwith "oops"
+
+            let path = getPath [ma.Identifier] ma.Expression
+            let schemes = TypeEnvironment.tryFindMethod path env
+                
             Error (InternalError "oops")
 
         /// Infers the type of a tuple.
