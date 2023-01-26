@@ -23,6 +23,19 @@ type ParserTests() =
         } |> Assert.Ok
 
     [<TestMethod>]
+    member _.Annotation() =
+        result {
+            let text = "(x : int)"
+            let expected =
+                AnnotationExpr {
+                    Expression = IdentifierExpr (Identifier.create "x")
+                    Type = Type.int
+                }
+            let! actual = Parser.run Expression.parse text
+            Assert.AreEqual(expected, actual, actual.Unparse())
+        } |> Assert.Ok
+
+    [<TestMethod>]
     member _.MemberAccess() =
         result {
             let text = "(a b).c . d"
