@@ -33,6 +33,17 @@ type TypeInferenceTests() =
             Assert.AreEqual(expected, actual, actual.Unparse())
         } |> Assert.Ok
 
+    [<TestMethod>]
+    member _.Annotation() =
+        let text = "fun flag -> (flag : bool)"
+        result {
+            let! expr = Parser.run Expression.parse text
+            let expected = Type.bool ^=> Type.bool
+            let! expr' = infer expr
+            let actual = expr'.Type
+            Assert.AreEqual(expected, actual, actual.Unparse())
+        } |> Assert.Ok
+
     // https://courses.cs.cornell.edu/cs3110/2021sp/textbook/interp/letpoly.html
     [<TestMethod>]
     member _.Polymorphic() =

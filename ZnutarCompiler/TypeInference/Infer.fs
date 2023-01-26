@@ -243,17 +243,19 @@ module Infer =   // to-do: replace with constraint-based inference
         /// Checks the type of an annotation.
         let private inferAnnotation env ann =
             result {
-                    // infer acutal sub-expression type
+                    // infer underlying sub-expression type
                 let! exprSubst, exprAnnex =
                     infer env ann.Expression
 
-                    // must match annotated type
+                    // must be compatible with annotated type
                 let! typeSubst = unify exprAnnex.Type ann.Type
 
                     // gather results
+                let annex =
+                    AnnotatedExpression.apply typeSubst exprAnnex
                 return
                     exprSubst ++ typeSubst,
-                    exprAnnex
+                    annex
             }
 
         /// Infers the type of a member access.

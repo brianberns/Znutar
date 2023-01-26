@@ -151,3 +151,24 @@ module AnnotatedExpression =
 
     let rec unparse (annex : AnnotatedExpression) =
         annex.Unparse()
+
+    let apply subst annex =
+        let tapply = Substitution.Type.apply subst
+        match annex with
+            | IdentifierExpr ai ->
+                IdentifierExpr { ai with Type = tapply ai.Type }
+            | ApplicationExpr app ->
+                ApplicationExpr { app with Type = tapply app.Type }
+            | LambdaExpr lam ->
+                LambdaExpr { lam with Type = tapply lam.Type }
+            | LetExpr letb ->
+                LetExpr { letb with Type = tapply letb.Type }
+            | LiteralExpr _ -> annex
+            | IfExpr iff ->
+                IfExpr { iff with Type = tapply iff.Type }
+            | BinaryOperationExpr bop ->
+                BinaryOperationExpr { bop with Type = tapply bop.Type }
+            | MemberAccessExpr ma ->
+                MemberAccessExpr { ma with Type = tapply ma.Type }
+            | TupleExpr tuple ->
+                TupleExpr { tuple with Type = tapply tuple.Type }
