@@ -268,9 +268,16 @@ module Infer =   // to-do: replace with constraint-based inference
                 | _ -> failwith "oops"
 
             let path = getPath [ma.Identifier] ma.Expression
-            let schemes = TypeEnvironment.tryFindMethod path env
-                
-            Error (InternalError "oops")
+            match TypeEnvironment.tryFindMethod path env with
+                | [ scheme ] ->
+                    let annex =
+                        MemberAccessExpr {
+                            MemberAccess = ma
+                            Type = instantiate scheme 
+                        }
+                    Ok (Substitution.empty, annex)
+                | [] -> Error (UnboundIdentifier ma.Identifier)
+                | _ -> Error (AmbiguousMethodOverload ma)
 
         /// Infers the type of a tuple.
         let private inferTuple env exprs =

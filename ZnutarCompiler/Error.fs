@@ -2,6 +2,7 @@
 
 /// Standard compiler error type.
 type CompilerError =
+    | AmbiguousMethodOverload of MemberAccess
     | InternalError of message : string
     | InvalidSyntax of message : string
     | UnboundIdentifier of Identifier

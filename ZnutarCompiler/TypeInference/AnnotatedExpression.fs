@@ -54,7 +54,7 @@ type AnnotatedExpression =
                     {BinaryOperator.unparse bop.Operator} \
                     {bop.Right.Unparse()})"
             | MemberAccessExpr ma ->
-                $"({ma.Expression}).{ma.Identifier}"
+                $"({ma.MemberAccess.Expression.Unparse()}).{ma.MemberAccess.Identifier.Name}"
             | TupleExpr tuple ->
                 let str =
                     tuple.Expressions
@@ -131,8 +131,10 @@ and AnnotatedBinaryOperation =
 /// expr.ident
 and AnnotatedMemberAccess =
     {
-        Expression : AnnotatedExpression
-        Identifier : Identifier
+        // Expression : AnnotatedExpression
+        // Identifier : Identifier
+
+        MemberAccess : MemberAccess
 
         /// Result type. E.g. (expr.ident : int).
         Type : Type
