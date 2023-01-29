@@ -106,12 +106,24 @@ module Infer =   // to-do: replace with constraint-based inference
                 return bodySubst, annex
             }
 
-        /// Infers the type of a function application.
+        /// Infers the type of a function or member application.
         let private inferApplication env app =
+            match app.Function with
+                | Expression.MemberAccessExpr ma ->
+                    result {
+                            // infer the input type
+                        let! argSubst, argAnnex = infer env app.Argument
+
+                        let! annex = inferMemberApplication env ma argAnnex
+                        return argSubst, annex
+                    }
+                | _ -> inferFunctionApplication env app
+
+        /// Infers the type of a function application.
+        let private inferFunctionApplication env app =
             result {
                     // infer the function type (must be an arrow)
-                let! funSubst, funAnnex =
-                    infer env app.Function
+                let! funSubst, funAnnex = infer env app.Function
 
                     // infer the input type
                 let! argSubst, argAnnex =
@@ -135,6 +147,46 @@ module Infer =   // to-do: replace with constraint-based inference
                     }
                 return subst, annex
             }
+
+        /// Converts member access to an identifier path.
+        let rec private getPath acc = function
+            | Expression.IdentifierExpr ident -> ident :: acc
+            | Expression.MemberAccessExpr ma ->
+                getPath (ma.Identifier :: acc) ma.Expression
+            | _ -> failwith "oops"
+
+        let private tryFindScheme (annex : AnnotatedExpression) (schemes : seq<Scheme>) =
+            schemes
+                |> Seq.tryFind (fun scheme ->
+                    match scheme.Type with
+                        | TypeArrow (inpType, _) ->
+                            annex.Type = inpType
+                        | _ -> false)
+
+        /// Infers the type of a member application.
+        let private inferMemberApplication env (ma : MemberAccess) (argAnnex : AnnotatedExpression) =
+
+            let path = getPath [ma.Identifier] ma.Expression
+            match TypeEnvironment.tryFindMethod path env with
+                | [ scheme ] ->
+                    let annex =
+                        MemberAccessExpr {
+                            MemberAccess = ma
+                            Type = instantiate scheme 
+                        }
+                    Ok annex
+                | [] -> Error (UnboundIdentifier ma.Identifier)
+                | schemes ->
+                    match tryFindScheme argAnnex schemes with
+                        | Some scheme ->
+                            let annex =
+                                MemberAccessExpr {
+                                    MemberAccess = ma
+                                    Type = instantiate scheme 
+                                }
+                            Ok annex
+                        | None ->
+                            Error (UnresolvedMethodOverload ma)
 
         /// Infers the type of a let binding.
         let private inferLet env letb =
@@ -261,12 +313,6 @@ module Infer =   // to-do: replace with constraint-based inference
         /// Infers the type of a member access.
         let private inferMemberAccess env ma =
 
-            let rec getPath acc = function
-                | Expression.IdentifierExpr ident -> ident :: acc
-                | Expression.MemberAccessExpr ma ->
-                    getPath (ma.Identifier :: acc) ma.Expression
-                | _ -> failwith "oops"
-
             let path = getPath [ma.Identifier] ma.Expression
             match TypeEnvironment.tryFindMethod path env with
                 | [ scheme ] ->
@@ -277,7 +323,7 @@ module Infer =   // to-do: replace with constraint-based inference
                         }
                     Ok (Substitution.empty, annex)
                 | [] -> Error (UnboundIdentifier ma.Identifier)
-                | _ -> Error (AmbiguousMethodOverload ma)
+                | _ -> Error (UnresolvedMethodOverload ma)
 
         /// Infers the type of a tuple.
         let private inferTuple env exprs =
