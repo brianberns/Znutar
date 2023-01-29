@@ -183,9 +183,23 @@ module Expression =
         transpile expr
 
     and private transpileMemberAccess ma =
-        result {
-            return! Error (InternalError "oops")
-        }
+
+        let rec loop (ma : MemberAccess) : Syntax.MemberAccessExpressionSyntax =
+
+            let exprNode =
+                match ma.Expression with
+                    | Expression.IdentifierExpr ident ->
+                        IdentifierName(ident.Name)
+                            :> Syntax.ExpressionSyntax
+                    | Expression.MemberAccessExpr ma -> loop ma
+                    | _ -> failwith "oops"
+
+            MemberAccessExpression(
+                SyntaxKind.SimpleMemberAccessExpression,
+                exprNode,
+                IdentifierName(ma.Identifier.Name))
+
+        Ok (List.empty, loop ma.MemberAccess)
 
     /// Transpiles a tuple.
     and private transpileTuple tuple =
