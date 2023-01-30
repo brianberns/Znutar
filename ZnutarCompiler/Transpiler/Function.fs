@@ -37,16 +37,16 @@ type Function =
 
 module Function =
 
-    let rec private gatherLambdas = function
-        | LambdaExpr lam ->
-            lam :: gatherLambdas lam.Body
-        | _ -> []
-
     /// Attempts to convert a let-bound lambda into a function
     /// definition. For example:
     /// * From: let const = fun x -> fun y -> x in next
     /// * To:   let const(x, y) = x in next
     let tryCreate letb =
+
+        let rec gatherLambdas = function
+            | LambdaExpr lam ->
+                lam :: gatherLambdas lam.Body
+            | _ -> []
 
         let lams = gatherLambdas letb.Argument
         if lams.Length = 0 then None
