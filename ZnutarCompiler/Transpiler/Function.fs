@@ -81,24 +81,6 @@ module Function =
             | returnType :: parmTypesRev ->
                 Ok (List.rev parmTypesRev, returnType)
 
-    let private createStatementNode
-        returnTypeNode
-        ident
-        typeParmNodes
-        parmNodes
-        bodyStmtNodes =
-        LocalFunctionStatement(
-            returnType = returnTypeNode,
-            identifier = ident.Name)
-            .WithTypeParameterList(
-                TypeParameterList(
-                    Syntax.separatedList typeParmNodes))
-            .WithParameterList(
-                ParameterList(
-                    Syntax.separatedList parmNodes))
-            .WithBody(
-                Block(bodyStmtNodes : Syntax.StatementSyntax[]))
-
     /// Transpiles the given function.
     let transpile (transpileExpr : ExpressionTranspiler) func =
         result {
@@ -127,15 +109,20 @@ module Function =
 
                     // create function
                 let funcNode =
-                    createStatementNode
-                        (Type.transpile returnType)
-                        func.Identifier
-                        typeParmNodes
-                        parmNodes
-                        [|
-                            yield! bodyStmtNodes
-                            yield ReturnStatement(bodyExprNode)
-                        |]
+                    LocalFunctionStatement(
+                        returnType = Type.transpile returnType,
+                        identifier = func.Identifier.Name)
+                        .WithTypeParameterList(
+                            TypeParameterList(
+                                Syntax.separatedList typeParmNodes))
+                        .WithParameterList(
+                            ParameterList(
+                                Syntax.separatedList parmNodes))
+                        .WithBody(
+                            Block([|
+                                yield! bodyStmtNodes
+                                yield ReturnStatement(bodyExprNode)
+                            |]))
 
                     // gather results
                 let stmtNodes =
@@ -149,9 +136,14 @@ module Function =
                     InternalError "Function arity mismatch")
         }
 
+/// Type that represents a function call (rather than an abstraction
+/// application).
 type FunctionCall =
     {
+        /// Function being called.
         Function : AnnotatedExpression
+
+        /// Arguments passed to function.
         Arguments : List<AnnotatedExpression>
     }
 
@@ -179,6 +171,8 @@ module FunctionCall =
             Arguments = args
         }
 
+    /// Transpiles the given function call using the given
+    /// transpiler.
     let transpile (transpileExpr : ExpressionTranspiler) funcCall =
         result {
 
