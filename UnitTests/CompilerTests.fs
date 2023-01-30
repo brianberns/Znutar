@@ -25,11 +25,6 @@ type CompilerTests() =
         Assert.AreEqual(Ok "1", run text)
 
     [<TestMethod>]
-    member _.HelloWorld() =
-        let text = "System.Console.Write(\"Hello world\")"
-        Assert.AreEqual(Ok "Hello world", run text)
-
-    [<TestMethod>]
     member _.Arithmetic() =
         let text =
             """
@@ -152,3 +147,18 @@ type CompilerTests() =
             f 3
             """
         Assert.AreEqual(Ok "(3, 6)", run text)
+
+    [<TestMethod>]
+    member _.HelloWorld() =
+        let text = "System.Console.Write(\"Hello world\")"
+        Assert.AreEqual(Ok "Hello world", run text)
+
+    [<TestMethod>]
+    member _.Write() =
+        let text =
+            """
+            let f x =
+                System.Console.Write(x : int);
+            f 3
+            """
+        Assert.AreEqual(Ok "3", run text)

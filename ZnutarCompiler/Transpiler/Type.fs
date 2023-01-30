@@ -6,7 +6,7 @@ open type SyntaxFactory
 
 open Znutar
 
-module private Syntax =
+module Syntax =
 
     let private comma =
         SyntaxNodeOrToken.op_Implicit(
@@ -19,6 +19,13 @@ module private Syntax =
                 if iNode > 0 then yield comma
                 yield SyntaxNodeOrToken.op_Implicit(node)
         |]
+
+    /// Converts the given expression node into a statement.
+    let toStatement typ exprNode : Syntax.StatementSyntax =
+        if typ = Type.unit then
+            ExpressionStatement(exprNode)   // don't return a void value
+        else
+            ReturnStatement(exprNode)
 
 module Type =
 

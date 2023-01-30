@@ -121,7 +121,7 @@ module Function =
                         .WithBody(
                             Block([|
                                 yield! bodyStmtNodes
-                                yield ReturnStatement(bodyExprNode)
+                                yield Syntax.toStatement returnType bodyExprNode
                             |]))
 
                     // gather results

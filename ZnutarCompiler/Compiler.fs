@@ -24,11 +24,7 @@ module Compiler =
             let stmts =
                 [|
                     yield! mainStmtNodes
-                    yield
-                        if expr.Type = Type.unit then
-                            ExpressionStatement(mainExprNode)   // don't return a void value
-                        else
-                            ReturnStatement(mainExprNode)
+                    yield Syntax.toStatement expr.Type mainExprNode
                 |]
             return MethodDeclaration(
                 returnType = typeNode,
