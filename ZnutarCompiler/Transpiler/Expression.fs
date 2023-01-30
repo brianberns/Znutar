@@ -60,16 +60,19 @@ module Expression =
         | MemberAccessExpr ma -> transpileMemberAccess ma
         | TupleExpr tuple -> transpileTuple tuple
 
+    /// Transpiles an application.
     and private transpileApplication app =
         app
             |> FunctionCall.create
             |> FunctionCall.transpile transpile
 
+    /// Transpiles a "let", possibly by turning it into a function.
     and private transpileLet letb =
         match Function.tryCreate letb with
             | Some func -> transpileFunction func
             | None -> transpileLetRaw letb
 
+    /// Transpiles a "let".
     (*
         From:
             let y =
@@ -108,9 +111,11 @@ module Expression =
             return stmtNodes, bodyExprNode
         }
 
+    /// Transpiles a function.
     and private transpileFunction func =
         Function.transpile transpile func
 
+    /// Transpiles an "if".
     and transpileIf iff =
         result {
 
@@ -126,6 +131,7 @@ module Expression =
             return ifStmtNodes, ifExprNode
         }
 
+    /// Transpiles a binary operation.
     and private transpileBinaryOperation bop =
         let kind =
             match bop.Operator with
