@@ -12,7 +12,7 @@ type CompilerTests() =
         result {
             do!
                 Compiler.compile
-                    Array.empty
+                    [| @"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\7.0.2\ref\net7.0\System.Console.dll" |]
                     assemblyName
                     $"{assemblyName}.dll"
                     text
@@ -23,6 +23,11 @@ type CompilerTests() =
     member _.Simple() =
         let text = "1"
         Assert.AreEqual(Ok "1", run text)
+
+    [<TestMethod>]
+    member _.HelloWorld() =
+        let text = "System.Console.Write(\"Hello world\")"
+        Assert.AreEqual(Ok "Hello world", run text)
 
     [<TestMethod>]
     member _.Arithmetic() =

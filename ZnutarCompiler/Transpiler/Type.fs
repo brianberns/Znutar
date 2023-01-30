@@ -31,11 +31,7 @@ module Type =
             Type.string,
                 PredefinedType(Token(SyntaxKind.StringKeyword))
             Type.unit,
-                QualifiedName(
-                    QualifiedName(
-                        IdentifierName("Znutar"),
-                        IdentifierName("Runtime")),
-                    IdentifierName("Unit"))
+                PredefinedType(Token(SyntaxKind.VoidKeyword))
         ]
 
     /// Transpiles the given type.

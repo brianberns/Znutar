@@ -15,6 +15,28 @@ module CompilationUnit =
         }
     *)
     let private mainMethod (exprNode : Syntax.MethodDeclarationSyntax) =
+
+        let invocation =
+
+            let invocation =
+                InvocationExpression(
+                    IdentifierName(exprNode.Identifier))
+
+            if exprNode.ReturnType.ToString() = "void" then   // don't attempt to write void value
+                invocation
+            else
+                InvocationExpression(
+                    MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        MemberAccessExpression(
+                            SyntaxKind.SimpleMemberAccessExpression,
+                            IdentifierName("System"),
+                            IdentifierName("Console")),
+                        IdentifierName("Write")))
+                    .WithArgumentList(
+                        ArgumentList(
+                            SingletonSeparatedList(
+                                Argument(invocation))))
         MethodDeclaration(
             returnType =
                 PredefinedType(
@@ -22,22 +44,7 @@ module CompilationUnit =
             identifier = "Main")
             .AddModifiers(
                 Token(SyntaxKind.StaticKeyword))
-            .WithBody(
-                Block(
-                    ExpressionStatement(
-                        InvocationExpression(
-                            MemberAccessExpression(
-                                SyntaxKind.SimpleMemberAccessExpression,
-                                MemberAccessExpression(
-                                    SyntaxKind.SimpleMemberAccessExpression,
-                                    IdentifierName("System"),
-                                    IdentifierName("Console")),
-                                IdentifierName("Write")))
-                            .WithArgumentList(
-                                ArgumentList(
-                                    SingletonSeparatedList(
-                                        Argument(InvocationExpression(
-                                            IdentifierName(exprNode.Identifier)))))))))
+            .WithBody(Block(ExpressionStatement(invocation)))
 
     /// Creates a compilation unit.
     let create assemblyName exprNode =
