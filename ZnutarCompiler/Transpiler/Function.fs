@@ -81,7 +81,7 @@ module Function =
             | returnType :: parmTypesRev ->
                 Ok (List.rev parmTypesRev, returnType)
 
-    /// Transpiles the given function.
+    /// Transpiles the given function using the given transpiler.
     let transpile (transpileExpr : ExpressionTranspiler) func =
         result {
             let! parmTypes, returnType = getSignature func
