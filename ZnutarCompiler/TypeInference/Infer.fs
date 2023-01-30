@@ -114,7 +114,19 @@ module Infer =   // to-do: replace with constraint-based inference
                             // infer the input type
                         let! argSubst, argAnnex = infer env app.Argument
 
-                        let! annex = inferMemberApplication env ma argAnnex
+                            // infer the member access type
+                        let! maAnnex = inferMemberApplication env ma argAnnex
+
+                            // gather results
+                        let annex =
+                            ApplicationExpr {
+                                Function = maAnnex
+                                Argument = argAnnex
+                                Type =
+                                    match maAnnex.Type with
+                                        | TypeArrow (_, outType) -> outType
+                                        | _ -> failwith "oops"
+                            }
                         return argSubst, annex
                     }
                 | _ -> inferFunctionApplication env app

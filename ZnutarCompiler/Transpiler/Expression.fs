@@ -182,9 +182,10 @@ module Expression =
             }
         transpile expr
 
+    /// Transpiles a member access.
     and private transpileMemberAccess ma =
 
-        let rec loop (ma : MemberAccess) : Syntax.MemberAccessExpressionSyntax =
+        let rec loop (ma : MemberAccess) =
 
             let exprNode =
                 match ma.Expression with
