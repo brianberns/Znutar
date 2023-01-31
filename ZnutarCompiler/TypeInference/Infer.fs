@@ -177,7 +177,6 @@ module Infer =   // to-do: replace with constraint-based inference
 
         /// Infers the type of a member application.
         let private inferMemberApplication env (ma : MemberAccess) (argAnnex : AnnotatedExpression) =
-
             let path = getPath [ma.Identifier] ma.Expression
             match TypeEnvironment.tryFindMethod path env with
                 | [ scheme ] ->
