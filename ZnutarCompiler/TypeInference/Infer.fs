@@ -377,14 +377,18 @@ module Infer =   // to-do: replace with constraint-based inference
                     let! maAnnex = inferMemberAccess env ma (Some argAnnex)
 
                         // gather results
+                    let! typ =
+                        match maAnnex.Type with
+                            | TypeArrow (_, outType) -> Ok outType
+                            | _ ->
+                                Error
+                                    (InternalError
+                                        $"Unexpected member access type: {maAnnex.Type.Unparse()}")
                     let annex =
                         ApplicationExpr {
                             Function = maAnnex
                             Argument = argAnnex
-                            Type =
-                                match maAnnex.Type with
-                                    | TypeArrow (_, outType) -> outType
-                                    | _ -> failwith "oops"
+                            Type = typ
                         }
                     return argSubst, annex
                 }
