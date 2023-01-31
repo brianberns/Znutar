@@ -61,7 +61,7 @@ module Infer =   // to-do: replace with constraint-based inference
                 Ok (Substitution.empty, LiteralExpr lit)
             | AnnotationExpr ann -> inferAnnotation env ann
             | Expression.MemberAccessExpr ma ->
-                inferMemberAccess env ma
+                MemberAccess.inferMemberAccess env ma
             | Expression.TupleExpr exprs ->
                 inferTuple env exprs
 
@@ -110,26 +110,9 @@ module Infer =   // to-do: replace with constraint-based inference
         let private inferApplication env app =
             match app.Function with
                 | Expression.MemberAccessExpr ma ->
-                    result {
-                            // infer the input type
-                        let! argSubst, argAnnex = infer env app.Argument
-
-                            // infer the member access type
-                        let! maAnnex = inferMemberApplication env ma argAnnex
-
-                            // gather results
-                        let annex =
-                            ApplicationExpr {
-                                Function = maAnnex
-                                Argument = argAnnex
-                                Type =
-                                    match maAnnex.Type with
-                                        | TypeArrow (_, outType) -> outType
-                                        | _ -> failwith "oops"
-                            }
-                        return argSubst, annex
-                    }
-                | _ -> inferFunctionApplication env app
+                    MemberAccess.inferMemberApplication env ma app.Argument
+                | _ ->
+                    inferFunctionApplication env app
 
         /// Infers the type of a function application.
         let private inferFunctionApplication env app =
@@ -159,45 +142,6 @@ module Infer =   // to-do: replace with constraint-based inference
                     }
                 return subst, annex
             }
-
-        /// Converts member access to an identifier path.
-        let rec private getPath acc = function
-            | Expression.IdentifierExpr ident -> ident :: acc
-            | Expression.MemberAccessExpr ma ->
-                getPath (ma.Identifier :: acc) ma.Expression
-            | _ -> failwith "oops"
-
-        let private tryFindScheme (annex : AnnotatedExpression) (schemes : seq<Scheme>) =
-            schemes
-                |> Seq.tryFind (fun scheme ->
-                    match scheme.Type with
-                        | TypeArrow (inpType, _) ->
-                            annex.Type = inpType
-                        | _ -> false)
-
-        /// Infers the type of a member application.
-        let private inferMemberApplication env (ma : MemberAccess) (argAnnex : AnnotatedExpression) =
-            let path = getPath [ma.Identifier] ma.Expression
-            match TypeEnvironment.tryFindMethod path env with
-                | [ scheme ] ->
-                    let annex =
-                        MemberAccessExpr {
-                            MemberAccess = ma
-                            Type = instantiate scheme 
-                        }
-                    Ok annex
-                | [] -> Error (UnboundIdentifier ma.Identifier)
-                | schemes ->
-                    match tryFindScheme argAnnex schemes with
-                        | Some scheme ->
-                            let annex =
-                                MemberAccessExpr {
-                                    MemberAccess = ma
-                                    Type = instantiate scheme 
-                                }
-                            Ok annex
-                        | None ->
-                            Error (UnresolvedMethodOverload ma)
 
         /// Infers the type of a let binding.
         let private inferLet env letb =
@@ -321,21 +265,6 @@ module Infer =   // to-do: replace with constraint-based inference
                     annex
             }
 
-        /// Infers the type of a member access.
-        let private inferMemberAccess env ma =
-
-            let path = getPath [ma.Identifier] ma.Expression
-            match TypeEnvironment.tryFindMethod path env with
-                | [ scheme ] ->
-                    let annex =
-                        MemberAccessExpr {
-                            MemberAccess = ma
-                            Type = instantiate scheme 
-                        }
-                    Ok (Substitution.empty, annex)
-                | [] -> Error (UnboundIdentifier ma.Identifier)
-                | _ -> Error (UnresolvedMethodOverload ma)
-
         /// Infers the type of a tuple.
         let private inferTuple env exprs =
             result {
@@ -372,6 +301,100 @@ module Infer =   // to-do: replace with constraint-based inference
                     }
                 return subst, annex
             }
+
+        module private MemberAccess =
+
+            /// Converts a member access to an identifier path.
+            /// E.g. System.Console.WriteLine -> [ System; Console; WriteLine ]
+            let private getPath (ma : MemberAccess) =
+
+                let rec loop acc expr =
+                    result {
+                        match expr with
+                            | Expression.IdentifierExpr ident ->
+                                return ident :: acc
+                            | Expression.MemberAccessExpr ma ->
+                                return! loop (ma.Identifier :: acc) ma.Expression
+                            | _ ->
+                                return! Error (
+                                    InternalError
+                                        $"Unexpected expression type: {expr.Unparse()}")
+                    }
+
+                loop [ma.Identifier] ma.Expression
+
+            let private tryFindScheme (annex : AnnotatedExpression) (schemes : seq<Scheme>) =
+                schemes
+                    |> Seq.tryFind (fun scheme ->
+                        match scheme.Type with
+                            | TypeArrow (inpType, _) ->
+                                annex.Type = inpType
+                            | _ -> false)
+
+            let private inferMemberAccessWithArg env (ma : MemberAccess) (argAnnex : AnnotatedExpression) =
+                result {
+                    let! path = getPath ma
+                    match TypeEnvironment.tryFindMethod path env with
+                        | [ scheme ] ->
+                            let annex =
+                                MemberAccessExpr {
+                                    MemberAccess = ma
+                                    Type = instantiate scheme 
+                                }
+                            return annex
+                        | [] -> return! Error (UnboundIdentifier ma.Identifier)
+                        | schemes ->
+                            match tryFindScheme argAnnex schemes with
+                                | Some scheme ->
+                                    let annex =
+                                        MemberAccessExpr {
+                                            MemberAccess = ma
+                                            Type = instantiate scheme 
+                                        }
+                                    return annex
+                                | None ->
+                                    return! Error (UnresolvedMethodOverload ma)
+                }
+
+            /// Infers the type of a member application.
+            let inferMemberApplication env ma arg =
+                result {
+                        // infer the input type
+                    let! argSubst, argAnnex = infer env arg
+
+                        // infer the member access type
+                    let! maAnnex = inferMemberAccessWithArg env ma argAnnex
+
+                        // gather results
+                    let annex =
+                        ApplicationExpr {
+                            Function = maAnnex
+                            Argument = argAnnex
+                            Type =
+                                match maAnnex.Type with
+                                    | TypeArrow (_, outType) -> outType
+                                    | _ -> failwith "oops"
+                        }
+                    return argSubst, annex
+                }
+
+            /// Infers the type of a member access.
+            let inferMemberAccess env (ma : MemberAccess) =
+                result {
+                    let! path = getPath ma
+                    match TypeEnvironment.tryFindMethod path env with
+                        | [ scheme ] ->
+                            let annex =
+                                MemberAccessExpr {
+                                    MemberAccess = ma
+                                    Type = instantiate scheme 
+                                }
+                            return Substitution.empty, annex
+                        | [] ->
+                            return! Error (UnboundIdentifier ma.Identifier)
+                        | _ ->
+                            return! Error (UnresolvedMethodOverload ma)
+                }
 
     /// Infers the type of the given expression.
     let inferExpression assemblies expr =
