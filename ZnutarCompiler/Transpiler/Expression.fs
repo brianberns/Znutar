@@ -89,6 +89,10 @@ module Expression =
      *)
     and private transpileLetRaw letb =
         result {
+                // can't assign a void value
+            if letb.Argument.Type = Type.``void`` then
+                return! Error VoidAssignment
+
             let typeNode = Type.transpile letb.Argument.Type
             let! argStmtNodes, argExprNode = transpile letb.Argument   // argStmtNodes: int x = 1, argExprNode: 2 * x
             let! bodyStmtNodes, bodyExprNode = transpile letb.Body     // bodyStmtNodes: int z = 3, bodyExprNode: y + z

@@ -7,6 +7,7 @@ type CompilerError =
     | UnboundIdentifier of Identifier
     | UnificationFailure of Type * Type
     | UnresolvedMethodOverload of MemberAccess
+    | VoidAssignment
 
 /// Standard compiler result type.
 type CompilerResult<'t> = Result<'t, CompilerError>

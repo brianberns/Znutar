@@ -162,3 +162,14 @@ type CompilerTests() =
             f 3
             """
         Assert.AreEqual(Ok "3", run text)
+
+    [<TestMethod>]
+    member _.VoidAssignment() =
+        let text =
+            """
+            let x = System.Console.Write("Hello world") in
+            x
+            """
+        match run text with
+            | Error VoidAssignment -> ()
+            | res -> Assert.Fail(sprintf "%A" res)
