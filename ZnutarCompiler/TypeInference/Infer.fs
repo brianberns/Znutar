@@ -338,28 +338,25 @@ module Infer =   // to-do: replace with constraint-based inference
 
             /// Infers the type of a member access.
             let inferMemberAccess env (ma : MemberAccess) argAnnexOpt =
+
+                let createMemberAccessAnnex ma scheme =
+                    MemberAccessExpr {
+                        MemberAccess = ma
+                        Type = instantiate scheme
+                    }
+
                 result {
                     let! path = getPath ma
                     match TypeEnvironment.tryFindMethod path env with
                         | [ scheme ] ->
-                            let annex =
-                                MemberAccessExpr {
-                                    MemberAccess = ma
-                                    Type = instantiate scheme 
-                                }
-                            return annex
+                            return createMemberAccessAnnex ma scheme
                         | [] -> return! Error (UnboundIdentifier ma.Identifier)
                         | schemes ->
                             let annexOpt =
                                 option {
                                     let! argAnnex = argAnnexOpt
                                     let! scheme = tryFindScheme argAnnex schemes
-                                    let annex =
-                                        MemberAccessExpr {
-                                            MemberAccess = ma
-                                            Type = instantiate scheme 
-                                        }
-                                    return annex
+                                    return createMemberAccessAnnex ma scheme
                                 }
                             match annexOpt with
                                 | Some annex -> return annex
