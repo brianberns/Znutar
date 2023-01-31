@@ -328,16 +328,16 @@ module Infer =   // to-do: replace with constraint-based inference
 
                 loop [ma.Identifier] ma.Expression
 
-            let private tryFindScheme (annex : AnnotatedExpression) (schemes : seq<Scheme>) =
+            let private tryFindScheme typ (schemes : seq<Scheme>) =
                 schemes
                     |> Seq.tryFind (fun scheme ->
                         match scheme.Type with
                             | TypeArrow (inpType, _) ->
-                                annex.Type = inpType
+                                typ = inpType
                             | _ -> false)
 
             /// Infers the type of a member access.
-            let inferMemberAccess env (ma : MemberAccess) argAnnexOpt =
+            let inferMemberAccess env (ma : MemberAccess) typeOpt =
 
                 let createMemberAccessAnnex ma scheme =
                     MemberAccessExpr {
@@ -354,8 +354,8 @@ module Infer =   // to-do: replace with constraint-based inference
                         | schemes ->
                             let annexOpt =
                                 option {
-                                    let! argAnnex = argAnnexOpt
-                                    let! scheme = tryFindScheme argAnnex schemes
+                                    let! typ = typeOpt
+                                    let! scheme = tryFindScheme typ schemes
                                     return createMemberAccessAnnex ma scheme
                                 }
                             match annexOpt with
@@ -371,7 +371,8 @@ module Infer =   // to-do: replace with constraint-based inference
                     let! argSubst, argAnnex = infer env arg
 
                         // infer the member access type
-                    let! maAnnex = inferMemberAccess env ma (Some argAnnex)
+                    let typeOpt = Some argAnnex.Type
+                    let! maAnnex = inferMemberAccess env ma typeOpt
 
                         // gather results
                     let! typ =
