@@ -60,10 +60,8 @@ module Infer =   // to-do: replace with constraint-based inference
             | Expression.LiteralExpr lit ->
                 Ok (Substitution.empty, LiteralExpr lit)
             | AnnotationExpr ann -> inferAnnotation env ann
-            | Expression.MemberAccessExpr ma ->
-                MemberAccess.inferMemberAccess env ma
-            | Expression.TupleExpr exprs ->
-                inferTuple env exprs
+            | Expression.MemberAccessExpr ma -> inferMemberAccess env ma
+            | Expression.TupleExpr exprs -> inferTuple env exprs
 
         /// Infers the type of a identifier by looking it up in the
         /// given environment.
@@ -265,6 +263,13 @@ module Infer =   // to-do: replace with constraint-based inference
                     annex
             }
 
+        /// Checks the type of a member access.
+        let private inferMemberAccess env ma =
+            result {
+                let! annex = MemberAccess.inferMemberAccess env ma None
+                return Substitution.empty, annex
+            }
+
         /// Infers the type of a tuple.
         let private inferTuple env exprs =
             result {
@@ -331,7 +336,8 @@ module Infer =   // to-do: replace with constraint-based inference
                                 annex.Type = inpType
                             | _ -> false)
 
-            let private inferMemberAccessWithArg env (ma : MemberAccess) (argAnnex : AnnotatedExpression) =
+            /// Infers the type of a member access.
+            let inferMemberAccess env (ma : MemberAccess) argAnnexOpt =
                 result {
                     let! path = getPath ma
                     match TypeEnvironment.tryFindMethod path env with
@@ -344,14 +350,19 @@ module Infer =   // to-do: replace with constraint-based inference
                             return annex
                         | [] -> return! Error (UnboundIdentifier ma.Identifier)
                         | schemes ->
-                            match tryFindScheme argAnnex schemes with
-                                | Some scheme ->
+                            let annexOpt =
+                                option {
+                                    let! argAnnex = argAnnexOpt
+                                    let! scheme = tryFindScheme argAnnex schemes
                                     let annex =
                                         MemberAccessExpr {
                                             MemberAccess = ma
                                             Type = instantiate scheme 
                                         }
                                     return annex
+                                }
+                            match annexOpt with
+                                | Some annex -> return annex
                                 | None ->
                                     return! Error (UnresolvedMethodOverload ma)
                 }
@@ -363,7 +374,7 @@ module Infer =   // to-do: replace with constraint-based inference
                     let! argSubst, argAnnex = infer env arg
 
                         // infer the member access type
-                    let! maAnnex = inferMemberAccessWithArg env ma argAnnex
+                    let! maAnnex = inferMemberAccess env ma (Some argAnnex)
 
                         // gather results
                     let annex =
@@ -376,24 +387,6 @@ module Infer =   // to-do: replace with constraint-based inference
                                     | _ -> failwith "oops"
                         }
                     return argSubst, annex
-                }
-
-            /// Infers the type of a member access.
-            let inferMemberAccess env (ma : MemberAccess) =
-                result {
-                    let! path = getPath ma
-                    match TypeEnvironment.tryFindMethod path env with
-                        | [ scheme ] ->
-                            let annex =
-                                MemberAccessExpr {
-                                    MemberAccess = ma
-                                    Type = instantiate scheme 
-                                }
-                            return Substitution.empty, annex
-                        | [] ->
-                            return! Error (UnboundIdentifier ma.Identifier)
-                        | _ ->
-                            return! Error (UnresolvedMethodOverload ma)
                 }
 
     /// Infers the type of the given expression.
