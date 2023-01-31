@@ -196,21 +196,29 @@ module Expression =
     and private transpileMemberAccess ma =
 
         let rec loop (ma : MemberAccess) =
+            result {
+                let! exprNode =
+                    match ma.Expression with
+                        | Expression.IdentifierExpr ident ->
+                            IdentifierName(ident.Name)
+                                :> Syntax.ExpressionSyntax
+                                |> Ok
+                        | Expression.MemberAccessExpr ma -> loop ma
+                        | expr ->
+                            Error
+                                (InternalError
+                                    $"Unexpected expression {expr.Unparse()}")
 
-            let exprNode =
-                match ma.Expression with
-                    | Expression.IdentifierExpr ident ->
-                        IdentifierName(ident.Name)
-                            :> Syntax.ExpressionSyntax
-                    | Expression.MemberAccessExpr ma -> loop ma
-                    | _ -> failwith "oops"
+                return MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    exprNode,
+                    IdentifierName(ma.Identifier.Name))
+            }
 
-            MemberAccessExpression(
-                SyntaxKind.SimpleMemberAccessExpression,
-                exprNode,
-                IdentifierName(ma.Identifier.Name))
-
-        Ok (List.empty, loop ma.MemberAccess)
+        result {
+            let! exprNode = loop ma.MemberAccess
+            return List.empty, exprNode
+        }
 
     /// Transpiles a tuple.
     and private transpileTuple tuple =
