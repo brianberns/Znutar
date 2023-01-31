@@ -1,6 +1,5 @@
 ﻿namespace Znutar
 
-open System
 open System.Reflection
 
 /// Name of a value or type.
@@ -88,6 +87,9 @@ module Type =
     /// Primitive unit type.
     let unit = constant "unit"
 
+    /// Primitive void type. (Not the same as unit.)
+    let ``void`` = constant "void"
+
     /// Free type variables in the given type. (Note: *All*
     /// the type variables in a type are free. They only get
     /// bound in a scheme.)
@@ -102,10 +104,10 @@ module Type =
                 |> Set.unionMany
 
     let private ofSystemType (sysType : System.Type) =
-        if sysType = typeof<bool> then bool
-        elif sysType = typeof<int> then int
-        elif sysType = typeof<string> then string
-        elif sysType = typeof<Void> then unit
+        if sysType = typeof<System.Boolean> then bool
+        elif sysType = typeof<System.Int32> then int
+        elif sysType = typeof<System.String> then string
+        elif sysType = typeof<System.Void> then ``void``
         else
             constant sysType.Name
 

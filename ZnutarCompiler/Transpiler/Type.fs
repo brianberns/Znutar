@@ -22,7 +22,7 @@ module Syntax =
 
     /// Converts the given expression node into a statement.
     let toStatement typ exprNode : Syntax.StatementSyntax =
-        if typ = Type.unit then
+        if typ = Type.``void`` then
             ExpressionStatement(exprNode)   // don't return a void value
         else
             ReturnStatement(exprNode)
@@ -38,6 +38,12 @@ module Type =
             Type.string,
                 PredefinedType(Token(SyntaxKind.StringKeyword))
             Type.unit,
+                QualifiedName(
+                    QualifiedName(
+                        IdentifierName("Znutar"),
+                        IdentifierName("Runtime")),
+                    IdentifierName("Unit"))
+            Type.``void``,
                 PredefinedType(Token(SyntaxKind.VoidKeyword))
         ]
 
