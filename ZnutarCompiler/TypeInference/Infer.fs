@@ -338,7 +338,7 @@ module Infer =   // to-do: replace with constraint-based inference
 
             /// Infers the type of a member access.
             /// E.g. System.Console.WriteLine.
-            let inferMemberAccess env (ma : MemberAccess) tryResolve =
+            let inferMemberAccess env ma tryResolve =
                 result {
                     let! path = getPath ma
                     match TypeEnvironment.tryFindMethod path env with
