@@ -173,3 +173,12 @@ type CompilerTests() =
         match run text with
             | Error VoidAssignment -> ()
             | res -> Assert.Fail(sprintf "%A" res)
+
+    [<TestMethod>]
+    member _.AnnotatedMemberAccess() =
+        let text =
+            """
+            let f = (System.Console.Write : string -> void) in
+            f("Hello world")
+            """
+        Assert.AreEqual(Ok "Hello world", run text)
