@@ -360,7 +360,8 @@ module Infer =   // to-do: replace with constraint-based inference
                                     return! Error (UnresolvedMethodOverload ma)
                 }
 
-            /// Infers the type of a member access.
+            /// Infers the type of a member access with the given signature.
+            /// E.g. System.Console.WriteLine : string -> void.
             let inferMemberAccessTyped env ma typ =
                 inferMemberAccess env ma (
                     Seq.tryPick (fun scheme ->
