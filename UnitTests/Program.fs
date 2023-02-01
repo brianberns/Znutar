@@ -4,7 +4,7 @@ module Program =
     result {
         let text =
             """
-            System.Console.ReadLine
+            System.Console.ReadLine()
             """
         let assemblyName = "Test"
         do! Compiler.compile

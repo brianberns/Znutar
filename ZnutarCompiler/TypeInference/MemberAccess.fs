@@ -4,7 +4,7 @@ open Znutar
 open Znutar.TypeInference
 open Substitution
 
-module Type =
+module private Type =
 
     /// Count of type variables created.
     let mutable private count = 0
@@ -78,9 +78,9 @@ module private MemberAccess =
 
                 // infer the member access type (e.g. WriteLine : string -> void)
             let! maSubst, maAnnex =
-                let typ =
+                let arrowType =
                     argAnnex.Type ^=> Type.createFreshTypeVariable "ma"
-                inferMemberAccessTyped env ma typ
+                inferMemberAccessTyped env ma arrowType
 
                 // gather results
             let! typ =
