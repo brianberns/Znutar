@@ -5,7 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Option.fs" />
     <Compile Include="Result.fs" />
     <Compile Include="MultiItemList.fs" />
     <Compile Include="Type.fs" />

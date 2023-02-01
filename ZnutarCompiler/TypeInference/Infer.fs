@@ -271,9 +271,12 @@ module Infer =   // to-do: replace with constraint-based inference
                     annex
             }
 
-        /// Checks the type of a member access.
+        /// Infers the type of a member access.
         let private inferMemberAccess env ma =
-            MemberAccess.inferMemberAccess env ma (fun _ -> None)
+            MemberAccess.inferMemberAccess env ma (
+                Seq.tryExactlyOne
+                    >> Option.map (fun scheme ->
+                        Substitution.empty, scheme))
 
         /// Infers the type of a tuple.
         let private inferTuple env exprs =
@@ -336,15 +339,6 @@ module Infer =   // to-do: replace with constraint-based inference
             /// Infers the type of a member access.
             /// E.g. System.Console.WriteLine.
             let inferMemberAccess env (ma : MemberAccess) tryResolve =
-
-                let gather ma scheme =
-                    let annex =
-                        MemberAccessExpr {
-                            MemberAccess = ma
-                            Type = instantiate scheme
-                        }
-                    Substitution.empty, annex
-
                 result {
                     let! path = getPath ma
                     match TypeEnvironment.tryFindMethod path env with
@@ -352,15 +346,16 @@ module Infer =   // to-do: replace with constraint-based inference
                             // no such member
                         | [] -> return! Error (UnboundIdentifier ma.Identifier)
 
-                            // member is not overloaded
-                        | [ scheme ] ->
-                            return gather ma scheme
-
-                            // attempt to resolve overload
+                            // try to resolve overload
                         | schemes ->
                             match tryResolve schemes with
-                                | Some scheme ->
-                                    return gather ma scheme
+                                | Some (subst, scheme) ->
+                                    let annex =
+                                        MemberAccessExpr {
+                                            MemberAccess = ma
+                                            Type = instantiate scheme
+                                        }
+                                    return subst, annex
                                 | None ->
                                     return! Error (UnresolvedMethodOverload ma)
                 }
@@ -368,8 +363,10 @@ module Infer =   // to-do: replace with constraint-based inference
             /// Infers the type of a member access.
             let inferMemberAccessTyped env ma typ =
                 inferMemberAccess env ma (
-                    Seq.tryFind (fun scheme ->
-                        scheme.Type = typ))
+                    Seq.tryPick (fun scheme ->
+                        match Substitution.unify scheme.Type typ with
+                            | Ok subst -> Some (subst, scheme)
+                            | Error _ -> None))
 
             /// Infers the type of applying the given argument to the given
             /// member access. E.g. System.Console.WriteLine("Hello world").
@@ -397,7 +394,7 @@ module Infer =   // to-do: replace with constraint-based inference
                             Type = typ
                         }
                     return
-                        maSubst ++ argSubst,
+                        argSubst ++ maSubst,
                         annex
                 }
 
