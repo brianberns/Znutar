@@ -9,8 +9,10 @@ module Infer =   // to-do: replace with constraint-based inference
 
     open Substitution
 
+    /// Count of type variables created.
     let mutable private count = 0
 
+    /// Creates a fresh type variable with the given prefix.
     let private createFreshTypeVariable (prefix : string) =
         count <- count + 1
         Type.variable $"{prefix}{count}"
@@ -32,6 +34,7 @@ module Infer =   // to-do: replace with constraint-based inference
                     - TypeEnvironment.freeTypeVariables env)
         Scheme.create tvs typ
 
+    /// Binary operator type signatures.
     let private binOpMap =
         Map [
             Plus, Type.int ^=> Type.int ^=> Type.int
