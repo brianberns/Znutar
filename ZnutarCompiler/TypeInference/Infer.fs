@@ -110,10 +110,10 @@ module Infer =   // to-do: replace with constraint-based inference
                 | Expression.MemberAccessExpr ma ->
                     MemberAccess.inferMemberApplication env ma app.Argument
                 | _ ->
-                    inferFunctionApplication env app
+                    inferFunctionalApplication env app
 
-        /// Infers the type of a function application.
-        let private inferFunctionApplication env app =
+        /// Infers the type of a functional application.
+        let private inferFunctionalApplication env app =
             result {
                     // infer the function type (must be an arrow)
                 let! funSubst, funAnnex = infer env app.Function
@@ -245,8 +245,16 @@ module Infer =   // to-do: replace with constraint-based inference
                     annex
             }
 
-        /// Checks the type of an annotation.
+        /// Infers the type of an annotation.
         let private inferAnnotation env ann =
+            match ann.Expression with
+                | Expression.MemberAccessExpr ma ->
+                    MemberAccess.inferMemberAccess env ma (Some ann.Type)
+                | _ ->
+                    inferFunctionalAnnotation env ann
+
+        /// Infers the type of a functional annotation.
+        let private inferFunctionalAnnotation env ann =
             result {
                     // infer underlying sub-expression type
                 let! exprSubst, exprAnnex =
@@ -265,10 +273,7 @@ module Infer =   // to-do: replace with constraint-based inference
 
         /// Checks the type of a member access.
         let private inferMemberAccess env ma =
-            result {
-                let! annex = MemberAccess.inferMemberAccess env ma None
-                return Substitution.empty, annex
-            }
+            MemberAccess.inferMemberAccess env ma None
 
         /// Infers the type of a tuple.
         let private inferTuple env exprs =
@@ -340,13 +345,15 @@ module Infer =   // to-do: replace with constraint-based inference
             /// Infers the type of a member access. If specified, the given
             /// type is used to resolve member overloads.
             /// E.g. System.Console.WriteLine.
-            let inferMemberAccess env (ma : MemberAccess) typeOpt =
+            let inferMemberAccess env (ma : MemberAccess) typeOpt : Result<_ * _, _> =
 
-                let createMemberAccessAnnex ma scheme =
-                    MemberAccessExpr {
-                        MemberAccess = ma
-                        Type = instantiate scheme
-                    }
+                let gather ma scheme =
+                    let annex =
+                        MemberAccessExpr {
+                            MemberAccess = ma
+                            Type = instantiate scheme
+                        }
+                    Substitution.empty, annex
 
                 result {
                     let! path = getPath ma
@@ -357,7 +364,7 @@ module Infer =   // to-do: replace with constraint-based inference
 
                             // member is not overloaded
                         | [ scheme ] ->
-                            return createMemberAccessAnnex ma scheme
+                            return gather ma scheme
 
                             // attempt to resolve overload
                         | schemes ->
@@ -365,7 +372,7 @@ module Infer =   // to-do: replace with constraint-based inference
                                 option {
                                     let! typ = typeOpt
                                     let! scheme = tryFindScheme typ schemes
-                                    return createMemberAccessAnnex ma scheme
+                                    return gather ma scheme
                                 }
                             match annexOpt with
                                 | Some annex -> return annex
@@ -382,7 +389,7 @@ module Infer =   // to-do: replace with constraint-based inference
 
                         // infer the member access type
                     let typeOpt = Some argAnnex.Type
-                    let! maAnnex = inferMemberAccess env ma typeOpt
+                    let! maSubst, maAnnex = inferMemberAccess env ma typeOpt
 
                         // gather results
                     let! typ =
@@ -398,7 +405,9 @@ module Infer =   // to-do: replace with constraint-based inference
                             Argument = argAnnex
                             Type = typ
                         }
-                    return argSubst, annex
+                    return
+                        maSubst ++ argSubst,
+                        annex
                 }
 
     /// Infers the type of the given expression.
