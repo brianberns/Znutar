@@ -64,6 +64,14 @@ module Type =
                         .WithTypeArgumentList(
                             TypeArgumentList(
                                 SingletonSeparatedList(inpNode))))
+            elif inpType = Type.``void`` then
+                QualifiedName(
+                    IdentifierName("System"),
+                    GenericName(
+                        Identifier("Func"))
+                        .WithTypeArgumentList(
+                            TypeArgumentList(
+                                SingletonSeparatedList(outNode))))
             else
                 QualifiedName(
                     IdentifierName("System"),
