@@ -56,14 +56,23 @@ module Type =
         | TypeArrow (inpType, outType) ->
             let inpNode = transpile inpType
             let outNode = transpile outType
-            QualifiedName(
-                IdentifierName("System"),
-                GenericName(
-                    Identifier("Func"))
-                    .WithTypeArgumentList(
-                        TypeArgumentList(
-                            Syntax.separatedList(
-                                [inpNode; outNode]))))
+            if outType = Type.``void`` then
+                QualifiedName(
+                    IdentifierName("System"),
+                    GenericName(
+                        Identifier("Action"))
+                        .WithTypeArgumentList(
+                            TypeArgumentList(
+                                SingletonSeparatedList(inpNode))))
+            else
+                QualifiedName(
+                    IdentifierName("System"),
+                    GenericName(
+                        Identifier("Func"))
+                        .WithTypeArgumentList(
+                            TypeArgumentList(
+                                Syntax.separatedList(
+                                    [inpNode; outNode]))))
         | TypeTuple types ->
             let nodes =
                 types

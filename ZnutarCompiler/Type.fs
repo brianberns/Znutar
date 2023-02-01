@@ -108,8 +108,7 @@ module Type =
         elif sysType = typeof<System.Int32> then int
         elif sysType = typeof<System.String> then string
         elif sysType = typeof<System.Void> then ``void``
-        else
-            constant sysType.Name
+        else constant sysType.Name
 
     let ofMethod (method : MethodInfo) =
         assert(not method.IsGenericMethod)
