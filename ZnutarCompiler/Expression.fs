@@ -2,9 +2,17 @@
 
 /// A literal value, such as 1 or true.
 type Literal =
+
+    /// E.g. true.
     | BoolLiteral of bool
+
+    /// E.g. 1.
     | IntLiteral of int
+
+    /// E.g. "Hello world".
     | StringLiteral of char[]   // prevent null
+
+    /// E.g. ().
     | UnitLiteral
 
 module Literal =
