@@ -381,7 +381,9 @@ module Infer =   // to-do: replace with constraint-based inference
 
                         // infer the member access type (e.g. WriteLine : string -> void)
                     let! maSubst, maAnnex =
-                        inferMemberAccessTyped env ma argAnnex.Type
+                        let typ =
+                            argAnnex.Type ^=> createFreshTypeVariable "ma"
+                        inferMemberAccessTyped env ma typ
 
                         // gather results
                     let! typ =
