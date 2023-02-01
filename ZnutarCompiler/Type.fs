@@ -120,7 +120,7 @@ module Type =
                         ofSystemType parm.ParameterType)
                     |> Seq.toList
             match inpTypes with
-                | [] -> unit
+                | [] -> ``void``
                 | [typ] -> typ
                 | type0 :: type1 :: rest ->
                     MultiItemList.create type0 type1 rest

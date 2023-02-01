@@ -249,7 +249,7 @@ module Infer =   // to-do: replace with constraint-based inference
         let private inferAnnotation env ann =
             match ann.Expression with
                 | Expression.MemberAccessExpr ma ->
-                    MemberAccess.inferMemberAccess env ma (Some ann.Type)
+                    MemberAccess.inferMemberAccessTyped env ma ann.Type
                 | _ ->
                     inferFunctionalAnnotation env ann
 
@@ -273,7 +273,7 @@ module Infer =   // to-do: replace with constraint-based inference
 
         /// Checks the type of a member access.
         let private inferMemberAccess env ma =
-            MemberAccess.inferMemberAccess env ma None
+            MemberAccess.inferMemberAccess env ma (fun _ -> None)
 
         /// Infers the type of a tuple.
         let private inferTuple env exprs =
@@ -333,19 +333,9 @@ module Infer =   // to-do: replace with constraint-based inference
 
                 loop [ma.Identifier] ma.Expression
 
-            /// Tries to find a scheme matching the given type.
-            let private tryFindScheme typ schemes =
-                schemes
-                    |> Seq.tryFind (fun (scheme : Scheme) ->
-                        match scheme.Type with
-                            | TypeArrow (inpType, _) ->
-                                typ = inpType
-                            | _ -> false)
-
-            /// Infers the type of a member access. If specified, the given
-            /// type is used to resolve member overloads.
+            /// Infers the type of a member access.
             /// E.g. System.Console.WriteLine.
-            let inferMemberAccess env (ma : MemberAccess) typeOpt : Result<_ * _, _> =
+            let inferMemberAccess env (ma : MemberAccess) tryResolve =
 
                 let gather ma scheme =
                     let annex =
@@ -368,28 +358,29 @@ module Infer =   // to-do: replace with constraint-based inference
 
                             // attempt to resolve overload
                         | schemes ->
-                            let annexOpt =
-                                option {
-                                    let! typ = typeOpt
-                                    let! scheme = tryFindScheme typ schemes
+                            match tryResolve schemes with
+                                | Some scheme ->
                                     return gather ma scheme
-                                }
-                            match annexOpt with
-                                | Some annex -> return annex
                                 | None ->
                                     return! Error (UnresolvedMethodOverload ma)
                 }
+
+            /// Infers the type of a member access.
+            let inferMemberAccessTyped env ma typ =
+                inferMemberAccess env ma (
+                    Seq.tryFind (fun scheme ->
+                        scheme.Type = typ))
 
             /// Infers the type of applying the given argument to the given
             /// member access. E.g. System.Console.WriteLine("Hello world").
             let inferMemberApplication env ma arg =
                 result {
-                        // infer the input type
+                        // infer the input type (e.g. "Hello world" : string)
                     let! argSubst, argAnnex = infer env arg
 
-                        // infer the member access type
-                    let typeOpt = Some argAnnex.Type
-                    let! maSubst, maAnnex = inferMemberAccess env ma typeOpt
+                        // infer the member access type (e.g. WriteLine : string -> void)
+                    let! maSubst, maAnnex =
+                        inferMemberAccessTyped env ma argAnnex.Type
 
                         // gather results
                     let! typ =
