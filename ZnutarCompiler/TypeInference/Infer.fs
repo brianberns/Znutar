@@ -2,27 +2,18 @@
 
 open Znutar
 open Znutar.TypeInference
+open Substitution
 
 /// Type inference.
 // See p. 91 of https://web.archive.org/web/20220524212025/http://dev.stephendiehl.com/fun/WYAH.pdf
 module Infer =   // to-do: replace with constraint-based inference
-
-    open Substitution
-
-    /// Count of type variables created.
-    let mutable private count = 0
-
-    /// Creates a fresh type variable with the given prefix.
-    let private createFreshTypeVariable (prefix : string) =
-        count <- count + 1
-        Type.variable $"{prefix}{count}"
 
     /// Creates a fresh type from the given scheme.
     let private instantiate scheme =
         let subst =
             (Substitution.empty, scheme.TypeVariables)
                 ||> List.fold (fun acc tv ->
-                    let typ = createFreshTypeVariable tv.Name
+                    let typ = Type.createFreshTypeVariable tv.Name
                     acc |> Map.add tv typ)
         Type.apply subst scheme.Type
 
@@ -85,7 +76,7 @@ module Infer =   // to-do: replace with constraint-based inference
             result {
                     // create an input type
                 let identType =
-                    createFreshTypeVariable lam.Identifier.Name
+                    Type.createFreshTypeVariable lam.Identifier.Name
                 let env' =
                     let scheme = Scheme.create [] identType
                     TypeEnvironment.add lam.Identifier scheme env
@@ -111,7 +102,8 @@ module Infer =   // to-do: replace with constraint-based inference
         let private inferApplication env app =
             match app.Function with
                 | Expression.MemberAccessExpr ma ->
-                    MemberAccess.inferMemberApplication env ma app.Argument
+                    MemberAccess.inferMemberApplication
+                        infer env ma app.Argument
                 | _ ->
                     inferFunctionalApplication env app
 
@@ -127,7 +119,7 @@ module Infer =   // to-do: replace with constraint-based inference
                     infer env' app.Argument
 
                     // unify (input ^=> output) with function type
-                let outType = createFreshTypeVariable "app"
+                let outType = Type.createFreshTypeVariable "app"
                 let! appSubst =
                     let funType = Type.apply argSubst funAnnex.Type
                     unify funType (argAnnex.Type ^=> outType)
@@ -152,7 +144,7 @@ module Infer =   // to-do: replace with constraint-based inference
                 let env' =
                     if letb.Recursive then
                         let scheme =
-                            createFreshTypeVariable "arg"
+                            Type.createFreshTypeVariable "arg"
                                 |> generalize env
                         TypeEnvironment.add
                             letb.Identifier scheme env   // to-do: allow mutual recursion
@@ -226,7 +218,7 @@ module Infer =   // to-do: replace with constraint-based inference
                     infer env bop.Left
                 let! rightSubst, rightAnnex =
                     infer env bop.Right
-                let resultType = createFreshTypeVariable "bop"
+                let resultType = Type.createFreshTypeVariable "bop"
 
                     // must match expected scheme
                 let! arrowSubst =
@@ -317,92 +309,6 @@ module Infer =   // to-do: replace with constraint-based inference
                     }
                 return subst, annex
             }
-
-        module private MemberAccess =
-
-            /// Converts a member access to an identifier path.
-            /// E.g. System.Console.WriteLine -> [ System; Console; WriteLine ]
-            let private getPath (ma : MemberAccess) =
-
-                let rec loop acc expr =
-                    result {
-                        match expr with
-                            | Expression.IdentifierExpr ident ->
-                                return ident :: acc
-                            | Expression.MemberAccessExpr ma ->
-                                return! loop (ma.Identifier :: acc) ma.Expression
-                            | _ ->
-                                return! Error (
-                                    InternalError
-                                        $"Unexpected expression type: {expr.Unparse()}")
-                    }
-
-                loop [ma.Identifier] ma.Expression
-
-            /// Infers the type of a member access.
-            /// E.g. System.Console.WriteLine.
-            let inferMemberAccess env ma tryResolve =
-                result {
-                    let! path = getPath ma
-                    match TypeEnvironment.tryFindMethod path env with
-
-                            // no such member
-                        | [] -> return! Error (UnboundIdentifier ma.Identifier)
-
-                            // try to resolve overload
-                        | schemes ->
-                            match tryResolve schemes with
-                                | Some (subst, scheme) ->
-                                    let annex =
-                                        MemberAccessExpr {
-                                            MemberAccess = ma
-                                            Type = scheme.Type   // to-do: instantiate type?
-                                        }
-                                    return subst, annex
-                                | None ->
-                                    return! Error (UnresolvedMethodOverload ma)
-                }
-
-            /// Infers the type of a member access with the given signature.
-            /// E.g. System.Console.WriteLine : string -> void.
-            let inferMemberAccessTyped env ma typ =
-                inferMemberAccess env ma (
-                    Seq.tryPick (fun scheme ->
-                        match Substitution.unify scheme.Type typ with
-                            | Ok subst -> Some (subst, scheme)
-                            | Error _ -> None))
-
-            /// Infers the type of applying the given argument to the given
-            /// member access. E.g. System.Console.WriteLine("Hello world").
-            let inferMemberApplication env ma arg =
-                result {
-                        // infer the input type (e.g. "Hello world" : string)
-                    let! argSubst, argAnnex = infer env arg
-
-                        // infer the member access type (e.g. WriteLine : string -> void)
-                    let! maSubst, maAnnex =
-                        let typ =
-                            argAnnex.Type ^=> createFreshTypeVariable "ma"
-                        inferMemberAccessTyped env ma typ
-
-                        // gather results
-                    let! typ =
-                        match maAnnex.Type with
-                            | TypeArrow (_, outType) -> Ok outType
-                            | _ ->
-                                Error
-                                    (InternalError
-                                        $"Unexpected member access type: {maAnnex.Type.Unparse()}")
-                    let annex =
-                        ApplicationExpr {
-                            Function = maAnnex
-                            Argument = argAnnex
-                            Type = typ
-                        }
-                    return
-                        argSubst ++ maSubst,
-                        annex
-                }
 
     /// Infers the type of the given expression.
     let inferExpression assemblies expr =
