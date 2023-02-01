@@ -54,6 +54,8 @@ module Substitution =
     let inline (++) subst1 subst2 = compose subst1 subst2
 
     /// Attempts to find a substitution that unifies the given types.
+    /// Applying such a substitution to both types produces the same
+    /// result type.
     let rec unify type1 type2 =
 
         /// Does the given type variable occur free in the given type?

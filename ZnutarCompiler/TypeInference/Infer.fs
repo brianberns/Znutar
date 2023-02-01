@@ -353,7 +353,7 @@ module Infer =   // to-do: replace with constraint-based inference
                                     let annex =
                                         MemberAccessExpr {
                                             MemberAccess = ma
-                                            Type = instantiate scheme
+                                            Type = scheme.Type   // to-do: instantiate type?
                                         }
                                     return subst, annex
                                 | None ->
