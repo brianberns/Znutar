@@ -328,15 +328,18 @@ module Infer =   // to-do: replace with constraint-based inference
 
                 loop [ma.Identifier] ma.Expression
 
-            let private tryFindScheme typ (schemes : seq<Scheme>) =
+            /// Tries to find a scheme matching the given type.
+            let private tryFindScheme typ schemes =
                 schemes
-                    |> Seq.tryFind (fun scheme ->
+                    |> Seq.tryFind (fun (scheme : Scheme) ->
                         match scheme.Type with
                             | TypeArrow (inpType, _) ->
                                 typ = inpType
                             | _ -> false)
 
-            /// Infers the type of a member access.
+            /// Infers the type of a member access. If specified, the given
+            /// type is used to resolve member overloads.
+            /// E.g. System.Console.WriteLine.
             let inferMemberAccess env (ma : MemberAccess) typeOpt =
 
                 let createMemberAccessAnnex ma scheme =
@@ -348,9 +351,15 @@ module Infer =   // to-do: replace with constraint-based inference
                 result {
                     let! path = getPath ma
                     match TypeEnvironment.tryFindMethod path env with
+
+                            // no such member
+                        | [] -> return! Error (UnboundIdentifier ma.Identifier)
+
+                            // member is not overloaded
                         | [ scheme ] ->
                             return createMemberAccessAnnex ma scheme
-                        | [] -> return! Error (UnboundIdentifier ma.Identifier)
+
+                            // attempt to resolve overload
                         | schemes ->
                             let annexOpt =
                                 option {
@@ -364,7 +373,8 @@ module Infer =   // to-do: replace with constraint-based inference
                                     return! Error (UnresolvedMethodOverload ma)
                 }
 
-            /// Infers the type of a member application.
+            /// Infers the type of applying the given argument to the given
+            /// member access. E.g. System.Console.WriteLine("Hello world").
             let inferMemberApplication env ma arg =
                 result {
                         // infer the input type
