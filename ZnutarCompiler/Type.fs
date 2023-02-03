@@ -1,5 +1,6 @@
 ﻿namespace Znutar
 
+open System
 open System.Reflection
 
 /// Name of a value or type.
@@ -122,11 +123,12 @@ module Type =
                 |> Seq.map freeTypeVariables
                 |> Set.unionMany
 
-    let private ofDotnetType (dotnetType : System.Type) =
-        if dotnetType = typeof<System.Boolean> then bool
-        elif dotnetType = typeof<System.Int32> then int
-        elif dotnetType = typeof<System.String> then string
-        elif dotnetType = typeof<System.Void> then unit   // convert void to unit
+    /// Creates a Znutar type from the given .NET type.
+    let private ofDotnetType dotnetType =
+        if dotnetType = typeof<Boolean> then bool
+        elif dotnetType = typeof<Int32> then int
+        elif dotnetType = typeof<String> then string
+        elif dotnetType = typeof<Void> then unit   // convert void to unit
         else constant dotnetType.FullName
 
     let ofMethod (method : MethodInfo) =
