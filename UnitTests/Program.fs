@@ -4,7 +4,7 @@ module Program =
     result {
         let text =
             """
-            System.Console.ReadLine()
+            System.Console.Write("Hello world")
             """
         let assemblyName = "Test"
         do! Compiler.compile
@@ -14,3 +14,25 @@ module Program =
                 text
         return! Process.run assemblyName
     } |> printfn "%A"
+
+(*
+namespace Test
+{
+    static class TestType
+    {
+        static void Main()
+        {
+            Expression();
+        }
+
+        static Znutar.Runtime.Unit Expression()
+        {
+            return ((System.Func<string, Znutar.Runtime.Unit>)(x =>
+            {
+                System.Console.Write(x);
+                return Znutar.Runtime.Unit.Value;
+            }))("Hello world");
+        }
+    }
+}
+*)

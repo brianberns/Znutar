@@ -21,11 +21,8 @@ module Syntax =
         |]
 
     /// Converts the given expression node into a statement.
-    let toStatement typ exprNode : Syntax.StatementSyntax =
-        if typ = Type.``void`` then
-            ExpressionStatement(exprNode)   // don't return a void value
-        else
-            ReturnStatement(exprNode)
+    let toStatement (typ : Type) exprNode : Syntax.StatementSyntax =
+        ReturnStatement(exprNode)
 
 module Type =
 
@@ -43,8 +40,6 @@ module Type =
                         IdentifierName("Znutar"),
                         IdentifierName("Runtime")),
                     IdentifierName("Unit"))
-            Type.``void``,
-                PredefinedType(Token(SyntaxKind.VoidKeyword))
         ]
 
     /// Transpiles the given type.
@@ -56,31 +51,14 @@ module Type =
         | TypeArrow (inpType, outType) ->
             let inpNode = transpile inpType
             let outNode = transpile outType
-            if outType = Type.``void`` then
-                QualifiedName(
-                    IdentifierName("System"),
-                    GenericName(
-                        Identifier("Action"))
-                        .WithTypeArgumentList(
-                            TypeArgumentList(
-                                SingletonSeparatedList(inpNode))))
-            elif inpType = Type.``void`` then
-                QualifiedName(
-                    IdentifierName("System"),
-                    GenericName(
-                        Identifier("Func"))
-                        .WithTypeArgumentList(
-                            TypeArgumentList(
-                                SingletonSeparatedList(outNode))))
-            else
-                QualifiedName(
-                    IdentifierName("System"),
-                    GenericName(
-                        Identifier("Func"))
-                        .WithTypeArgumentList(
-                            TypeArgumentList(
-                                Syntax.separatedList(
-                                    [inpNode; outNode]))))
+            QualifiedName(
+                IdentifierName("System"),
+                GenericName(
+                    Identifier("Func"))
+                    .WithTypeArgumentList(
+                        TypeArgumentList(
+                            Syntax.separatedList(
+                                [inpNode; outNode]))))
         | TypeTuple types ->
             let nodes =
                 types

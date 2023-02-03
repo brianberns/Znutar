@@ -89,10 +89,6 @@ module Expression =
      *)
     and private transpileLetRaw letb =
         result {
-                // can't assign a void value
-            if letb.Argument.Type = Type.``void`` then
-                return! Error VoidAssignment
-
             let typeNode = Type.transpile letb.Argument.Type
             let! argStmtNodes, argExprNode = transpile letb.Argument   // argStmtNodes: int x = 1, argExprNode: 2 * x
             let! bodyStmtNodes, bodyExprNode = transpile letb.Body     // bodyStmtNodes: int z = 3, bodyExprNode: y + z
@@ -193,7 +189,7 @@ module Expression =
         transpile expr
 
     /// Transpiles a member access.
-    and private transpileMemberAccess ma =
+    and private transpileMemberAccessRaw ma =
 
         let rec loop (ma : MemberAccess) =
             result {
@@ -218,6 +214,47 @@ module Expression =
         result {
             let! exprNode = loop ma.MemberAccess
             return List.empty, exprNode
+        }
+
+    /// Transpiles a member access.
+    (*
+        Before:
+            System.Console.WriteLine
+        After:
+            ((System.Func<string, Znutar.Runtime.Unit>)(x =>
+                {
+                    System.Console.WriteLine(x);
+                    return Znutar.Runtime.Unit.Value;
+                }))
+    *)
+    and private transpileMemberAccess ma =
+        result {
+            let! stmtNodes, exprNode = transpileMemberAccessRaw ma
+            let! emptyStmtNodes, unitValueNode= transpileLiteral UnitLiteral
+            assert(emptyStmtNodes.IsEmpty)
+            match ma.Type with
+                | TypeArrow (inpType, outType) when outType = Type.unit ->
+                    let exprNode' =
+                        ParenthesizedExpression(
+                            CastExpression(
+                                Type.transpile (inpType ^=> Type.unit),
+                                ParenthesizedExpression(
+                                    SimpleLambdaExpression(
+                                        Parameter(
+                                            Identifier("x")))
+                                        .WithBlock(
+                                            Block(
+                                                ExpressionStatement(
+                                                    InvocationExpression(exprNode)
+                                                        .WithArgumentList(
+                                                            ArgumentList(
+                                                                SingletonSeparatedList(
+                                                                    Argument(
+                                                                        IdentifierName("x")))))),
+                                                ReturnStatement(unitValueNode))))))
+                    return stmtNodes, exprNode'
+                | _ ->
+                    return stmtNodes, exprNode
         }
 
     /// Transpiles a tuple.

@@ -87,9 +87,6 @@ module Type =
     /// Primitive unit type.
     let unit = constant "unit"
 
-    /// Primitive void type. (Not the same as unit.)
-    let ``void`` = constant "void"
-
     /// Free type variables in the given type. (Note: *All*
     /// the type variables in a type are free. They only get
     /// bound in a scheme.)
@@ -107,7 +104,7 @@ module Type =
         if sysType = typeof<System.Boolean> then bool
         elif sysType = typeof<System.Int32> then int
         elif sysType = typeof<System.String> then string
-        elif sysType = typeof<System.Void> then ``void``
+        elif sysType = typeof<System.Void> then unit   // convert void to unit
         else constant sysType.Name
 
     let ofMethod (method : MethodInfo) =
@@ -119,12 +116,10 @@ module Type =
                         ofSystemType parm.ParameterType)
                     |> Seq.toList
             match inpTypes with
-                | [] -> ``void``
+                | [] -> unit   // convert void to unit
                 | [typ] -> typ
                 | type0 :: type1 :: rest ->
                     MultiItemList.create type0 type1 rest
                         |> TypeTuple
-        let outType =
-            method.ReturnType
-                |> ofSystemType
+        let outType = ofSystemType method.ReturnType
         inpType ^=> outType

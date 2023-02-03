@@ -137,7 +137,7 @@ type CompilerTests() =
             let ignore x = ();
             ignore 3
             """
-        Assert.AreEqual(Ok "()", run text)
+        Assert.AreEqual(Ok "", run text)
 
     [<TestMethod>]
     member _.Tuple() =
@@ -170,15 +170,13 @@ type CompilerTests() =
             let x = System.Console.Write("Hello world") in
             x
             """
-        match run text with
-            | Error VoidAssignment -> ()
-            | res -> Assert.Fail(sprintf "%A" res)
+        Assert.AreEqual(Ok "Hello world", run text)
 
     [<TestMethod>]
     member _.AnnotatedMemberAccess() =
         let text =
             """
-            let f = (System.Console.Write : string -> void) in
+            let f = (System.Console.Write : string -> unit) in
             f("Hello world")
             """
         Assert.AreEqual(Ok "Hello world", run text)

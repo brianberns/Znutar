@@ -22,7 +22,7 @@ module CompilationUnit =
                 InvocationExpression(
                     IdentifierName(exprNode.Identifier))
 
-            if exprNode.ReturnType.ToString() = "void" then   // don't attempt to write void value
+            if exprNode.ReturnType.ToString() = "Znutar.Runtime.Unit" then   // don't write unit value
                 invocation
             else
                 InvocationExpression(
