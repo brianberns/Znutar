@@ -3,6 +3,19 @@
 open FParsec
 open Znutar
 
+module private QualifiedIdentifier =
+
+    /// Parses a qualified identifier. E.g. "System.Guid".
+    let parse : Parser<QualifiedIdentifier, _> =
+        let p =
+            Identifier.parse .>> spaces
+        let sep =
+            skipChar '.' >>. spaces
+        pipe2
+            p
+            (many (sep >>. p))
+            NonEmptyList.create
+
 /// Parses types. E.g. "'a -> int".
 module Type =
 
