@@ -34,7 +34,7 @@ type QualifiedIdentifier = NonEmptyList<Identifier>
 module QualifiedIdentifier =
 
     /// Creates a qualified identifier from the given full type name.
-    let create (fullName : string) : QualifiedIdentifier =
+    let split (fullName : string) : QualifiedIdentifier =
         let idents =
             fullName.Split('.')
                 |> Seq.map Identifier.create
@@ -95,7 +95,7 @@ module Type =
     let variable = Identifier.create >> TypeVariable
 
     /// Creates a type constant with the given name.
-    let constant = QualifiedIdentifier.create >> TypeConstant
+    let constant = QualifiedIdentifier.split >> TypeConstant
 
     /// Primitive Boolean type.
     let bool = constant "bool"
