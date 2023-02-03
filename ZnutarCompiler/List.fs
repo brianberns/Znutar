@@ -12,7 +12,7 @@ type NonEmptyList<'t> =
         this.Rest.Length + 1
 
     /// All items in this list.
-    member this.Items =
+    member private this.Items =
         seq {
             yield this.Item
             yield! this.Rest
@@ -59,7 +59,7 @@ type MultiItemList<'t> =
         this.Rest.Length + 2
 
     /// All items in this list.
-    member this.Items =
+    member private this.Items =
         seq {
             yield this.Item1
             yield this.Item2

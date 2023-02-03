@@ -34,9 +34,9 @@ module Type =
                     loop idents,
                     IdentifierName(ident.Name))
 
-        qi.Items
+        qi
+            |> Seq.rev
             |> Seq.toList
-            |> List.rev
             |> loop
             :> Syntax.TypeSyntax
 
