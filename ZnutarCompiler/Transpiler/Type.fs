@@ -8,21 +8,20 @@ open Znutar
 
 module Syntax =
 
-    let private comma =
-        SyntaxNodeOrToken.op_Implicit(
-            Token(SyntaxKind.CommaToken))
-
     /// Creates a comma-separated syntax list.
     let separatedList nodes =
         SeparatedList [|
             for iNode, (node : #SyntaxNode) in Seq.indexed nodes do
-                if iNode > 0 then yield comma
+                if iNode > 0 then
+                    yield SyntaxNodeOrToken.op_Implicit(
+                        Token(SyntaxKind.CommaToken))
                 yield SyntaxNodeOrToken.op_Implicit(node)
         |]
 
-module Type =
+module QualifiedIdentifier =
 
-    let private toTypeSyntax (qi : QualifiedIdentifier) =
+    /// Transpiles the given qualified identifier.
+    let transpile (qi : QualifiedIdentifier) =
 
         let rec loop = function
             | [] -> failwith "Empty qualified name"
@@ -40,10 +39,14 @@ module Type =
             |> loop
             :> Syntax.TypeSyntax
 
-    let private primitiveTypeMap : Map<_, Syntax.TypeSyntax> =
+module Type =
+
+    /// Maps primitive types to syntax nodes.
+    let private primitiveTypeMap =
         Map [
             Type.bool,
                 PredefinedType(Token(SyntaxKind.BoolKeyword))
+                    :> Syntax.TypeSyntax
             Type.int,
                 PredefinedType(Token(SyntaxKind.IntKeyword))
             Type.string,
@@ -51,7 +54,7 @@ module Type =
             Type.unit,
                 typeof<Znutar.Runtime.Unit>.FullName
                     |> QualifiedIdentifier.split
-                    |> toTypeSyntax
+                    |> QualifiedIdentifier.transpile
         ]
 
     /// Transpiles the given type.
@@ -59,7 +62,7 @@ module Type =
         | TypeConstant qi as typ ->
             match Map.tryFind typ primitiveTypeMap with
                 | Some node -> node
-                | None -> toTypeSyntax qi
+                | None -> QualifiedIdentifier.transpile qi
         | TypeVariable tv ->
             IdentifierName(tv.Name)
         | TypeArrow (inpType, outType) ->
