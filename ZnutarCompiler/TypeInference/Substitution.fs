@@ -30,7 +30,7 @@ module Substitution =
 
         /// Applies the given substitution to the given type.
         let rec apply (subst : Substitution) = function
-            | TypeConstant ident -> TypeConstant ident
+            | TypeConstant _ as typ -> typ
             | TypeVariable tv as typ ->
                 subst
                     |> Map.tryFind tv

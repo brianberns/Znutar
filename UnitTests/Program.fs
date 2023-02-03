@@ -1,14 +1,16 @@
 namespace Znutar
 
+open System
+
 module Program =
     result {
         let text =
             """
-            System.Console.ReadLine()
+            System.Guid.NewGuid()
             """
         let assemblyName = "Test"
         do! Compiler.compile
-                [| @"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\7.0.2\ref\net7.0\System.Console.dll" |]
+                [| typeof<Console>.Assembly.Location |]
                 assemblyName
                 $"{assemblyName}.dll"
                 text

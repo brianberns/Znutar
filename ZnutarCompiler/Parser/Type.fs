@@ -12,7 +12,10 @@ module Type =
         createParserForwardedToRef ()
 
     let private parseConstant =
-        Identifier.parse |>> TypeConstant
+        Identifier.parse
+            |>> (fun ident ->
+                NonEmptyList.create ident []   // to-do: support qualified identifiers
+                    |> TypeConstant)
 
     let private parseVariableIdentifier =
         skipChar '\''

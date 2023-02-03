@@ -1,7 +1,7 @@
 ﻿namespace Znutar
 
+open System
 open Microsoft.VisualStudio.TestTools.UnitTesting
-
 open Znutar
 
 [<TestClass>]
@@ -12,7 +12,7 @@ type CompilerTests() =
         result {
             do!
                 Compiler.compile
-                    [| @"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\7.0.2\ref\net7.0\System.Console.dll" |]
+                    [| typeof<Console>.Assembly.Location |]
                     assemblyName
                     $"{assemblyName}.dll"
                     text
@@ -180,3 +180,15 @@ type CompilerTests() =
             f("Hello world")
             """
         Assert.AreEqual(Ok "Hello world", run text)
+
+    [<TestMethod>]
+    member _.NewGuid() =
+        let text =
+            """
+            System.Guid.NewGuid()
+            """
+        match run text with
+            | Ok str ->
+                let flag, _ = Guid.TryParse(str)
+                Assert.IsTrue(flag)
+            | Error err -> Assert.Fail(string err)

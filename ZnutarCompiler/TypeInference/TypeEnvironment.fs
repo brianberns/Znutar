@@ -68,7 +68,7 @@ module private MethodTypeEnvironment =
                         if not typ.IsGenericType then
                             let namespaceParts = typ.Namespace.Split('.')
                             for method in typ.GetMethods() do
-                                if method.IsStatic then
+                                if method.IsStatic && not method.IsGenericMethod then
                                     let path =
                                         [
                                             yield! namespaceParts

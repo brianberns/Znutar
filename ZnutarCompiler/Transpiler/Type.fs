@@ -22,6 +22,24 @@ module Syntax =
 
 module Type =
 
+    let private toTypeSyntax (qi : QualifiedIdentifier) =
+
+        let rec loop = function
+            | [] -> failwith "Empty qualified name"
+            | [ident] ->
+                IdentifierName(ident.Name)
+                    :> Syntax.NameSyntax
+            | ident :: idents ->
+                QualifiedName(
+                    loop idents,
+                    IdentifierName(ident.Name))
+
+        qi.Items
+            |> Seq.toList
+            |> List.rev
+            |> loop
+            :> Syntax.TypeSyntax
+
     let private primitiveTypeMap : Map<_, Syntax.TypeSyntax> =
         Map [
             Type.bool,
@@ -31,17 +49,17 @@ module Type =
             Type.string,
                 PredefinedType(Token(SyntaxKind.StringKeyword))
             Type.unit,
-                QualifiedName(
-                    QualifiedName(
-                        IdentifierName("Znutar"),
-                        IdentifierName("Runtime")),
-                    IdentifierName("Unit"))
+                typeof<Znutar.Runtime.Unit>.FullName
+                    |> QualifiedIdentifier.create
+                    |> toTypeSyntax
         ]
 
     /// Transpiles the given type.
     let rec transpile = function
-        | TypeConstant _ as typ ->
-            primitiveTypeMap[typ]
+        | TypeConstant qi as typ ->
+            match Map.tryFind typ primitiveTypeMap with
+                | Some node -> node
+                | None -> toTypeSyntax qi
         | TypeVariable tv ->
             IdentifierName(tv.Name)
         | TypeArrow (inpType, outType) ->

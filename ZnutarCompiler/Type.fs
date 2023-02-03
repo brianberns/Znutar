@@ -28,12 +28,34 @@ module TypeVariable =
     let unparse (tv : TypeVariable) =
         $"'{tv.Name}"                         // apostrophe is implicit
 
+/// A qualified identifier. E.g. "System.Guid".
+type QualifiedIdentifier = NonEmptyList<Identifier>
+
+module QualifiedIdentifier =
+
+    /// Creates a qualified identifier from the given full type name.
+    let create (fullName : string) : QualifiedIdentifier =
+        let idents =
+            fullName.Split('.')
+                |> Seq.map Identifier.create
+                |> Seq.toList
+        match idents with
+            | [] -> failwith "Empty name"
+            | ident :: idents ->
+                NonEmptyList.create ident idents
+
+    /// Converts the given qualified identifier to a string.
+    let toString (qi : QualifiedIdentifier) =
+        qi
+            |> Seq.map (fun ident -> ident.Name)
+            |> String.concat "."
+
 /// The type of a value or function.
 [<System.Diagnostics.DebuggerDisplay("{Unparse()}")>]
 type Type =
 
-    /// Type constant. E.g. int, bool.
-    | TypeConstant of Identifier
+    /// Type constant. E.g. int, bool, System.Guid.
+    | TypeConstant of QualifiedIdentifier
 
     /// Type variable. E.g. 'a.
     | TypeVariable of TypeVariable
@@ -41,13 +63,13 @@ type Type =
     /// Function type. E.g. 'a -> int.
     | TypeArrow of Type * Type
 
-    /// Tuple type. e.g. int * 'a * bool.
+    /// Tuple type. E.g. int * 'a * bool.
     | TypeTuple of MultiItemList<Type>
 
     /// Unparses the given type.
     member typ.Unparse() =
         match typ with
-            | TypeConstant ident -> ident.Name
+            | TypeConstant qi -> QualifiedIdentifier.toString qi
             | TypeVariable tv -> TypeVariable.unparse tv
             | TypeArrow (inpType, outType) ->
                 $"({inpType.Unparse()} -> {outType.Unparse()})"
@@ -73,7 +95,7 @@ module Type =
     let variable = Identifier.create >> TypeVariable
 
     /// Creates a type constant with the given name.
-    let constant = Identifier.create >> TypeConstant
+    let constant = QualifiedIdentifier.create >> TypeConstant
 
     /// Primitive Boolean type.
     let bool = constant "bool"
@@ -100,12 +122,12 @@ module Type =
                 |> Seq.map freeTypeVariables
                 |> Set.unionMany
 
-    let private ofSystemType (sysType : System.Type) =
-        if sysType = typeof<System.Boolean> then bool
-        elif sysType = typeof<System.Int32> then int
-        elif sysType = typeof<System.String> then string
-        elif sysType = typeof<System.Void> then unit   // convert void to unit
-        else constant sysType.Name
+    let private ofDotnetType (dotnetType : System.Type) =
+        if dotnetType = typeof<System.Boolean> then bool
+        elif dotnetType = typeof<System.Int32> then int
+        elif dotnetType = typeof<System.String> then string
+        elif dotnetType = typeof<System.Void> then unit   // convert void to unit
+        else constant dotnetType.FullName
 
     let ofMethod (method : MethodInfo) =
         assert(not method.IsGenericMethod)
@@ -113,7 +135,7 @@ module Type =
             let inpTypes =
                 method.GetParameters()
                     |> Seq.map (fun parm ->
-                        ofSystemType parm.ParameterType)
+                        ofDotnetType parm.ParameterType)
                     |> Seq.toList
             match inpTypes with
                 | [] -> unit   // convert void to unit
@@ -121,5 +143,5 @@ module Type =
                 | type0 :: type1 :: rest ->
                     MultiItemList.create type0 type1 rest
                         |> TypeTuple
-        let outType = ofSystemType method.ReturnType
+        let outType = ofDotnetType method.ReturnType
         inpType ^=> outType

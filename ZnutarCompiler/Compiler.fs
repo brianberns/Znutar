@@ -1,5 +1,6 @@
 ﻿namespace Znutar
 
+open System
 open System.Reflection
 
 open Microsoft.CodeAnalysis
@@ -78,8 +79,11 @@ module Compiler =
                 // infer types of the resulting syntax tree
             let! expr' =
                 let refAssemblies =
-                    references
-                        |> Array.map Assembly.LoadFrom
+                    [|
+                        yield typeof<obj>.Assembly
+                        for ref in references do
+                            yield Assembly.LoadFile(ref)
+                    |]
                 Infer.inferExpression refAssemblies expr
 
                 // compile tree into an assembly
