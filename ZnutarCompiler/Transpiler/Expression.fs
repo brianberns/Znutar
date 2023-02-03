@@ -227,6 +227,12 @@ module Expression =
                     return Znutar.Runtime.Unit.Value;
                 }))
     *)
+    (*
+        Before:
+            System.Console.ReadLine
+        After:
+            ((System.Func<Znutar.Runtime.Unit, string>)(x => System.Console.ReadLine()))
+    *)
     and private transpileMemberAccess ma =
         result {
             let! stmtNodes, exprNode = transpileMemberAccessRaw ma
@@ -252,6 +258,18 @@ module Expression =
                                                                     Argument(
                                                                         IdentifierName("x")))))),
                                                 ReturnStatement(unitValueNode))))))
+                    return stmtNodes, exprNode'
+                | TypeArrow (inpType, outType) when inpType = Type.unit ->
+                    let exprNode' =
+                        ParenthesizedExpression(
+                            CastExpression(
+                                Type.transpile (Type.unit ^=> outType),
+                                ParenthesizedExpression(
+                                    SimpleLambdaExpression(
+                                        Parameter(
+                                            Identifier("x")))
+                                        .WithExpressionBody(
+                                            InvocationExpression(exprNode)))))
                     return stmtNodes, exprNode'
                 | _ ->
                     return stmtNodes, exprNode
