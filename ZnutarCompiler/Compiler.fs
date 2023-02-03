@@ -24,7 +24,7 @@ module Compiler =
             let stmts =
                 [|
                     yield! mainStmtNodes
-                    yield Syntax.toStatement expr.Type mainExprNode
+                    yield ReturnStatement(mainExprNode)
                 |]
             return MethodDeclaration(
                 returnType = typeNode,

@@ -20,10 +20,6 @@ module Syntax =
                 yield SyntaxNodeOrToken.op_Implicit(node)
         |]
 
-    /// Converts the given expression node into a statement.
-    let toStatement (typ : Type) exprNode : Syntax.StatementSyntax =
-        ReturnStatement(exprNode)
-
 module Type =
 
     let private primitiveTypeMap : Map<_, Syntax.TypeSyntax> =
