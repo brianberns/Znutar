@@ -51,6 +51,15 @@ module private Identifier =
                 return Identifier.create name
         } |> attempt
 
+module private QualifiedIdentifier =
+
+    let parse : Parser<QualifiedIdentifier, _> =
+        let p =
+            Identifier.parse .>> spaces
+        let sep =
+            skipChar '.' >>. spaces
+        pipe2 p (many (sep >>. p)) NonEmptyList.create
+
 module Parser =
 
     /// Runs the given parser on the given text.
