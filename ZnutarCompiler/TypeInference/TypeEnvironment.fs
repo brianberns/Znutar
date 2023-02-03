@@ -49,7 +49,7 @@ module private MethodTypeEnvironment =
     let rec add path method env =
         match path with
             | [] ->
-                let scheme = Scheme.create List.empty (Type.ofMethod method)
+                let scheme = Scheme.create List.empty (Type.getSignature method)
                 { env with Schemes = scheme :: env.Schemes }
             | ident :: tail ->
                 let child =
