@@ -155,3 +155,5 @@ module Type =
                         |> TypeTuple
         let outType = ofDotnetType method.ReturnType
         inpType ^=> outType
+
+   // to-do: allow explicit references to .NET name of Znutar type (e.g. "(Console.WriteLine : System.String -> unit)")
