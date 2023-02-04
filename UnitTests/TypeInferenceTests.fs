@@ -49,8 +49,8 @@ type TypeInferenceTests() =
     member _.Polymorphic() =
         let text =
             """
-            let id = fun x -> x;
-            let a = id 0;
+            let id = fun x -> x in
+            let a = id 0 in
             id true
             """
         result {
@@ -85,7 +85,7 @@ type TypeInferenceTests() =
     member _.Const() =
         let text =
             """
-            let const = fun x -> fun y -> x;
+            let const = fun x -> fun y -> x in
             const false 6
             """
         result {
@@ -123,8 +123,8 @@ type TypeInferenceTests() =
         let text =
             """
             let f x =
-                let g y = (x,y);
-                g;
+                let g y = (x,y) in
+                g in
             f 0
             """
         result {

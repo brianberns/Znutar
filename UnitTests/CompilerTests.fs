@@ -29,9 +29,9 @@ type CompilerTests() =
         let text =
             """
             let y =
-                let x = 1;
-                2 * x;
-            let z = 3;
+                let x = 1 in
+                2 * x in
+            let z = 3 in
             y + z
             """
         Assert.AreEqual(Ok "5", run text)
@@ -40,7 +40,7 @@ type CompilerTests() =
     member _.Plus1() =
         let text =
             """
-            let plus1 x = x + 1;
+            let plus1 x = x + 1 in
             plus1 5
             """
         Assert.AreEqual(Ok "6", run text)
@@ -58,7 +58,7 @@ type CompilerTests() =
             """
             let rec factorial n =
                 if n = 0 then 1
-                else n * factorial (n - 1);
+                else n * factorial (n - 1) in
             factorial 6
             """
         Assert.AreEqual(Ok "720", run text)
@@ -69,11 +69,11 @@ type CompilerTests() =
             """
             let abs x =
                 if x > 0 then x
-                else 0 - x;
+                else 0 - x in
             
             let rec gcd a b =
                 if b = 0 then abs a
-                else gcd b (a % b);
+                else gcd b (a % b) in
  
             gcd 400 600
             """
@@ -83,7 +83,7 @@ type CompilerTests() =
     member _.Identity() =
         let text =
             """
-            let id x = x;
+            let id x = x in
             id true
             """
         Assert.AreEqual(Ok "True", run text)
@@ -92,8 +92,8 @@ type CompilerTests() =
     member _.Identity2() =
         let text =
             """
-            let id x = x;
-            let value = id 0;
+            let id x = x in
+            let value = id 0 in
             if value = 0 then id true
             else id false
             """
@@ -103,7 +103,7 @@ type CompilerTests() =
     member _.Const() =
         let text =
             """
-            let const x y = x;
+            let const x y = x in
             const false 6
             """
         Assert.AreEqual(Ok "False", run text)
@@ -134,7 +134,7 @@ type CompilerTests() =
     member _.Ignore() =
         let text =
             """
-            let ignore x = ();
+            let ignore x = () in
             ignore 3
             """
         Assert.AreEqual(Ok "", run text)
@@ -143,7 +143,7 @@ type CompilerTests() =
     member _.Tuple() =
         let text =
             """
-            let f x = x, 2 * x;
+            let f x = x, 2 * x in
             f 3
             """
         Assert.AreEqual(Ok "(3, 6)", run text)
@@ -158,7 +158,7 @@ type CompilerTests() =
         let text =
             """
             let f x =
-                System.Console.Write(x : int);
+                System.Console.Write(x : int) in
             f 3
             """
         Assert.AreEqual(Ok "3", run text)
