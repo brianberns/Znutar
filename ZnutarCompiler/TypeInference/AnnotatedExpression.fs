@@ -133,8 +133,7 @@ and AnnotatedMemberAccess =
     {
         // Expression : AnnotatedExpression
         // Identifier : Identifier
-
-        MemberAccess : MemberAccess
+        MemberAccess : MemberAccess   // to-do: sub-expressions should be annotated
 
         /// Result type. E.g. (expr.ident : int).
         Type : Type
