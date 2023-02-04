@@ -46,35 +46,30 @@ module private MemberTypeEnvironment =
             Children = Map.empty
         }
 
-    let rec addMethod path method env =
+    let private addMember path (mem : #MemberInfo) env getSig add =
         match path with
             | [] ->
                 let scheme =
-                    Scheme.create [] (Type.getMethodSignature method)
+                    Scheme.create [] (getSig mem)
                 { env with Schemes = scheme :: env.Schemes }
             | ident :: tail ->
                 let child =
                     env.Children
                         |> Map.tryFind ident
                         |> Option.defaultValue empty
-                let child' = addMethod tail method child
+                let child' = add tail mem child
                 { env with
                     Children = Map.add ident child' env.Children }
 
+    let rec addMethod path method env =
+        addMember path method env
+            Type.getMethodSignature
+            addMethod
+
     let rec addProperty path property env =
-        match path with
-            | [] ->
-                let scheme =
-                    Scheme.create [] (Type.getPropertySignature property)
-                { env with Schemes = scheme :: env.Schemes }
-            | ident :: tail ->
-                let child =
-                    env.Children
-                        |> Map.tryFind ident
-                        |> Option.defaultValue empty
-                let child' = addProperty tail property child
-                { env with
-                    Children = Map.add ident child' env.Children }
+        addMember path property env
+            Type.getPropertySignature
+            addProperty
 
     let create assemblies =
         let pairs =
