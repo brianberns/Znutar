@@ -239,7 +239,7 @@ module Expression =
             let! emptyStmtNodes, unitValueNode= transpileLiteral UnitLiteral
             assert(emptyStmtNodes.IsEmpty)
             match ma.Type with
-                | TypeArrow (inpType, outType) when outType = Type.unit ->
+                | TypeArrow (inpType, outType) when outType = Type.unit ->   // to-do: handle case where both input and output types are unit
                     let exprNode' =
                         ParenthesizedExpression(
                             CastExpression(
