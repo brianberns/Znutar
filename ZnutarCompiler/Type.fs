@@ -139,7 +139,7 @@ module Type =
             | false, _ -> constant dotnetType.FullName
 
     /// Creates a Znutar type for the signature of the given method.
-    let getMethodSignature (method : MethodInfo) =
+    let private getMethodBaseSignature returnType (method : MethodBase) =
         assert(not method.IsGenericMethod)
         let inpType =
             let inpTypes =
@@ -153,8 +153,14 @@ module Type =
                 | type0 :: type1 :: rest ->
                     MultiItemList.create type0 type1 rest
                         |> TypeTuple
-        let outType = ofDotnetType method.ReturnType
+        let outType = ofDotnetType returnType
         inpType ^=> outType
+
+    /// Creates a Znutar type for the signature of the given method.
+    let getMethodSignature (method : MethodInfo) =
+        getMethodBaseSignature
+            method.ReturnType
+            method
 
     /// Creates a Znutar type for the signature of the given property.
     let getPropertySignature (property : PropertyInfo) =
@@ -163,19 +169,8 @@ module Type =
 
     /// Creates a Znutar type for the signature of the given constructor.
     let getConstructorSignature (constructor : ConstructorInfo) =
-        let inpType =
-            let inpTypes =
-                constructor.GetParameters()
-                    |> Seq.map (fun parm ->
-                        ofDotnetType parm.ParameterType)
-                    |> Seq.toList
-            match inpTypes with
-                | [] -> unit   // convert void to unit
-                | [typ] -> typ
-                | type0 :: type1 :: rest ->
-                    MultiItemList.create type0 type1 rest
-                        |> TypeTuple
-        let outType = ofDotnetType constructor.DeclaringType
-        inpType ^=> outType
+        getMethodBaseSignature
+            constructor.DeclaringType
+            constructor
 
    // to-do: allow explicit references to .NET name of Znutar type (e.g. "(Console.WriteLine : System.String -> unit)")
