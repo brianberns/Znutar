@@ -46,6 +46,7 @@ module private MemberTypeEnvironment =
             Children = Map.empty
         }
 
+    // to-do: use QualifiedIdentifier type for path?
     let private addMember path (mem : #MemberInfo) env getSig add =
         match path with
             | [] ->
@@ -77,27 +78,23 @@ module private MemberTypeEnvironment =
                 for (assembly : Assembly) in assemblies do
                     for typ in assembly.ExportedTypes do
                         if not typ.IsGenericType then
+
                             let namespaceParts = typ.Namespace.Split('.')
+                            let getPath (mem : MemberInfo)=
+                                [
+                                    yield! namespaceParts
+                                    yield typ.Name
+                                    yield mem.Name
+                                ] |> List.map Identifier.create
 
                             for method in typ.GetMethods() do
                                 if method.IsStatic && not method.IsGenericMethod then
-                                    let path =
-                                        [
-                                            yield! namespaceParts
-                                            yield typ.Name
-                                            yield method.Name
-                                        ] |> List.map Identifier.create
-                                    yield path, Choice1Of2 method
+                                    yield getPath method, Choice1Of2 method
 
                             for property in typ.GetProperties() do
-                                if property.GetMethod.IsStatic && not property.GetMethod.IsGenericMethod then
-                                    let path =
-                                        [
-                                            yield! namespaceParts
-                                            yield typ.Name
-                                            yield property.Name
-                                        ] |> List.map Identifier.create
-                                    yield path, Choice2Of2 property
+                                let method = property.GetMethod
+                                if method.IsStatic && not method.IsGenericMethod then
+                                    yield getPath property, Choice2Of2 property
             |]
         (empty, pairs)
             ||> Seq.fold (fun tree (path, choice) ->
