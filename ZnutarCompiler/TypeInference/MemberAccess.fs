@@ -40,7 +40,7 @@ module private MemberAccess =
     let inferMemberAccess env ma tryResolve =
         result {
             let! path = getPath ma
-            match TypeEnvironment.tryFindMethod path env with
+            match TypeEnvironment.tryFindMember path env with
 
                     // no such member
                 | [] -> return! Error (UnboundIdentifier ma.Identifier)

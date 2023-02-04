@@ -139,7 +139,7 @@ module Type =
             | false, _ -> constant dotnetType.FullName
 
     /// Creates a Znutar type for the signature of the given method.
-    let getSignature (method : MethodInfo) =
+    let getMethodSignature (method : MethodInfo) =
         assert(not method.IsGenericMethod)
         let inpType =
             let inpTypes =
@@ -155,5 +155,10 @@ module Type =
                         |> TypeTuple
         let outType = ofDotnetType method.ReturnType
         inpType ^=> outType
+
+    /// Creates a Znutar type for the signature of the given property.
+    let getPropertySignature (property : PropertyInfo) =
+        assert(not property.GetMethod.IsGenericMethod)
+        ofDotnetType property.PropertyType
 
    // to-do: allow explicit references to .NET name of Znutar type (e.g. "(Console.WriteLine : System.String -> unit)")

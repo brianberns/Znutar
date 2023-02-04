@@ -6,7 +6,7 @@ module Program =
     result {
         let text =
             """
-            System.Guid.NewGuid()
+            System.DateTime.Now
             """
         let assemblyName = "Test"
         do! Compiler.compile

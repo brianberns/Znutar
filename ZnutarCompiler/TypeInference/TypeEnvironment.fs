@@ -32,13 +32,13 @@ module private FunctionTypeEnvironment =
             (Map.values env)
             |> set
 
-type private MethodTypeEnvironment =
+type private MemberTypeEnvironment =
     {
         Schemes : List<Scheme>
-        Children : Map<Identifier, MethodTypeEnvironment>
+        Children : Map<Identifier, MemberTypeEnvironment>
     }
 
-module private MethodTypeEnvironment =
+module private MemberTypeEnvironment =
 
     let empty =
         {
@@ -46,17 +46,33 @@ module private MethodTypeEnvironment =
             Children = Map.empty
         }
 
-    let rec add path method env =
+    let rec addMethod path method env =
         match path with
             | [] ->
-                let scheme = Scheme.create List.empty (Type.getSignature method)
+                let scheme =
+                    Scheme.create [] (Type.getMethodSignature method)
                 { env with Schemes = scheme :: env.Schemes }
             | ident :: tail ->
                 let child =
                     env.Children
                         |> Map.tryFind ident
                         |> Option.defaultValue empty
-                let child' = add tail method child
+                let child' = addMethod tail method child
+                { env with
+                    Children = Map.add ident child' env.Children }
+
+    let rec addProperty path property env =
+        match path with
+            | [] ->
+                let scheme =
+                    Scheme.create [] (Type.getPropertySignature property)
+                { env with Schemes = scheme :: env.Schemes }
+            | ident :: tail ->
+                let child =
+                    env.Children
+                        |> Map.tryFind ident
+                        |> Option.defaultValue empty
+                let child' = addProperty tail property child
                 { env with
                     Children = Map.add ident child' env.Children }
 
@@ -67,6 +83,7 @@ module private MethodTypeEnvironment =
                     for typ in assembly.ExportedTypes do
                         if not typ.IsGenericType then
                             let namespaceParts = typ.Namespace.Split('.')
+
                             for method in typ.GetMethods() do
                                 if method.IsStatic && not method.IsGenericMethod then
                                     let path =
@@ -75,11 +92,25 @@ module private MethodTypeEnvironment =
                                             yield typ.Name
                                             yield method.Name
                                         ] |> List.map Identifier.create
-                                    yield path, method
+                                    yield path, Choice1Of2 method
+
+                            for property in typ.GetProperties() do
+                                if property.GetMethod.IsStatic && not property.GetMethod.IsGenericMethod then
+                                    let path =
+                                        [
+                                            yield! namespaceParts
+                                            yield typ.Name
+                                            yield property.Name
+                                        ] |> List.map Identifier.create
+                                    yield path, Choice2Of2 property
             |]
         (empty, pairs)
-            ||> Seq.fold (fun tree (path, method) ->
-                add path method tree)
+            ||> Seq.fold (fun tree (path, choice) ->
+                match choice with
+                    | Choice1Of2 method ->
+                        addMethod path method tree
+                    | Choice2Of2 property ->
+                        addProperty path property tree)
 
     let rec tryFind path env =
         match path with
@@ -93,7 +124,7 @@ module private MethodTypeEnvironment =
 type TypeEnvironment =
     private {
         FuncTypeEnv : FunctionTypeEnvironment
-        MethodTypeEnv : MethodTypeEnvironment
+        MemberTypeEnv : MemberTypeEnvironment
     }
 
 module TypeEnvironment =
@@ -101,7 +132,7 @@ module TypeEnvironment =
     let create assemblies =
         {
             FuncTypeEnv = FunctionTypeEnvironment.empty
-            MethodTypeEnv = MethodTypeEnvironment.create assemblies
+            MemberTypeEnv = MemberTypeEnvironment.create assemblies
         }
 
     /// Adds the given scheme with the given identifier to
@@ -117,8 +148,8 @@ module TypeEnvironment =
     let tryFindFunc ident env =
         FunctionTypeEnvironment.tryFind ident env.FuncTypeEnv
 
-    let tryFindMethod path env =
-        MethodTypeEnvironment.tryFind path env.MethodTypeEnv
+    let tryFindMember path env =
+        MemberTypeEnvironment.tryFind path env.MemberTypeEnv
 
     let freeTypeVariables env =
         FunctionTypeEnvironment.freeTypeVariables env.FuncTypeEnv

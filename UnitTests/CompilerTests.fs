@@ -192,3 +192,15 @@ type CompilerTests() =
                 let flag, _ = Guid.TryParse(str)
                 Assert.IsTrue(flag)
             | Error err -> Assert.Fail(string err)
+
+    [<TestMethod>]
+    member _.Now() =
+        let text =
+            """
+            System.DateTime.Now
+            """
+        match run text with
+            | Ok str ->
+                let flag, _ = DateTime.TryParse(str)
+                Assert.IsTrue(flag)
+            | Error err -> Assert.Fail(string err)
