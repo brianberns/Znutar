@@ -218,20 +218,29 @@ module Expression =
 
     /// Transpiles a member access.
     (*
-        Before:
-            System.Console.WriteLine
-        After:
-            ((System.Func<string, Znutar.Runtime.Unit>)(x =>
-                {
-                    System.Console.WriteLine(x);
-                    return Znutar.Runtime.Unit.Value;
-                }))
-    *)
-    (*
-        Before:
-            System.Console.ReadLine
-        After:
-            ((System.Func<Znutar.Runtime.Unit, string>)(x => System.Console.ReadLine()))
+        constructor
+            before:
+                System.String
+            after:
+                ((System.Func<char[], string>)(x =>
+                    new string(x)))
+
+        string -> unit
+            before:
+                System.Console.WriteLine
+            after:
+                ((System.Func<string, Znutar.Runtime.Unit>)(x =>
+                    {
+                        System.Console.WriteLine(x);
+                        return Znutar.Runtime.Unit.Value;
+                    }))
+    
+        unit -> string
+            before:
+                System.Console.ReadLine
+            after:
+                ((System.Func<Znutar.Runtime.Unit, string>)(x =>
+                    System.Console.ReadLine()))
     *)
     and private transpileMemberAccess ma =
         result {
@@ -239,15 +248,28 @@ module Expression =
             let! emptyStmtNodes, unitValueNode= transpileLiteral UnitLiteral
             assert(emptyStmtNodes.IsEmpty)
             match ma.Type with
-                | TypeArrow (inpType, outType) when outType = Type.unit ->   // to-do: handle case where both input and output types are unit
+                | TypeArrow (inpType, outType) when inpType = Type.unit && outType = Type.unit ->
                     let exprNode' =
                         ParenthesizedExpression(
                             CastExpression(
-                                Type.transpile (inpType ^=> Type.unit),
+                                Type.transpile ma.Type,
                                 ParenthesizedExpression(
                                     SimpleLambdaExpression(
-                                        Parameter(
-                                            Identifier("x")))
+                                        Parameter(Identifier("x")))
+                                        .WithBlock(
+                                            Block(
+                                                ExpressionStatement(
+                                                    InvocationExpression(exprNode)),
+                                                ReturnStatement(unitValueNode))))))
+                    return stmtNodes, exprNode'
+                | TypeArrow (_, outType) when outType = Type.unit ->
+                    let exprNode' =
+                        ParenthesizedExpression(
+                            CastExpression(
+                                Type.transpile ma.Type,
+                                ParenthesizedExpression(
+                                    SimpleLambdaExpression(
+                                        Parameter(Identifier("x")))
                                         .WithBlock(
                                             Block(
                                                 ExpressionStatement(
@@ -259,15 +281,14 @@ module Expression =
                                                                         IdentifierName("x")))))),
                                                 ReturnStatement(unitValueNode))))))
                     return stmtNodes, exprNode'
-                | TypeArrow (inpType, outType) when inpType = Type.unit ->
+                | TypeArrow (inpType, _) when inpType = Type.unit ->
                     let exprNode' =
                         ParenthesizedExpression(
                             CastExpression(
-                                Type.transpile (Type.unit ^=> outType),
+                                Type.transpile ma.Type,
                                 ParenthesizedExpression(
                                     SimpleLambdaExpression(
-                                        Parameter(
-                                            Identifier("x")))
+                                        Parameter(Identifier("x")))
                                         .WithExpressionBody(
                                             InvocationExpression(exprNode)))))
                     return stmtNodes, exprNode'

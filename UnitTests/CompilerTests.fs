@@ -148,6 +148,7 @@ type CompilerTests() =
             """
         Assert.AreEqual(Ok "(3, 6)", run text)
 
+    /// string -> unit
     [<TestMethod>]
     member _.HelloWorld() =
         let text = "System.Console.Write(\"Hello world\")"
@@ -181,6 +182,7 @@ type CompilerTests() =
             """
         Assert.AreEqual(Ok "Hello world", run text)
 
+    /// unit -> Guid
     [<TestMethod>]
     member _.NewGuid() =
         let text =
@@ -193,6 +195,7 @@ type CompilerTests() =
                 Assert.IsTrue(flag)
             | Error err -> Assert.Fail(string err)
 
+    /// property
     [<TestMethod>]
     member _.Now() =
         let text =
@@ -204,3 +207,12 @@ type CompilerTests() =
                 let flag, _ = DateTime.TryParse(str)
                 Assert.IsTrue(flag)
             | Error err -> Assert.Fail(string err)
+
+    /// unit -> unit
+    [<TestMethod>]
+    member _.Break() =
+        let text =
+            """
+            System.Diagnostics.Debugger.Break()
+            """
+        Assert.AreEqual(Ok "", run text)

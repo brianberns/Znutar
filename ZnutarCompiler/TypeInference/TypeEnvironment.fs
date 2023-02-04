@@ -32,9 +32,23 @@ module private FunctionTypeEnvironment =
             (Map.values env)
             |> set
 
+type MemberScheme =
+    {
+        Scheme : Scheme
+        IsConstructor : bool
+    }
+
+module MemberScheme =
+
+    let create typeVars typ isConstructor =
+        {
+            Scheme = Scheme.create typeVars typ
+            IsConstructor = isConstructor
+        }
+
 type private MemberTypeEnvironment =
     {
-        Schemes : List<Scheme>
+        Schemes : List<MemberScheme>
         Children : Map<Identifier, MemberTypeEnvironment>
     }
 
@@ -51,7 +65,10 @@ module private MemberTypeEnvironment =
         match path with
             | [] ->
                 let scheme =
-                    Scheme.create [] (getSig mem)
+                    MemberScheme.create
+                        []
+                        (getSig mem)
+                        (mem.MemberType = MemberTypes.Constructor)
                 { env with Schemes = scheme :: env.Schemes }
             | ident :: tail ->
                 let child =
@@ -72,6 +89,11 @@ module private MemberTypeEnvironment =
             Type.getPropertySignature
             addProperty
 
+    let rec addConstructor path constructor env =
+        addMember path constructor env
+            Type.getConstructorSignature
+            addConstructor
+
     let create assemblies =
         let pairs =
             [|
@@ -84,25 +106,31 @@ module private MemberTypeEnvironment =
                                 [
                                     yield! namespaceParts
                                     yield typ.Name
-                                    yield mem.Name
+                                    if mem.MemberType <> MemberTypes.Constructor then
+                                        yield mem.Name
                                 ] |> List.map Identifier.create
 
                             for method in typ.GetMethods() do
                                 if method.IsStatic && not method.IsGenericMethod then
-                                    yield getPath method, Choice1Of2 method
+                                    yield getPath method, Choice1Of3 method
 
                             for property in typ.GetProperties() do
                                 let method = property.GetMethod
                                 if method.IsStatic && not method.IsGenericMethod then
-                                    yield getPath property, Choice2Of2 property
+                                    yield getPath property, Choice2Of3 property
+
+                            for constructor in typ.GetConstructors() do
+                                yield getPath constructor, Choice3Of3 constructor
             |]
         (empty, pairs)
             ||> Seq.fold (fun tree (path, choice) ->
                 match choice with
-                    | Choice1Of2 method ->
+                    | Choice1Of3 method ->
                         addMethod path method tree
-                    | Choice2Of2 property ->
-                        addProperty path property tree)
+                    | Choice2Of3 property ->
+                        addProperty path property tree
+                    | Choice3Of3 constructor ->
+                        addConstructor path constructor tree)
 
     let rec tryFind path env =
         match path with

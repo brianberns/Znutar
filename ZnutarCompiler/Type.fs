@@ -161,4 +161,21 @@ module Type =
         assert(not property.GetMethod.IsGenericMethod)
         ofDotnetType property.PropertyType
 
+    /// Creates a Znutar type for the signature of the given constructor.
+    let getConstructorSignature (constructor : ConstructorInfo) =
+        let inpType =
+            let inpTypes =
+                constructor.GetParameters()
+                    |> Seq.map (fun parm ->
+                        ofDotnetType parm.ParameterType)
+                    |> Seq.toList
+            match inpTypes with
+                | [] -> unit   // convert void to unit
+                | [typ] -> typ
+                | type0 :: type1 :: rest ->
+                    MultiItemList.create type0 type1 rest
+                        |> TypeTuple
+        let outType = ofDotnetType constructor.DeclaringType
+        inpType ^=> outType
+
    // to-do: allow explicit references to .NET name of Znutar type (e.g. "(Console.WriteLine : System.String -> unit)")

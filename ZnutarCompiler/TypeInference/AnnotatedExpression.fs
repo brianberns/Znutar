@@ -137,6 +137,7 @@ and AnnotatedMemberAccess =
 
         /// Result type. E.g. (expr.ident : int).
         Type : Type
+        IsConstructor : bool
     }
 
 /// a, b

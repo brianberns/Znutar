@@ -48,11 +48,12 @@ module private MemberAccess =
                     // try to resolve overload
                 | schemes ->
                     match tryResolve schemes with
-                        | Some (subst : Substitution, scheme : Scheme) ->
+                        | Some (subst : Substitution, scheme : MemberScheme) ->
                             let annex =
                                 MemberAccessExpr {
                                     MemberAccess = ma
-                                    Type = scheme.Type   // to-do: instantiate type?
+                                    Type = scheme.Scheme.Type   // to-do: instantiate type?
+                                    IsConstructor = scheme.IsConstructor
                                 }
                             return subst, annex
                         | None ->
@@ -64,7 +65,7 @@ module private MemberAccess =
     let inferMemberAccessTyped env ma typ =
         inferMemberAccess env ma (
             Seq.tryPick (fun scheme ->
-                match Substitution.unify scheme.Type typ with
+                match Substitution.unify scheme.Scheme.Type typ with
                     | Ok subst -> Some (subst, scheme)
                     | Error _ -> None))
 
