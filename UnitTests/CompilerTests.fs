@@ -216,3 +216,12 @@ type CompilerTests() =
             System.Diagnostics.Debugger.Break()
             """
         Assert.AreEqual(Ok "", run text)
+
+    /// unit -> obj
+    [<TestMethod>]
+    member _.Object() =
+        let text =
+            """
+            System.Object()
+            """
+        Assert.AreEqual(Ok "System.Object", run text)

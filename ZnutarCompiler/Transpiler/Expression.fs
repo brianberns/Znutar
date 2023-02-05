@@ -245,17 +245,21 @@ module Expression =
     and private transpileMemberAccess ma =
         result {
 
+                // transpile raw member access (e.g. Console.WriteLine)
             let! stmtNodes, exprNode = transpileMemberAccessRaw ma
 
-            let! emptyStmtNodes, unitValueNode= transpileLiteral UnitLiteral
-            assert(emptyStmtNodes.IsEmpty)
-
+                // do we need to wrap the member access in a lambda?
             match ma.Type with
                 | TypeArrow (inpType, outType) when
                     inpType = Type.unit ||
                     outType = Type.unit ||
                     ma.IsConstructor ->
 
+                        // get expression node for unit type
+                    let! emptyStmtNodes, unitValueNode= transpileLiteral UnitLiteral
+                    assert(emptyStmtNodes.IsEmpty)
+
+                        // ignore input unit?
                     let argumentList =
                         if inpType = Type.unit then
                             ArgumentList()
@@ -265,16 +269,16 @@ module Expression =
                                     Argument(
                                         IdentifierName("x"))))
 
+                        // constructor invocation? (e.g. new String)
                     let invocation : Syntax.ExpressionSyntax =
                         if ma.IsConstructor then
-                            ObjectCreationExpression(
-                                Type.transpile outType
-                            )
+                            ObjectCreationExpression(Type.transpile outType)
                                 .WithArgumentList(argumentList)
                         else
                             InvocationExpression(exprNode)
                                 .WithArgumentList(argumentList)
 
+                        // supply output unit?
                     let lambda =
                         let lambda =
                             SimpleLambdaExpression(
@@ -298,56 +302,6 @@ module Expression =
                     return stmtNodes, exprNode'
                 | _ ->
                     return stmtNodes, exprNode
-
-            (*
-            match ma.Type with
-                | TypeArrow (inpType, outType) when inpType = Type.unit && outType = Type.unit ->
-                    let exprNode' =
-                        ParenthesizedExpression(
-                            CastExpression(
-                                Type.transpile ma.Type,
-                                ParenthesizedExpression(
-                                    SimpleLambdaExpression(
-                                        Parameter(Identifier("x")))
-                                        .WithBlock(
-                                            Block(
-                                                ExpressionStatement(
-                                                    InvocationExpression(exprNode)),
-                                                ReturnStatement(unitValueNode))))))
-                    return stmtNodes, exprNode'
-                | TypeArrow (_, outType) when outType = Type.unit ->
-                    let exprNode' =
-                        ParenthesizedExpression(
-                            CastExpression(
-                                Type.transpile ma.Type,
-                                ParenthesizedExpression(
-                                    SimpleLambdaExpression(
-                                        Parameter(Identifier("x")))
-                                        .WithBlock(
-                                            Block(
-                                                ExpressionStatement(
-                                                    InvocationExpression(exprNode)
-                                                        .WithArgumentList(
-                                                            ArgumentList(
-                                                                SingletonSeparatedList(
-                                                                    Argument(
-                                                                        IdentifierName("x")))))),
-                                                ReturnStatement(unitValueNode))))))
-                    return stmtNodes, exprNode'
-                | TypeArrow (inpType, _) when inpType = Type.unit ->
-                    let exprNode' =
-                        ParenthesizedExpression(
-                            CastExpression(
-                                Type.transpile ma.Type,
-                                ParenthesizedExpression(
-                                    SimpleLambdaExpression(
-                                        Parameter(Identifier("x")))
-                                        .WithExpressionBody(
-                                            InvocationExpression(exprNode)))))
-                    return stmtNodes, exprNode'
-                | _ ->
-                    return stmtNodes, exprNode
-                *)
         }
 
     /// Transpiles a tuple.
