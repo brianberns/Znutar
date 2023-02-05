@@ -244,9 +244,62 @@ module Expression =
     *)
     and private transpileMemberAccess ma =
         result {
+
             let! stmtNodes, exprNode = transpileMemberAccessRaw ma
+
             let! emptyStmtNodes, unitValueNode= transpileLiteral UnitLiteral
             assert(emptyStmtNodes.IsEmpty)
+
+            match ma.Type with
+                | TypeArrow (inpType, outType) when
+                    inpType = Type.unit ||
+                    outType = Type.unit ||
+                    ma.IsConstructor ->
+
+                    let argumentList =
+                        if inpType = Type.unit then
+                            ArgumentList()
+                        else
+                            ArgumentList(
+                                SingletonSeparatedList(
+                                    Argument(
+                                        IdentifierName("x"))))
+
+                    let invocation : Syntax.ExpressionSyntax =
+                        if ma.IsConstructor then
+                            ObjectCreationExpression(
+                                Type.transpile outType
+                            )
+                                .WithArgumentList(argumentList)
+                        else
+                            InvocationExpression(exprNode)
+                                .WithArgumentList(argumentList)
+
+                    let lambda =
+                        let lambda =
+                            SimpleLambdaExpression(
+                                Parameter(Identifier("x")))
+                        if outType = Type.unit then
+                            lambda
+                                .WithBlock(
+                                    Block(
+                                        ExpressionStatement(invocation),
+                                        ReturnStatement(unitValueNode)))
+                        else
+                            lambda
+                                .WithExpressionBody(invocation)
+
+                    let exprNode' =
+                        ParenthesizedExpression(
+                            CastExpression(
+                                Type.transpile ma.Type,
+                                ParenthesizedExpression(lambda)))
+
+                    return stmtNodes, exprNode'
+                | _ ->
+                    return stmtNodes, exprNode
+
+            (*
             match ma.Type with
                 | TypeArrow (inpType, outType) when inpType = Type.unit && outType = Type.unit ->
                     let exprNode' =
@@ -294,6 +347,7 @@ module Expression =
                     return stmtNodes, exprNode'
                 | _ ->
                     return stmtNodes, exprNode
+                *)
         }
 
     /// Transpiles a tuple.
