@@ -225,3 +225,17 @@ type CompilerTests() =
             System.Object()
             """
         Assert.AreEqual(Ok "System.Object", run text)
+
+    /// (int * int * int) -> DateTime
+    [<TestMethod>]
+    member _.TupledMemberAccess() =
+        let text =
+            """
+            System.DateTime(2023, 1, 1)
+            """
+        match run text with
+            | Ok str ->
+                let flag, dt = DateTime.TryParse(str)
+                Assert.IsTrue(flag)
+                Assert.AreEqual(DateTime(2023, 1, 1), dt)
+            | Error err -> Assert.Fail(string err)

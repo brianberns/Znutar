@@ -259,15 +259,50 @@ module Expression =
                     let! emptyStmtNodes, unitValueNode= transpileLiteral UnitLiteral
                     assert(emptyStmtNodes.IsEmpty)
 
-                        // ignore input unit?
+                    (*
+                                .WithArgumentList(
+                                    ArgumentList(
+                                        SeparatedList<ArgumentSyntax>(
+                                            new SyntaxNodeOrToken[]{
+                                                Argument(
+                                                    MemberAccessExpression(
+                                                        SyntaxKind.SimpleMemberAccessExpression,
+                                                        IdentifierName("x"),
+                                                        IdentifierName("Item1"))),
+                                                Token(SyntaxKind.CommaToken),
+                                                Argument(
+                                                    MemberAccessExpression(
+                                                        SyntaxKind.SimpleMemberAccessExpression,
+                                                        IdentifierName("x"),
+                                                        IdentifierName("Item2"))),
+                                                Token(SyntaxKind.CommaToken),
+                                                Argument(
+                                                    MemberAccessExpression(
+                                                        SyntaxKind.SimpleMemberAccessExpression,
+                                                        IdentifierName("x"),
+                                                        IdentifierName("Item3")))})))))))))))
+                    *)
                     let argumentList =
-                        if inpType = Type.unit then
-                            ArgumentList()
-                        else
-                            ArgumentList(
-                                SingletonSeparatedList(
+                        match inpType with
+                            | TypeTuple tuple ->
+                                Seq.init tuple.Length (fun iArg ->
                                     Argument(
-                                        IdentifierName("x"))))
+                                        MemberAccessExpression(
+                                            SyntaxKind.SimpleMemberAccessExpression,
+                                            IdentifierName("x"),
+                                            IdentifierName($"Item{iArg + 1}"))))
+                                    |> Syntax.separatedList
+                                    |> ArgumentList
+
+                                // ignore input unit?
+                            | _ when inpType = Type.unit ->
+                                ArgumentList()
+
+                            | _ ->
+                                ArgumentList(
+                                    SingletonSeparatedList(
+                                        Argument(
+                                            IdentifierName("x"))))
 
                         // constructor invocation? (e.g. new String)
                     let invocation : Syntax.ExpressionSyntax =
