@@ -102,7 +102,7 @@ module private MemberTypeEnvironment =
                         if not typ.IsGenericType then
 
                             let namespaceParts = typ.Namespace.Split('.')
-                            let getPath (mem : MemberInfo)=
+                            let getPath (mem : MemberInfo) =
                                 [
                                     yield! namespaceParts
                                     yield typ.Name
