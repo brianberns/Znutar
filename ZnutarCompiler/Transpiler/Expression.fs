@@ -259,31 +259,12 @@ module Expression =
                     let! emptyStmtNodes, unitValueNode= transpileLiteral UnitLiteral
                     assert(emptyStmtNodes.IsEmpty)
 
-                    (*
-                                .WithArgumentList(
-                                    ArgumentList(
-                                        SeparatedList<ArgumentSyntax>(
-                                            new SyntaxNodeOrToken[]{
-                                                Argument(
-                                                    MemberAccessExpression(
-                                                        SyntaxKind.SimpleMemberAccessExpression,
-                                                        IdentifierName("x"),
-                                                        IdentifierName("Item1"))),
-                                                Token(SyntaxKind.CommaToken),
-                                                Argument(
-                                                    MemberAccessExpression(
-                                                        SyntaxKind.SimpleMemberAccessExpression,
-                                                        IdentifierName("x"),
-                                                        IdentifierName("Item2"))),
-                                                Token(SyntaxKind.CommaToken),
-                                                Argument(
-                                                    MemberAccessExpression(
-                                                        SyntaxKind.SimpleMemberAccessExpression,
-                                                        IdentifierName("x"),
-                                                        IdentifierName("Item3")))})))))))))))
-                    *)
+                        // gather arguments
                     let argumentList =
                         match inpType with
+
+                                // argument is a tuple?
+                                // (e.g. x => new System.DateTime(x.Item1, x.Item2, x.Item3)))
                             | TypeTuple tuple ->
                                 Seq.init tuple.Length (fun iArg ->
                                     Argument(
