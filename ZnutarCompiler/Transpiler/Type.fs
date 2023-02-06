@@ -53,7 +53,7 @@ module Type =
                 PredefinedType(Token(SyntaxKind.StringKeyword))
             Type.unit,
                 typeof<Znutar.Runtime.Unit>.FullName
-                    |> QualifiedIdentifier.split
+                    |> QualifiedIdentifier.parse
                     |> QualifiedIdentifier.transpile
         ]
 

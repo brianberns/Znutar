@@ -34,8 +34,8 @@ type QualifiedIdentifier = NonEmptyList<Identifier>
 
 module QualifiedIdentifier =
 
-    /// Creates a qualified identifier from the given full type name.
-    let split (fullName : string) : QualifiedIdentifier =
+    /// Creates a qualified identifier from the given full name.
+    let parse (fullName : string) : QualifiedIdentifier =
         let idents =
             fullName.Split('.')
                 |> Seq.map Identifier.create
@@ -46,7 +46,7 @@ module QualifiedIdentifier =
                 NonEmptyList.create ident idents
 
     /// Converts the given qualified identifier to a string.
-    let toString (qi : QualifiedIdentifier) =
+    let unparse (qi : QualifiedIdentifier) =
         qi
             |> Seq.map (fun ident -> ident.Name)
             |> String.concat "."
@@ -70,7 +70,7 @@ type Type =
     /// Unparses the given type.
     member typ.Unparse() =
         match typ with
-            | TypeConstant qi -> QualifiedIdentifier.toString qi
+            | TypeConstant qi -> QualifiedIdentifier.unparse qi
             | TypeVariable tv -> TypeVariable.unparse tv
             | TypeArrow (inpType, outType) ->
                 $"({inpType.Unparse()} -> {outType.Unparse()})"
@@ -96,7 +96,7 @@ module Type =
     let variable = Identifier.create >> TypeVariable
 
     /// Creates a type constant with the given name.
-    let constant = QualifiedIdentifier.split >> TypeConstant
+    let constant = QualifiedIdentifier.parse >> TypeConstant
 
     /// Primitive Boolean type.
     let bool = constant "bool"
