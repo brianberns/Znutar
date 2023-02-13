@@ -3,19 +3,19 @@
 /// A list that contains at least one item.
 type NonEmptyList<'t> =
     {
-        Item : 't
-        Rest : List<'t>
+        Head : 't
+        Tail : List<'t>
     }
 
     /// Number of items in this list.
     member this.Length =
-        this.Rest.Length + 1
+        this.Tail.Length + 1
 
     /// All items in this list.
     member private this.Items =
         seq {
-            yield this.Item
-            yield! this.Rest
+            yield this.Head
+            yield! this.Tail
         }
 
     interface System.Collections.Generic.IEnumerable<'t> with
@@ -32,38 +32,54 @@ type NonEmptyList<'t> =
 module NonEmptyList =
 
     /// Creates a non-empty list.
-    let create item rest =
+    let create head tail =
         {
-            Item = item
-            Rest = rest
+            Head = head
+            Tail = tail
         }
 
     /// Maps the given function over the given non-empty
     /// list.
     let map mapping neList =
         {
-            Item = mapping neList.Item
-            Rest = List.map mapping neList.Rest
+            Head = mapping neList.Head
+            Tail = List.map mapping neList.Tail
         }
+
+    /// Converts the given non-empty list to a plain list.
+    let toList neList =
+        neList.Head :: neList.Tail
+
+    /// Adds the given item to the front of the given non-empty
+    /// list.
+    let cons item neList =
+        create item (toList neList)
+
+    /// Reverses the given non-empty list.
+    let rev neList =
+        let init = create neList.Head []
+        (init, neList.Tail)
+            ||> List.fold (fun acc item ->
+                create item (toList acc))
 
 /// A list that contains at least two items.
 type MultiItemList<'t> =
     {
-        Item1 : 't
-        Item2 : 't
-        Rest : List<'t>
+        Head1 : 't
+        Head2 : 't
+        Tail : List<'t>
     }
 
     /// Number of items in this list.
     member this.Length =
-        this.Rest.Length + 2
+        this.Tail.Length + 2
 
     /// All items in this list.
     member private this.Items =
         seq {
-            yield this.Item1
-            yield this.Item2
-            yield! this.Rest
+            yield this.Head1
+            yield this.Head2
+            yield! this.Tail
         }
 
     interface System.Collections.Generic.IEnumerable<'t> with
@@ -80,18 +96,18 @@ type MultiItemList<'t> =
 module MultiItemList =
 
     /// Creates a multi-item list.
-    let create item1 item2 rest =
+    let create head1 head2 tail =
         {
-            Item1 = item1
-            Item2 = item2
-            Rest = rest
+            Head1 = head1
+            Head2 = head2
+            Tail = tail
         }
 
     /// Maps the given function over the given multi-item
     /// list.
     let map mapping milist =
         {
-            Item1 = mapping milist.Item1
-            Item2 = mapping milist.Item2
-            Rest = List.map mapping milist.Rest
+            Head1 = mapping milist.Head1
+            Head2 = mapping milist.Head2
+            Tail = List.map mapping milist.Tail
         }

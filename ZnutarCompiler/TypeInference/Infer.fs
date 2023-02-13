@@ -279,15 +279,15 @@ module Infer =   // to-do: replace with constraint-based inference
 
                     // infer first item's type
                 let! subst1, annex1 =
-                    infer env exprs.Item1
+                    infer env exprs.Head1
 
                     // infer second item's type
                 let! subst2, annex2 =
-                    infer env exprs.Item2
+                    infer env exprs.Head2
 
                     // infer subsequent items' types
                 let! pairs =
-                    exprs.Rest
+                    exprs.Tail
                         |> Result.traverse (infer env)
                 let restSubsts, restAnnexs = List.unzip pairs
 
