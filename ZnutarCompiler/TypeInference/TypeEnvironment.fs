@@ -132,15 +132,6 @@ module private MemberTypeEnvironment =
                     | Choice3Of3 constructor ->
                         addConstructor path constructor tree)
 
-    let rec tryFind path env =
-        match path with
-            | [] -> env.Schemes
-            | ident :: tail ->
-                env.Children
-                    |> Map.tryFind ident
-                    |> Option.map (tryFind tail)
-                    |> Option.defaultValue List.empty
-
     /// Tries to find the given static member access in the given
     /// environment. E.g. System.Console.WriteLine.
     let tryFindStatic ma env =
