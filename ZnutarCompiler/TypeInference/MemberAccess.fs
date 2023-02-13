@@ -16,49 +16,28 @@ module private Type =
 
 module private MemberAccess =
 
-    /// Converts a member access to an identifier path.
-    /// E.g. System.Console.WriteLine -> [ System; Console; WriteLine ]
-    let private getPath (ma : MemberAccess) =
-
-        let rec loop acc expr =
-            result {
-                match expr with
-                    | Expression.IdentifierExpr ident ->
-                        return ident :: acc
-                    | Expression.MemberAccessExpr ma ->
-                        return! loop (ma.Identifier :: acc) ma.Expression
-                    | _ ->
-                        return! Error (
-                            InternalError
-                                $"Unexpected expression type: {expr.Unparse()}")
-            }
-
-        loop [ma.Identifier] ma.Expression
-
     /// Infers the type of a member access.
     /// E.g. System.Console.WriteLine.
     let inferMemberAccess env ma tryResolve =
-        result {
-            let! path = getPath ma
-            match TypeEnvironment.tryFindMember path env with
+        match TypeEnvironment.tryFindStaticMember ma env with
 
-                    // no such member
-                | [] -> return! Error (UnboundIdentifier ma.Identifier)
+                // no such member
+            | None
+            | Some ([], _) -> Error (UnboundIdentifier ma.Identifier)
 
-                    // try to resolve overload
-                | schemes ->
-                    match tryResolve schemes with
-                        | Some (subst : Substitution, scheme : MemberScheme) ->
-                            let annex =
-                                MemberAccessExpr {
-                                    MemberAccess = ma
-                                    Type = scheme.Scheme.Type   // to-do: instantiate type?
-                                    IsConstructor = scheme.IsConstructor
-                                }
-                            return subst, annex
-                        | None ->
-                            return! Error (UnresolvedMethodOverload ma)
-        }
+                // try to resolve overload
+            | Some (schemes, qi) ->
+                match tryResolve schemes with
+                    | Some (subst : Substitution, scheme : MemberScheme) ->
+                        let annex =
+                            MemberAccessExpr {
+                                MemberAccess = ma
+                                Type = scheme.Scheme.Type   // to-do: instantiate type?
+                                IsConstructor = scheme.IsConstructor
+                            }
+                        Ok (subst, annex)
+                    | None ->
+                        Error (UnresolvedMethodOverload ma)
 
     /// Infers the type of a member access with the given signature.
     /// E.g. System.Console.WriteLine : string -> void.

@@ -141,6 +141,40 @@ module private MemberTypeEnvironment =
                     |> Option.map (tryFind tail)
                     |> Option.defaultValue List.empty
 
+    /// Tries to find the given static member access in the given
+    /// environment. E.g. System.Console.WriteLine.
+    let tryFindStatic ma env =
+
+        let rec loop ma =
+            option {
+                let! env', idents =
+                    match ma.Expression with
+
+                            // e.g. find System.Console
+                        | MemberAccessExpr ma' -> loop ma'
+
+                            // e.g. find System
+                        | IdentifierExpr ident ->
+                            option {
+                                let! env' = Map.tryFind ident env.Children
+                                return env', NonEmptyList.singleton ident
+                            }
+
+                            // not a static member access
+                        | _ -> None
+
+                    // e.g. find WriteLine in System.Console's environment
+                let! env'' = Map.tryFind ma.Identifier env'.Children
+                let idents' = NonEmptyList.cons ma.Identifier idents
+                return env'', idents'
+            }
+
+        option {
+            let! env', idents = loop ma
+            let qi : QualifiedIdentifier = NonEmptyList.rev idents
+            return env'.Schemes, qi
+        }
+
 type TypeEnvironment =
     private {
         FuncTypeEnv : FunctionTypeEnvironment
@@ -168,8 +202,8 @@ module TypeEnvironment =
     let tryFindFunc ident env =
         FunctionTypeEnvironment.tryFind ident env.FuncTypeEnv
 
-    let tryFindMember path env =
-        MemberTypeEnvironment.tryFind path env.MemberTypeEnv
+    let tryFindStaticMember ma env =
+        MemberTypeEnvironment.tryFindStatic ma env.MemberTypeEnv
 
     let freeTypeVariables env =
         FunctionTypeEnvironment.freeTypeVariables env.FuncTypeEnv

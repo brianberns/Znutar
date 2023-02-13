@@ -38,6 +38,10 @@ module NonEmptyList =
             Tail = tail
         }
 
+    /// Creates a non-empty list containing only the given item.
+    let singleton head =
+        create head []
+
     /// Maps the given function over the given non-empty
     /// list.
     let map mapping neList =
