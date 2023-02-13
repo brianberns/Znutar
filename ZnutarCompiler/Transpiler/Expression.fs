@@ -50,15 +50,15 @@ module Expression =
 
     /// Transpiles an expression.
     let rec transpile = function
-        | IdentifierExpr ai -> transpileIdentifier ai.Identifier
-        | ApplicationExpr app -> transpileApplication app
-        | LetExpr letb -> transpileLet letb
-        | IfExpr iff -> transpileIf iff
-        | BinaryOperationExpr bop -> transpileBinaryOperation bop
-        | LiteralExpr lit -> transpileLiteral lit
-        | LambdaExpr lam -> transpileLambda lam
-        | MemberAccessExpr ma -> transpileMemberAccess ma
-        | TupleExpr tuple -> transpileTuple tuple
+        | AnnotatedIdentifierExpr ai -> transpileIdentifier ai.Identifier
+        | AnnotatedApplicationExpr app -> transpileApplication app
+        | AnnotatedLetExpr letb -> transpileLet letb
+        | AnnotatedIfExpr iff -> transpileIf iff
+        | AnnotatedBinaryOperationExpr bop -> transpileBinaryOperation bop
+        | AnnotatedLiteralExpr lit -> transpileLiteral lit
+        | AnnotatedLambdaExpr lam -> transpileLambda lam
+        | AnnotatedMemberAccessExpr ma -> transpileMemberAccess ma
+        | AnnotatedTupleExpr tuple -> transpileTuple tuple
 
     /// Transpiles an application.
     and private transpileApplication app =
@@ -179,11 +179,11 @@ module Expression =
                 Type = lam.Type
             }
         let expr =
-            LetExpr {
+            AnnotatedLetExpr {
                 Identifier = ident
                 Scheme = scheme
-                Argument = LambdaExpr lam
-                Body = IdentifierExpr annIdent
+                Argument = AnnotatedLambdaExpr lam
+                Body = AnnotatedIdentifierExpr annIdent
                 Type = lam.Type
             }
         transpile expr
@@ -195,11 +195,11 @@ module Expression =
             result {
                 let! exprNode =
                     match ma.Expression with
-                        | Expression.IdentifierExpr ident ->
+                        | IdentifierExpr ident ->
                             IdentifierName(ident.Name)
                                 :> Syntax.ExpressionSyntax
                                 |> Ok
-                        | Expression.MemberAccessExpr ma -> loop ma
+                        | MemberAccessExpr ma -> loop ma
                         | expr ->
                             Error
                                 (InternalError

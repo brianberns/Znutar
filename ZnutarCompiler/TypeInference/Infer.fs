@@ -44,18 +44,18 @@ module Infer =   // to-do: replace with constraint-based inference
         /// * Substitution used to infer the type
         /// * Equivalent expression fully annotated with inferred types
         let infer env = function
-            | Expression.IdentifierExpr ident -> inferIdent env ident
-            | Expression.LambdaExpr lam -> inferLambda env lam
-            | Expression.ApplicationExpr app -> inferApplication env app
-            | Expression.LetExpr letb -> inferLet env letb
-            | Expression.IfExpr iff -> inferIf env iff
-            | Expression.BinaryOperationExpr bop ->
+            | IdentifierExpr ident -> inferIdent env ident
+            | LambdaExpr lam -> inferLambda env lam
+            | ApplicationExpr app -> inferApplication env app
+            | LetExpr letb -> inferLet env letb
+            | IfExpr iff -> inferIf env iff
+            | BinaryOperationExpr bop ->
                 inferBinaryOperation env bop
-            | Expression.LiteralExpr lit ->
-                Ok (Substitution.empty, LiteralExpr lit)
+            | LiteralExpr lit ->
+                Ok (Substitution.empty, AnnotatedLiteralExpr lit)
             | AnnotationExpr ann -> inferAnnotation env ann
-            | Expression.MemberAccessExpr ma -> inferMemberAccess env ma
-            | Expression.TupleExpr exprs -> inferTuple env exprs
+            | MemberAccessExpr ma -> inferMemberAccess env ma
+            | TupleExpr exprs -> inferTuple env exprs
 
         /// Infers the type of a identifier by looking it up in the
         /// given environment.
@@ -64,7 +64,7 @@ module Infer =   // to-do: replace with constraint-based inference
                 let! scheme =
                     TypeEnvironment.tryFindFunc ident env
                 let annex =
-                    IdentifierExpr {
+                    AnnotatedIdentifierExpr {
                         Identifier = ident
                         Type = instantiate scheme
                     }
@@ -90,7 +90,7 @@ module Infer =   // to-do: replace with constraint-based inference
                     let identType' = Type.apply bodySubst identType
                     identType' ^=> bodyAnnex.Type
                 let annex =
-                    LambdaExpr {
+                    AnnotatedLambdaExpr {
                         Identifier = lam.Identifier
                         Body = bodyAnnex
                         Type = typ
@@ -101,7 +101,7 @@ module Infer =   // to-do: replace with constraint-based inference
         /// Infers the type of a function or member application.
         let private inferApplication env app =
             match app.Function with
-                | Expression.MemberAccessExpr ma ->
+                | MemberAccessExpr ma ->
                     MemberAccess.inferMemberApplication
                         infer env ma app.Argument
                 | _ ->
@@ -128,7 +128,7 @@ module Infer =   // to-do: replace with constraint-based inference
                 let subst = funSubst ++ argSubst ++ appSubst
                 let typ = Type.apply appSubst outType
                 let annex =
-                    ApplicationExpr {
+                    AnnotatedApplicationExpr {
                         Function = funAnnex
                         Argument = argAnnex
                         Type = typ
@@ -168,7 +168,7 @@ module Infer =   // to-do: replace with constraint-based inference
 
                     // gather result
                 let annex =
-                    LetExpr {
+                    AnnotatedLetExpr {
                         Identifier = letb.Identifier
                         Scheme = scheme
                         Argument = argAnnex
@@ -198,7 +198,7 @@ module Infer =   // to-do: replace with constraint-based inference
 
                     // gather results
                 let annex =
-                    IfExpr {
+                    AnnotatedIfExpr {
                         Condition = condAnnex
                         TrueBranch = trueAnnex
                         FalseBranch = falseAnnex
@@ -229,7 +229,7 @@ module Infer =   // to-do: replace with constraint-based inference
 
                     // gather results
                 let annex =
-                    BinaryOperationExpr {
+                    AnnotatedBinaryOperationExpr {
                         Operator = bop.Operator
                         Left = leftAnnex
                         Right = rightAnnex
@@ -243,7 +243,7 @@ module Infer =   // to-do: replace with constraint-based inference
         /// Infers the type of an annotation.
         let private inferAnnotation env ann =
             match ann.Expression with
-                | Expression.MemberAccessExpr ma ->
+                | MemberAccessExpr ma ->
                     MemberAccess.inferMemberAccessTyped env ma ann.Type
                 | _ ->
                     inferFunctionalAnnotation env ann
@@ -303,7 +303,7 @@ module Infer =   // to-do: replace with constraint-based inference
                             |> MultiItemList.map (fun annex -> annex.Type)
                             |> TypeTuple
                             |> Type.apply subst
-                    TupleExpr {
+                    AnnotatedTupleExpr {
                         Expressions = annexs
                         Type = typ
                     }

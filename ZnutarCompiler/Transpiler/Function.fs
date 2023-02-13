@@ -44,7 +44,7 @@ module Function =
     let tryCreate letb =
 
         let rec gatherLambdas = function
-            | LambdaExpr lam ->
+            | AnnotatedLambdaExpr lam ->
                 lam :: gatherLambdas lam.Body
             | _ -> []
 
@@ -154,7 +154,7 @@ module FunctionCall =
 
         let rec loop (app : AnnotatedApplication) =
             match app.Function with
-                | ApplicationExpr app' ->
+                | AnnotatedApplicationExpr app' ->
                     let expr, args = loop app'
                     expr, app.Argument :: args
                 | expr -> expr, [app.Argument]

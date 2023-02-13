@@ -5,57 +5,57 @@ open Znutar
 /// An expression annotated with its inferred type.
 [<System.Diagnostics.DebuggerDisplay("{Unparse()}")>]
 type AnnotatedExpression =
-    | IdentifierExpr of AnnotatedIdentifier
-    | ApplicationExpr of AnnotatedApplication
-    | LambdaExpr of AnnotatedLambdaAbstraction
-    | LetExpr of AnnotatedLetBinding
-    | LiteralExpr of Literal
-    | IfExpr of AnnotatedIf
-    | BinaryOperationExpr of AnnotatedBinaryOperation
-    | MemberAccessExpr of AnnotatedMemberAccess
-    | TupleExpr of AnnotatedTuple
+    | AnnotatedIdentifierExpr of AnnotatedIdentifier
+    | AnnotatedApplicationExpr of AnnotatedApplication
+    | AnnotatedLambdaExpr of AnnotatedLambdaAbstraction
+    | AnnotatedLetExpr of AnnotatedLetBinding
+    | AnnotatedLiteralExpr of Literal
+    | AnnotatedIfExpr of AnnotatedIf
+    | AnnotatedBinaryOperationExpr of AnnotatedBinaryOperation
+    | AnnotatedMemberAccessExpr of AnnotatedMemberAccess
+    | AnnotatedTupleExpr of AnnotatedTuple
 
     /// Result type.
     member annex.Type =
         match annex with
-            | IdentifierExpr ai -> ai.Type
-            | ApplicationExpr app -> app.Type
-            | LambdaExpr lam -> lam.Type
-            | LetExpr letb -> letb.Type
-            | LiteralExpr (IntLiteral _) -> Type.int
-            | LiteralExpr (BoolLiteral _) -> Type.bool
-            | LiteralExpr (StringLiteral _) -> Type.string
-            | LiteralExpr UnitLiteral -> Type.unit
-            | IfExpr iff -> iff.Type
-            | BinaryOperationExpr bop -> bop.Type
-            | MemberAccessExpr ma -> ma.Type
-            | TupleExpr tuple -> tuple.Type
+            | AnnotatedIdentifierExpr ai -> ai.Type
+            | AnnotatedApplicationExpr app -> app.Type
+            | AnnotatedLambdaExpr lam -> lam.Type
+            | AnnotatedLetExpr letb -> letb.Type
+            | AnnotatedLiteralExpr (IntLiteral _) -> Type.int
+            | AnnotatedLiteralExpr (BoolLiteral _) -> Type.bool
+            | AnnotatedLiteralExpr (StringLiteral _) -> Type.string
+            | AnnotatedLiteralExpr UnitLiteral -> Type.unit
+            | AnnotatedIfExpr iff -> iff.Type
+            | AnnotatedBinaryOperationExpr bop -> bop.Type
+            | AnnotatedMemberAccessExpr ma -> ma.Type
+            | AnnotatedTupleExpr tuple -> tuple.Type
 
     member annex.Unparse() =
         match annex with
-            | IdentifierExpr ai ->
+            | AnnotatedIdentifierExpr ai ->
                 ai.Identifier.Name
-            | ApplicationExpr app ->
+            | AnnotatedApplicationExpr app ->
                 $"({app.Function.Unparse()} {app.Argument.Unparse()})"
-            | LambdaExpr lam ->
+            | AnnotatedLambdaExpr lam ->
                 $"(fun {lam.Identifier.Name} -> \
                     {lam.Body.Unparse()})"
-            | LetExpr letb ->
+            | AnnotatedLetExpr letb ->
                 $"(let {letb.Identifier.Name} = \
                     {letb.Argument.Unparse()} in \
                     {letb.Body.Unparse()})"
-            | LiteralExpr literal -> Literal.unparse literal
-            | IfExpr iff ->
+            | AnnotatedLiteralExpr literal -> Literal.unparse literal
+            | AnnotatedIfExpr iff ->
                 $"(if {iff.Condition.Unparse()} \
                     then {iff.TrueBranch.Unparse()} \
                     else {iff.FalseBranch.Unparse()})"
-            | BinaryOperationExpr bop ->
+            | AnnotatedBinaryOperationExpr bop ->
                 $"({bop.Left.Unparse()} \
                     {BinaryOperator.unparse bop.Operator} \
                     {bop.Right.Unparse()})"
-            | MemberAccessExpr ma ->
+            | AnnotatedMemberAccessExpr ma ->
                 $"({ma.MemberAccess.Expression.Unparse()}).{ma.MemberAccess.Identifier.Name}"
-            | TupleExpr tuple ->
+            | AnnotatedTupleExpr tuple ->
                 let str =
                     tuple.Expressions
                         |> Seq.map (fun expr -> expr.Unparse())
@@ -161,50 +161,50 @@ module AnnotatedExpression =
         let sapply = Substitution.Scheme.apply subst
 
         match annex with
-            | IdentifierExpr ai ->
-                IdentifierExpr { ai with Type = tapply ai.Type }
-            | ApplicationExpr app ->
-                ApplicationExpr {
+            | AnnotatedIdentifierExpr ai ->
+                AnnotatedIdentifierExpr { ai with Type = tapply ai.Type }
+            | AnnotatedApplicationExpr app ->
+                AnnotatedApplicationExpr {
                     Function = loop app.Function
                     Argument = loop app.Argument
                     Type = tapply app.Type
                 }
-            | LambdaExpr lam ->
-                LambdaExpr {
+            | AnnotatedLambdaExpr lam ->
+                AnnotatedLambdaExpr {
                     lam with
                         Body = loop lam.Body
                         Type = tapply lam.Type
                 }
-            | LetExpr letb ->
-                LetExpr {
+            | AnnotatedLetExpr letb ->
+                AnnotatedLetExpr {
                     letb with
                         Scheme = sapply letb.Scheme
                         Argument = loop letb.Argument
                         Body = loop letb.Body
                         Type = tapply letb.Type
                 }
-            | LiteralExpr _ -> annex
-            | IfExpr iff ->
-                IfExpr {
+            | AnnotatedLiteralExpr _ -> annex
+            | AnnotatedIfExpr iff ->
+                AnnotatedIfExpr {
                     Condition = loop iff.Condition
                     TrueBranch = loop iff.TrueBranch
                     FalseBranch = loop iff.FalseBranch
                     Type = tapply iff.Type
                 }
-            | BinaryOperationExpr bop ->
-                BinaryOperationExpr {
+            | AnnotatedBinaryOperationExpr bop ->
+                AnnotatedBinaryOperationExpr {
                     bop with
                         Left = loop bop.Left
                         Right = loop bop.Right
                         Type = tapply bop.Type
                 }
-            | MemberAccessExpr ma ->
-                MemberAccessExpr {
+            | AnnotatedMemberAccessExpr ma ->
+                AnnotatedMemberAccessExpr {
                     ma with
                         Type = tapply ma.Type
                 }
-            | TupleExpr tuple ->
-                TupleExpr {
+            | AnnotatedTupleExpr tuple ->
+                AnnotatedTupleExpr {
                     Expressions =
                         MultiItemList.map loop tuple.Expressions
                     Type = tapply tuple.Type

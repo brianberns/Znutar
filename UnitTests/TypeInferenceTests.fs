@@ -145,11 +145,11 @@ type TypeInferenceTests() =
 
                 // g has scheme <'b>('b -> 'a * 'b)
             match expr' with
-                | LetExpr letF ->
+                | AnnotatedLetExpr letF ->
                     match letF.Argument with
-                        | LambdaExpr lam ->
+                        | AnnotatedLambdaExpr lam ->
                             match lam.Body with
-                                | LetExpr letG ->
+                                | AnnotatedLetExpr letG ->
                                     let expected =
                                         Type.variable "b" ^=>
                                             TypeTuple (

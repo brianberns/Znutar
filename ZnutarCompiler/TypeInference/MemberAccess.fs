@@ -30,7 +30,7 @@ module private MemberAccess =
                 match tryResolve schemes with
                     | Some (subst : Substitution, scheme : MemberScheme) ->
                         let annex =
-                            MemberAccessExpr {
+                            AnnotatedMemberAccessExpr {
                                 MemberAccess = ma
                                 Type = scheme.Scheme.Type   // to-do: instantiate type?
                                 IsConstructor = scheme.IsConstructor
@@ -71,7 +71,7 @@ module private MemberAccess =
                             (InternalError
                                 $"Unexpected member access type: {maAnnex.Type.Unparse()}")
             let annex =
-                ApplicationExpr {
+                AnnotatedApplicationExpr {
                     Function = maAnnex
                     Argument = argAnnex
                     Type = typ

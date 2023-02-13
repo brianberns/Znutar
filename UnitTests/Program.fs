@@ -24,12 +24,12 @@ module Program =
 
     let ma0 =
         {
-            Expression = Expression.IdentifierExpr (Identifier.create "System")
+            Expression = IdentifierExpr (Identifier.create "System")
             Identifier = Identifier.create "Console"
         }
     let ma1 =
         {
-            Expression = Expression.MemberAccessExpr ma0
+            Expression = MemberAccessExpr ma0
             Identifier = Identifier.create "WriteLine"
         }
 
