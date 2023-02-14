@@ -239,3 +239,23 @@ type CompilerTests() =
                 Assert.IsTrue(flag)
                 Assert.AreEqual(DateTime(2023, 1, 1), dt)
             | Error err -> Assert.Fail(string err)
+
+    [<TestMethod>]
+    member _.IncompleteMemberAccess() =
+        let text =
+            """
+            System.Diagnostics
+            """
+        Assert.AreEqual(
+            Error (UnboundIdentifier (Identifier.create "Diagnostics")),
+            run text)
+
+    [<TestMethod>]
+    member _.MissingMemberAccess() =
+        let text =
+            """
+            System.Xyzzy
+            """
+        Assert.AreEqual(
+            Error (UnboundIdentifier (Identifier.create "Xyzzy")),
+            run text)

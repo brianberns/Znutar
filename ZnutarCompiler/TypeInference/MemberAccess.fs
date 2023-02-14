@@ -18,11 +18,13 @@ module private MemberAccess =
 
     /// Infers the type of a static member access.
     /// E.g. System.Console.WriteLine.
-    let inferStaticMemberAccessWith env ma tryResolve =
+    let private inferStaticMemberAccessWith env ma tryResolve =
         match TypeEnvironment.tryFindStaticMember ma env with
 
-                // no such member
+                // no such member (e.g. System.Xyzzy)
             | None
+
+                // incomplete member access has no type (e.g. System.Diagnostics)
             | Some ([], _) -> Error (UnboundIdentifier ma.Identifier)
 
                 // try to resolve overload
@@ -39,21 +41,14 @@ module private MemberAccess =
                     | None ->
                         Error (UnresolvedMethodOverload ma)
 
-    /// Infers the type of a static member access with the given
-    /// signature. E.g. System.Console.WriteLine : string -> void.
-    let inferStaticMemberAccessTyped env ma typ =
-        inferStaticMemberAccessWith env ma (
-            Seq.tryPick (fun scheme ->
-                match Substitution.unify scheme.Scheme.Type typ with
-                    | Ok subst -> Some (subst, scheme)
-                    | Error _ -> None))
-
-    let inferInstanceMemberAccessWith env typ ident tryResolve =
+    let private inferInstanceMemberAccessWith env typ ident tryResolve =
         Error (InternalError "oops")
 
+    /// Infers the type of the given member access using the
+    /// given scheme resolver.
     let inferMemberAccessWith inferExpr env (ma : MemberAccess) tryResolve =
 
-        let tryResolve' subst schemes =
+        let tryResolve' subst schemes =   // to-do: apply given substitution to each scheme?
             tryResolve schemes
                 |> Option.map (fun (subst', scheme) ->
                     subst ++ subst', scheme)
@@ -88,7 +83,11 @@ module private MemberAccess =
             let! maSubst, maAnnex =
                 let arrowType =
                     argAnnex.Type ^=> Type.createFreshTypeVariable "ma"
-                inferStaticMemberAccessTyped env ma arrowType
+                inferStaticMemberAccessWith env ma (
+                    Seq.tryPick (fun scheme ->
+                        match Substitution.unify scheme.Scheme.Type arrowType with
+                            | Ok subst -> Some (subst, scheme)
+                            | Error _ -> None))
 
                 // gather results
             let! typ =

@@ -243,14 +243,17 @@ module Infer =   // to-do: replace with constraint-based inference
         /// Infers the type of an annotation.
         let private inferAnnotation env ann =
             match ann.Expression with
+
+                    // pick member that matches the annotation type
                 | MemberAccessExpr ma ->
                     inferMemberAccessWith env ma (
-                        Seq.tryPick (fun scheme ->
+                        Seq.tryPick (fun (scheme : MemberScheme) ->
                             match Substitution.unify scheme.Scheme.Type ann.Type with
                                 | Ok subst -> Some (subst, scheme)
                                 | Error _ -> None))
-                | _ ->
-                    inferFunctionalAnnotation env ann
+
+                    // must be a functional annotation
+                | _ -> inferFunctionalAnnotation env ann
 
         /// Infers the type of a functional annotation.
         let private inferFunctionalAnnotation env ann =
@@ -271,7 +274,7 @@ module Infer =   // to-do: replace with constraint-based inference
             }
 
         /// Infers the type of a member access.
-        let private inferMemberAccessWith env ma (tryResolve : List<MemberScheme> -> Option<Substitution * MemberScheme>) =
+        let private inferMemberAccessWith env ma tryResolve =
             MemberAccess.inferMemberAccessWith infer env ma tryResolve
 
         /// Infers the type of a member access.
