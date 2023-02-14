@@ -41,8 +41,39 @@ module private MemberAccess =
                     | None ->
                         Error (UnresolvedMethodOverload ma)
 
-    let private inferInstanceMemberAccessWith env typ ident tryResolve =
-        Error (InternalError "oops")
+    let private inferInstanceMemberAccessWith
+        env
+        (annex : AnnotatedExpression)
+        (ma : MemberAccess)
+        tryResolve =
+
+        let schemesOpt =
+            TypeEnvironment.tryFindInstanceMember
+                annex.Type
+                ma.Identifier
+                env
+
+        match schemesOpt with
+
+                // no such member (e.g. dt.Xyzzy)
+            | None
+
+                // no such member (e.g. type "System" in sys.Console)
+            | Some [] -> Error (UnboundIdentifier ma.Identifier)
+
+                // try to resolve overload
+            | Some schemes ->
+                match tryResolve schemes with
+                    | Some (subst : Substitution, scheme : MemberScheme) ->
+                        let annex' =
+                            AnnotatedInstanceMemberAccessExpr {
+                                Expression = annex
+                                Identifier = ma.Identifier
+                                Type = scheme.Scheme.Type   // to-do: instantiate type?
+                            }
+                        Ok (subst, annex')
+                    | None ->
+                        Error (UnresolvedMethodOverload ma)
 
     /// Infers the type of the given member access using the
     /// given scheme resolver.
@@ -60,8 +91,8 @@ module private MemberAccess =
             | Ok (exprSubst, exprAnnex : AnnotatedExpression) ->
                 inferInstanceMemberAccessWith
                     env
-                    exprAnnex.Type
-                    ma.Identifier
+                    exprAnnex
+                    ma
                     (tryResolve' exprSubst)
 
                 // possible static member (e.g. System.Console)

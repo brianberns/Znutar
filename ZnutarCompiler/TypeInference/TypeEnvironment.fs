@@ -166,6 +166,11 @@ module private MemberTypeEnvironment =
             return env'.Schemes, qi
         }
 
+    /// Tries to find the given instance member access in the given
+    /// environment. E.g. dt.Years.
+    let tryFindInstance (typ : Type) (ident : Identifier) env : Option<List<MemberScheme>> =
+        None
+
 type TypeEnvironment =
     private {
         FuncTypeEnv : FunctionTypeEnvironment
@@ -195,6 +200,9 @@ module TypeEnvironment =
 
     let tryFindStaticMember ma env =
         MemberTypeEnvironment.tryFindStatic ma env.MemberTypeEnv
+
+    let tryFindInstanceMember typ ident env =
+        MemberTypeEnvironment.tryFindInstance typ ident env.MemberTypeEnv
 
     let freeTypeVariables env =
         FunctionTypeEnvironment.freeTypeVariables env.FuncTypeEnv
