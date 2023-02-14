@@ -132,38 +132,36 @@ module private MemberTypeEnvironment =
                     | Choice3Of3 constructor ->
                         addConstructor path constructor tree)
 
+    /// Tries to convert a member access to an identifier path.
+    /// E.g. System.Console.WriteLine -> [ System; Console; WriteLine ]
+    let private tryGetPath (ma : MemberAccess) =
+
+        let rec loop acc expr : Option<QualifiedIdentifier> =
+            option {
+                match expr with
+                    | IdentifierExpr ident ->
+                        return NonEmptyList.cons ident acc
+                    | MemberAccessExpr ma' ->
+                        let acc' = NonEmptyList.cons ma'.Identifier acc
+                        return! loop acc' ma'.Expression
+                    | _ ->
+                        return! None
+            }
+
+        let init = NonEmptyList.singleton ma.Identifier
+        loop init ma.Expression
+
     /// Tries to find the given static member access in the given
     /// environment. E.g. System.Console.WriteLine.
     let tryFindStatic ma env =
-
-        let rec loop ma =
-            option {
-                let! env', idents =
-                    match ma.Expression with
-
-                            // e.g. find System.Console
-                        | MemberAccessExpr ma' -> loop ma'
-
-                            // e.g. find System
-                        | IdentifierExpr ident ->
-                            option {
-                                let! env' = Map.tryFind ident env.Children
-                                return env', NonEmptyList.singleton ident
-                            }
-
-                            // not a static member access
-                        | _ -> None
-
-                    // e.g. find WriteLine in System.Console's environment
-                let! env'' = Map.tryFind ma.Identifier env'.Children
-                let idents' = NonEmptyList.cons ma.Identifier idents
-                return env'', idents'
-            }
-
         option {
-            let! env', idents = loop ma
-            let qi : QualifiedIdentifier = NonEmptyList.rev idents
-            return env'.Schemes, qi
+            let! path = tryGetPath ma
+            let idents = NonEmptyList.toList path
+            let! env' =
+                (env, idents)
+                    ||> Option.foldM (fun env' ident ->
+                        Map.tryFind ident env'.Children)
+            return env'.Schemes, path
         }
 
     /// Tries to find the given instance member access in the given

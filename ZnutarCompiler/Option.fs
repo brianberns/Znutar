@@ -45,3 +45,19 @@ module OptionBuilder =
 
     /// Monadic option builder.
     let option = OptionBuilder()
+
+module Option =
+
+    // https://hoogle.haskell.org/?hoogle=foldM
+    /// Monadic fold.
+    let foldM f state items =
+
+        let rec loop state = function
+            | item :: tail ->
+                option {
+                    let! state' = f state item
+                    return! loop state' tail
+                }
+            | [] -> Some state
+
+        loop state items

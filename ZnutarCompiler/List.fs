@@ -45,10 +45,9 @@ module NonEmptyList =
     /// Maps the given function over the given non-empty
     /// list.
     let map mapping neList =
-        {
-            Head = mapping neList.Head
-            Tail = List.map mapping neList.Tail
-        }
+        create
+            (mapping neList.Head)
+            (List.map mapping neList.Tail)
 
     /// Converts the given non-empty list to a plain list.
     let toList neList =
