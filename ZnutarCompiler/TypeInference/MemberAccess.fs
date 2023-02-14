@@ -65,11 +65,15 @@ module private MemberAccess =
                     (tryResolve' exprSubst)
 
                 // possible static member (e.g. System.Console)
-            | Error (_ : CompilerError) ->
+            | Error (UnboundIdentifier _)
+            | Error (UnresolvedMethodOverload _) ->
                 inferStaticMemberAccessWith
                     env
                     ma
                     (tryResolve' Substitution.empty)
+
+                // unrecoverable error
+            | Error _ as err -> err
 
     /// Infers the type of applying the given argument to the given
     /// member access. E.g. System.Console.WriteLine("Hello world").
@@ -83,7 +87,7 @@ module private MemberAccess =
             let! maSubst, maAnnex =
                 let arrowType =
                     argAnnex.Type ^=> Type.createFreshTypeVariable "ma"
-                inferStaticMemberAccessWith env ma (
+                inferMemberAccessWith inferExpr env ma (
                     Seq.tryPick (fun scheme ->
                         match Substitution.unify scheme.Scheme.Type arrowType with
                             | Ok subst -> Some (subst, scheme)
