@@ -259,3 +259,12 @@ type CompilerTests() =
         Assert.AreEqual(
             Error (UnboundIdentifier (Identifier.create "Xyzzy")),
             run text)
+
+    [<TestMethod>]
+    member _.Year() =
+        let text =
+            """
+            let dt = System.DateTime(2023, 1, 1) in
+            dt.Year
+            """
+        Assert.AreEqual(Ok "2023", run text)
