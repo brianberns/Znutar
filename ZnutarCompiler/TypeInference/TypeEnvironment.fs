@@ -111,12 +111,12 @@ module private MemberTypeEnvironment =
                                 ] |> List.map Identifier.create
 
                             for method in typ.GetMethods() do
-                                if method.IsStatic && not method.IsGenericMethod then
+                                if not method.IsGenericMethod then
                                     yield getPath method, Choice1Of3 method
 
                             for property in typ.GetProperties() do
                                 let method = property.GetMethod
-                                if method.IsStatic && not method.IsGenericMethod then
+                                if not method.IsGenericMethod then
                                     yield getPath property, Choice2Of3 property
 
                             for constructor in typ.GetConstructors() do
@@ -151,23 +151,35 @@ module private MemberTypeEnvironment =
         let init = NonEmptyList.singleton ma.Identifier
         loop init ma.Expression
 
+    /// Tries to navigate the given path in the given environment.
+    let private tryNavigatePath (path : QualifiedIdentifier) env =
+        let idents = NonEmptyList.toList path
+        (env, idents)
+            ||> Option.foldM (fun env' ident ->
+                Map.tryFind ident env'.Children)
+
     /// Tries to find the given static member access in the given
     /// environment. E.g. System.Console.WriteLine.
     let tryFindStatic ma env =
         option {
             let! path = tryGetPath ma
-            let idents = NonEmptyList.toList path
-            let! env' =
-                (env, idents)
-                    ||> Option.foldM (fun env' ident ->
-                        Map.tryFind ident env'.Children)
+            let! env' = tryNavigatePath path env
             return env'.Schemes, path
         }
 
     /// Tries to find the given instance member access in the given
-    /// environment. E.g. dt.Years.
-    let tryFindInstance (typ : Type) (ident : Identifier) env : Option<List<MemberScheme>> =
-        None
+    /// environment. E.g. dt.Year.
+    let tryFindInstance typ ident env =
+        match typ with
+            | TypeConstant qi ->
+                option {
+                    let path =
+                        NonEmptyList.append qi
+                            (NonEmptyList.singleton ident)
+                    let! env' = tryNavigatePath path env
+                    return env'.Schemes
+                }
+            | _ -> None
 
 type TypeEnvironment =
     private {

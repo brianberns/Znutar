@@ -65,6 +65,12 @@ module NonEmptyList =
             ||> List.fold (fun acc item ->
                 create item (toList acc))
 
+    /// Appends the second given list to the first.
+    let append neList1 neList2 =
+        create
+            neList1.Head
+            (neList1.Tail @ toList neList2)
+
 /// A list that contains at least two items.
 type MultiItemList<'t> =
     {

@@ -6,7 +6,7 @@ module Program =
     result {
         let text =
             """
-            System.DateTime.Now.Years.ToString()
+            System.DateTime.Now.Year
             """
         let assemblyName = "Test"
         do! Compiler.compile

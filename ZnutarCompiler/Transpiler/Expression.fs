@@ -18,6 +18,19 @@ module Expression =
             IdentifierName(ident.Name)
         Ok ([], node)
 
+    /// Unit literal.
+    let private unitNode : Syntax.ExpressionSyntax =
+        MemberAccessExpression(
+            SyntaxKind.SimpleMemberAccessExpression,
+            MemberAccessExpression(
+                SyntaxKind.SimpleMemberAccessExpression,
+                MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    IdentifierName("Znutar"),
+                    IdentifierName("Runtime")),
+                IdentifierName("Unit")),
+            IdentifierName("Value"))
+
     /// Transpiles a literal.
     let private transpileLiteral lit =
         let node : Syntax.ExpressionSyntax =
@@ -35,17 +48,7 @@ module Expression =
                     LiteralExpression(
                         SyntaxKind.StringLiteralExpression,
                         Literal(String(chars)))
-                | UnitLiteral ->
-                    MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        MemberAccessExpression(
-                            SyntaxKind.SimpleMemberAccessExpression,
-                            MemberAccessExpression(
-                                SyntaxKind.SimpleMemberAccessExpression,
-                                IdentifierName("Znutar"),
-                                IdentifierName("Runtime")),
-                            IdentifierName("Unit")),
-                        IdentifierName("Value"))
+                | UnitLiteral -> unitNode
         Ok ([], node)
 
     /// Transpiles an expression.
@@ -205,7 +208,19 @@ module Expression =
 
         Ok (List.empty, exprNode)
 
-    /// Transpiles a member access.
+    /// Transpiles an instance member access.
+    and private transpileInstanceMemberAccessRaw ima =
+        result {
+            let! stmtNodes, exprNode = transpile ima.Expression
+            let accessNode =
+                MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    exprNode,
+                    IdentifierName(ima.Identifier.Name))
+            return stmtNodes, accessNode
+        }
+
+    /// Wraps a member access in a lambda, if necessary.
     (*
         constructor
             before:
@@ -231,86 +246,92 @@ module Expression =
                 ((System.Func<Znutar.Runtime.Unit, string>)(x =>
                     System.Console.ReadLine()))
     *)
+    and private wrapMemberAccess (exprNode : Syntax.ExpressionSyntax) typ isConstructor =
+        match typ with
+            | TypeArrow (inpType, outType) when
+                inpType = Type.unit ||
+                outType = Type.unit ||
+                isConstructor ->
+
+                    // gather arguments
+                let argumentList =
+                    match inpType with
+
+                            // argument is a tuple?
+                            // (e.g. x => new System.DateTime(x.Item1, x.Item2, x.Item3)))
+                        | TypeTuple tuple ->
+                            Seq.init tuple.Length (fun iArg ->
+                                Argument(
+                                    MemberAccessExpression(
+                                        SyntaxKind.SimpleMemberAccessExpression,
+                                        IdentifierName("x"),
+                                        IdentifierName($"Item{iArg + 1}"))))
+                                |> Syntax.separatedList
+                                |> ArgumentList
+
+                            // ignore input unit?
+                        | _ when inpType = Type.unit ->
+                            ArgumentList()
+
+                        | _ ->
+                            ArgumentList(
+                                SingletonSeparatedList(
+                                    Argument(
+                                        IdentifierName("x"))))
+
+                    // constructor invocation? (e.g. new String)
+                let invocation : Syntax.ExpressionSyntax =
+                    if isConstructor then
+                        ObjectCreationExpression(Type.transpile outType)
+                            .WithArgumentList(argumentList)
+                    else
+                        InvocationExpression(exprNode)
+                            .WithArgumentList(argumentList)
+
+                    // supply output unit?
+                let lambda =
+                    let lambda =
+                        SimpleLambdaExpression(
+                            Parameter(Identifier("x")))
+                    if outType = Type.unit then
+                        lambda
+                            .WithBlock(
+                                Block(
+                                    ExpressionStatement(invocation),
+                                    ReturnStatement(unitNode)))
+                    else
+                        lambda
+                            .WithExpressionBody(invocation)
+
+                let exprNode' =
+                    ParenthesizedExpression(
+                        CastExpression(
+                            Type.transpile typ,
+                            ParenthesizedExpression(lambda)))
+
+                exprNode' :> Syntax.ExpressionSyntax
+            | _ ->
+                exprNode
+
     and private transpileStaticMemberAccess sma =
         result {
-
                 // transpile raw member access (e.g. Console.WriteLine)
             let! stmtNodes, exprNode = transpileStaticMemberAccessRaw sma
 
-                // do we need to wrap the member access in a lambda?
-            match sma.Type with
-                | TypeArrow (inpType, outType) when
-                    inpType = Type.unit ||
-                    outType = Type.unit ||
-                    sma.IsConstructor ->
-
-                        // get expression node for unit type
-                    let! emptyStmtNodes, unitValueNode= transpileLiteral UnitLiteral
-                    assert(emptyStmtNodes.IsEmpty)
-
-                        // gather arguments
-                    let argumentList =
-                        match inpType with
-
-                                // argument is a tuple?
-                                // (e.g. x => new System.DateTime(x.Item1, x.Item2, x.Item3)))
-                            | TypeTuple tuple ->
-                                Seq.init tuple.Length (fun iArg ->
-                                    Argument(
-                                        MemberAccessExpression(
-                                            SyntaxKind.SimpleMemberAccessExpression,
-                                            IdentifierName("x"),
-                                            IdentifierName($"Item{iArg + 1}"))))
-                                    |> Syntax.separatedList
-                                    |> ArgumentList
-
-                                // ignore input unit?
-                            | _ when inpType = Type.unit ->
-                                ArgumentList()
-
-                            | _ ->
-                                ArgumentList(
-                                    SingletonSeparatedList(
-                                        Argument(
-                                            IdentifierName("x"))))
-
-                        // constructor invocation? (e.g. new String)
-                    let invocation : Syntax.ExpressionSyntax =
-                        if sma.IsConstructor then
-                            ObjectCreationExpression(Type.transpile outType)
-                                .WithArgumentList(argumentList)
-                        else
-                            InvocationExpression(exprNode)
-                                .WithArgumentList(argumentList)
-
-                        // supply output unit?
-                    let lambda =
-                        let lambda =
-                            SimpleLambdaExpression(
-                                Parameter(Identifier("x")))
-                        if outType = Type.unit then
-                            lambda
-                                .WithBlock(
-                                    Block(
-                                        ExpressionStatement(invocation),
-                                        ReturnStatement(unitValueNode)))
-                        else
-                            lambda
-                                .WithExpressionBody(invocation)
-
-                    let exprNode' =
-                        ParenthesizedExpression(
-                            CastExpression(
-                                Type.transpile sma.Type,
-                                ParenthesizedExpression(lambda)))
-
-                    return stmtNodes, exprNode'
-                | _ ->
-                    return stmtNodes, exprNode
+            let exprNode' =
+                wrapMemberAccess exprNode sma.Type sma.IsConstructor
+            return stmtNodes, exprNode'
         }
 
     and private transpileInstanceMemberAccess ima =
-        Error (InternalError "oops")
+        result {
+                // transpile raw member access (e.g. dt.Year)
+            let! stmtNodes, exprNode = transpileInstanceMemberAccessRaw ima
+
+            let exprNode' =
+                wrapMemberAccess exprNode ima.Type false
+            return stmtNodes, exprNode'
+        }
 
     /// Transpiles a tuple.
     and private transpileTuple tuple =
