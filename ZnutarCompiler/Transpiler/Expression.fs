@@ -57,7 +57,8 @@ module Expression =
         | AnnotatedBinaryOperationExpr bop -> transpileBinaryOperation bop
         | AnnotatedLiteralExpr lit -> transpileLiteral lit
         | AnnotatedLambdaExpr lam -> transpileLambda lam
-        | AnnotatedMemberAccessExpr ma -> transpileMemberAccess ma
+        | AnnotatedStaticMemberAccessExpr sma -> transpileStaticMemberAccess sma
+        | AnnotatedInstanceMemberAccessExpr ima -> transpileInstanceMemberAccess ima
         | AnnotatedTupleExpr tuple -> transpileTuple tuple
 
     /// Transpiles an application.
@@ -188,33 +189,21 @@ module Expression =
             }
         transpile expr
 
-    /// Transpiles a member access.
-    and private transpileMemberAccessRaw ma =
+    /// Transpiles a static member access.
+    and private transpileStaticMemberAccessRaw sma =
 
-        let rec loop (ma : MemberAccess) =
-            result {
-                let! exprNode =
-                    match ma.Expression with
-                        | IdentifierExpr ident ->
-                            IdentifierName(ident.Name)
-                                :> Syntax.ExpressionSyntax
-                                |> Ok
-                        | MemberAccessExpr ma -> loop ma
-                        | expr ->
-                            Error
-                                (InternalError
-                                    $"Unexpected expression {expr.Unparse()}")
+        let exprNode =
+            let init =
+                IdentifierName(sma.Path.Head.Name)
+                    :> Syntax.ExpressionSyntax
+            (init, sma.Path.Tail)
+                ||> List.fold (fun acc ident ->
+                    MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        acc,
+                        IdentifierName(ident.Name)))
 
-                return MemberAccessExpression(
-                    SyntaxKind.SimpleMemberAccessExpression,
-                    exprNode,
-                    IdentifierName(ma.Identifier.Name))
-            }
-
-        result {
-            let! exprNode = loop ma.MemberAccess
-            return List.empty, exprNode
-        }
+        Ok (List.empty, exprNode)
 
     /// Transpiles a member access.
     (*
@@ -242,18 +231,18 @@ module Expression =
                 ((System.Func<Znutar.Runtime.Unit, string>)(x =>
                     System.Console.ReadLine()))
     *)
-    and private transpileMemberAccess ma =
+    and private transpileStaticMemberAccess sma =
         result {
 
                 // transpile raw member access (e.g. Console.WriteLine)
-            let! stmtNodes, exprNode = transpileMemberAccessRaw ma
+            let! stmtNodes, exprNode = transpileStaticMemberAccessRaw sma
 
                 // do we need to wrap the member access in a lambda?
-            match ma.Type with
+            match sma.Type with
                 | TypeArrow (inpType, outType) when
                     inpType = Type.unit ||
                     outType = Type.unit ||
-                    ma.IsConstructor ->
+                    sma.IsConstructor ->
 
                         // get expression node for unit type
                     let! emptyStmtNodes, unitValueNode= transpileLiteral UnitLiteral
@@ -287,7 +276,7 @@ module Expression =
 
                         // constructor invocation? (e.g. new String)
                     let invocation : Syntax.ExpressionSyntax =
-                        if ma.IsConstructor then
+                        if sma.IsConstructor then
                             ObjectCreationExpression(Type.transpile outType)
                                 .WithArgumentList(argumentList)
                         else
@@ -312,13 +301,16 @@ module Expression =
                     let exprNode' =
                         ParenthesizedExpression(
                             CastExpression(
-                                Type.transpile ma.Type,
+                                Type.transpile sma.Type,
                                 ParenthesizedExpression(lambda)))
 
                     return stmtNodes, exprNode'
                 | _ ->
                     return stmtNodes, exprNode
         }
+
+    and private transpileInstanceMemberAccess ima =
+        Error (InternalError "oops")
 
     /// Transpiles a tuple.
     and private transpileTuple tuple =

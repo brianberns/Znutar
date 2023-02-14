@@ -98,7 +98,7 @@ module Infer =   // to-do: replace with constraint-based inference
                 return bodySubst, annex
             }
 
-        /// Infers the type of a function or member application.
+        /// Infers the type of a functional or member application.
         let private inferApplication env app =
             match app.Function with
                 | MemberAccessExpr ma ->
@@ -244,7 +244,11 @@ module Infer =   // to-do: replace with constraint-based inference
         let private inferAnnotation env ann =
             match ann.Expression with
                 | MemberAccessExpr ma ->
-                    MemberAccess.inferMemberAccessTyped env ma ann.Type
+                    inferMemberAccessWith env ma (
+                        Seq.tryPick (fun scheme ->
+                            match Substitution.unify scheme.Scheme.Type ann.Type with
+                                | Ok subst -> Some (subst, scheme)
+                                | Error _ -> None))
                 | _ ->
                     inferFunctionalAnnotation env ann
 
@@ -267,10 +271,15 @@ module Infer =   // to-do: replace with constraint-based inference
             }
 
         /// Infers the type of a member access.
+        let private inferMemberAccessWith env ma (tryResolve : List<MemberScheme> -> Option<Substitution * MemberScheme>) =
+            MemberAccess.inferMemberAccessWith infer env ma tryResolve
+
+        /// Infers the type of a member access.
         let private inferMemberAccess env ma =
-            MemberAccess.inferMemberAccess env ma (
-                Seq.tryExactlyOne
-                    >> Option.map (fun scheme ->
+            inferMemberAccessWith env ma (fun schemes ->
+                schemes
+                    |> Seq.tryExactlyOne   // hope there's only one matching member
+                    |> Option.map (fun scheme ->
                         Substitution.empty, scheme))
 
         /// Infers the type of a tuple.

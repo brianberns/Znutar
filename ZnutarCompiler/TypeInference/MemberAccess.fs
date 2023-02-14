@@ -16,9 +16,9 @@ module private Type =
 
 module private MemberAccess =
 
-    /// Infers the type of a member access.
+    /// Infers the type of a static member access.
     /// E.g. System.Console.WriteLine.
-    let inferMemberAccess env ma tryResolve =
+    let inferStaticMemberAccessWith env ma tryResolve =
         match TypeEnvironment.tryFindStaticMember ma env with
 
                 // no such member
@@ -26,12 +26,12 @@ module private MemberAccess =
             | Some ([], _) -> Error (UnboundIdentifier ma.Identifier)
 
                 // try to resolve overload
-            | Some (schemes, qi) ->
+            | Some (schemes, path) ->
                 match tryResolve schemes with
                     | Some (subst : Substitution, scheme : MemberScheme) ->
                         let annex =
-                            AnnotatedMemberAccessExpr {
-                                MemberAccess = ma
+                            AnnotatedStaticMemberAccessExpr {
+                                Path = path
                                 Type = scheme.Scheme.Type   // to-do: instantiate type?
                                 IsConstructor = scheme.IsConstructor
                             }
@@ -39,14 +39,42 @@ module private MemberAccess =
                     | None ->
                         Error (UnresolvedMethodOverload ma)
 
-    /// Infers the type of a member access with the given signature.
-    /// E.g. System.Console.WriteLine : string -> void.
-    let inferMemberAccessTyped env ma typ =
-        inferMemberAccess env ma (
+    /// Infers the type of a static member access with the given
+    /// signature. E.g. System.Console.WriteLine : string -> void.
+    let inferStaticMemberAccessTyped env ma typ =
+        inferStaticMemberAccessWith env ma (
             Seq.tryPick (fun scheme ->
                 match Substitution.unify scheme.Scheme.Type typ with
                     | Ok subst -> Some (subst, scheme)
                     | Error _ -> None))
+
+    let inferInstanceMemberAccessWith env typ ident tryResolve =
+        Error (InternalError "oops")
+
+    let inferMemberAccessWith inferExpr env (ma : MemberAccess) tryResolve =
+
+        let tryResolve' subst schemes =
+            tryResolve schemes
+                |> Option.map (fun (subst', scheme) ->
+                    subst ++ subst', scheme)
+
+            // determine static vs. instance member access
+        match inferExpr env ma.Expression with
+
+                // instance member (e.g. dt.AddYears)
+            | Ok (exprSubst, exprAnnex : AnnotatedExpression) ->
+                inferInstanceMemberAccessWith
+                    env
+                    exprAnnex.Type
+                    ma.Identifier
+                    (tryResolve' exprSubst)
+
+                // possible static member (e.g. System.Console)
+            | Error (_ : CompilerError) ->
+                inferStaticMemberAccessWith
+                    env
+                    ma
+                    (tryResolve' Substitution.empty)
 
     /// Infers the type of applying the given argument to the given
     /// member access. E.g. System.Console.WriteLine("Hello world").
@@ -60,7 +88,7 @@ module private MemberAccess =
             let! maSubst, maAnnex =
                 let arrowType =
                     argAnnex.Type ^=> Type.createFreshTypeVariable "ma"
-                inferMemberAccessTyped env ma arrowType
+                inferStaticMemberAccessTyped env ma arrowType
 
                 // gather results
             let! typ =

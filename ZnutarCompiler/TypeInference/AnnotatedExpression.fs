@@ -12,7 +12,8 @@ type AnnotatedExpression =
     | AnnotatedLiteralExpr of Literal
     | AnnotatedIfExpr of AnnotatedIf
     | AnnotatedBinaryOperationExpr of AnnotatedBinaryOperation
-    | AnnotatedMemberAccessExpr of AnnotatedMemberAccess
+    | AnnotatedStaticMemberAccessExpr of AnnotatedStaticMemberAccess
+    | AnnotatedInstanceMemberAccessExpr of AnnotatedInstanceMemberAccess
     | AnnotatedTupleExpr of AnnotatedTuple
 
     /// Result type.
@@ -28,7 +29,8 @@ type AnnotatedExpression =
             | AnnotatedLiteralExpr UnitLiteral -> Type.unit
             | AnnotatedIfExpr iff -> iff.Type
             | AnnotatedBinaryOperationExpr bop -> bop.Type
-            | AnnotatedMemberAccessExpr ma -> ma.Type
+            | AnnotatedStaticMemberAccessExpr sma -> sma.Type
+            | AnnotatedInstanceMemberAccessExpr ima -> ima.Type
             | AnnotatedTupleExpr tuple -> tuple.Type
 
     member annex.Unparse() =
@@ -53,8 +55,10 @@ type AnnotatedExpression =
                 $"({bop.Left.Unparse()} \
                     {BinaryOperator.unparse bop.Operator} \
                     {bop.Right.Unparse()})"
-            | AnnotatedMemberAccessExpr ma ->
-                $"({ma.MemberAccess.Expression.Unparse()}).{ma.MemberAccess.Identifier.Name}"
+            | AnnotatedStaticMemberAccessExpr sma ->
+                QualifiedIdentifier.unparse sma.Path
+            | AnnotatedInstanceMemberAccessExpr ima ->
+                $"{ima.Expression.Unparse()}.{ima.Identifier.Name}"
             | AnnotatedTupleExpr tuple ->
                 let str =
                     tuple.Expressions
@@ -128,16 +132,30 @@ and AnnotatedBinaryOperation =
         Type : Type
     }
 
-/// expr.ident
-and AnnotatedMemberAccess =
+/// ident.ident
+and AnnotatedStaticMemberAccess =
     {
-        // Expression : AnnotatedExpression
-        // Identifier : Identifier
-        MemberAccess : MemberAccess   // to-do: sub-expressions should be annotated
+        /// Member access path. E.g. System.Console.WriteLine.
+        Path : QualifiedIdentifier
+
+        /// Member is a constructor? E.g. System.Object.
+        IsConstructor : bool
+
+        /// Result type. E.g. (System.Console.WriteLine : string -> unit).
+        Type : Type
+    }
+
+/// expr.ident
+and AnnotatedInstanceMemberAccess =
+    {
+        /// Expression being accessed.
+        Expression : AnnotatedExpression
+
+        /// Member identifier. E.g. ToString.
+        Identifier : Identifier
 
         /// Result type. E.g. (expr.ident : int).
         Type : Type
-        IsConstructor : bool
     }
 
 /// a, b
@@ -198,10 +216,16 @@ module AnnotatedExpression =
                         Right = loop bop.Right
                         Type = tapply bop.Type
                 }
-            | AnnotatedMemberAccessExpr ma ->
-                AnnotatedMemberAccessExpr {
-                    ma with
-                        Type = tapply ma.Type
+            | AnnotatedStaticMemberAccessExpr sma ->
+                AnnotatedStaticMemberAccessExpr {
+                    sma with
+                        Type = tapply sma.Type
+                }
+            | AnnotatedInstanceMemberAccessExpr ima ->
+                AnnotatedInstanceMemberAccessExpr {
+                    ima with
+                        Expression = loop ima.Expression
+                        Type = tapply ima.Type
                 }
             | AnnotatedTupleExpr tuple ->
                 AnnotatedTupleExpr {
