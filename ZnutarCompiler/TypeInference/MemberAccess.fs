@@ -134,11 +134,8 @@ module private MemberAccess =
             let! maSubst, maAnnex =
                 let arrowType =
                     argAnnex.Type ^=> Type.createFreshTypeVariable "ma"
-                inferMemberAccessWith inferExpr env ma (
-                    Seq.tryPick (fun scheme ->
-                        match Substitution.unify scheme.Scheme.Type arrowType with
-                            | Ok subst -> Some (subst, scheme)
-                            | Error _ -> None))
+                tryResolveUnify arrowType
+                    |> inferMemberAccessWith inferExpr env ma
 
                 // gather results
             let! typ =
