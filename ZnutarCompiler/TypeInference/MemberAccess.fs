@@ -116,10 +116,11 @@ module private MemberAccess =
 
     /// Tries to pick a scheme by assuming there's only one.
     let tryResolveOne schemes =
-        schemes
-            |> Seq.tryExactlyOne
-            |> Option.map (fun scheme ->
-                Substitution.empty, scheme)
+        option {
+            let! (scheme : MemberScheme) =
+                Seq.tryExactlyOne schemes
+            return Substitution.empty, scheme
+        }
 
     /// Infers the type of applying the given argument to the given
     /// member access. E.g. System.Console.WriteLine("Hello world").
