@@ -6,8 +6,8 @@ module Program =
     result {
         let text =
             """
-            let dt = System.DateTime(2023, 1, 1) in
-            dt.Year
+            let list = System.Collections.ArrayList() in
+            list.Add(System.Object())
             """
         let assemblyName = "Test"
         do! Compiler.compile

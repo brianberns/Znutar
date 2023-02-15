@@ -13,6 +13,7 @@ module Identifier =
 
     /// Creates an identifier with the given name.
     let create name =
+        assert(String.IsNullOrEmpty(name) |> not)   // to-do: improve validation
         { Name = name }
 
 /// A type variable, such as 'a in 'a -> int.
@@ -34,16 +35,20 @@ type QualifiedIdentifier = NonEmptyList<Identifier>
 
 module QualifiedIdentifier =
 
+    /// Splits the given string into at least one substring.
+    let private nonEmptySplit (separator : char) (str : string) =
+        assert(isNull str |> not)
+        let substrs = str.Split(separator)
+        assert(substrs.Length >= 0)
+        NonEmptyList.create
+            substrs[0]
+            (Seq.toList substrs[1..])
+
     /// Creates a qualified identifier from the given full name.
     let parse (fullName : string) : QualifiedIdentifier =
-        let idents =
-            fullName.Split('.')
-                |> Seq.map Identifier.create
-                |> Seq.toList
-        match idents with
-            | [] -> failwith "Empty name"
-            | ident :: idents ->
-                NonEmptyList.create ident idents
+        fullName
+            |> nonEmptySplit '.'
+            |> NonEmptyList.map Identifier.create
 
     /// Converts the given qualified identifier to a string.
     let unparse (qi : QualifiedIdentifier) =

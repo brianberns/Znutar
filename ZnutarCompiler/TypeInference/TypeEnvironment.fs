@@ -3,8 +3,8 @@
 open System.Reflection
 open Znutar
 
-/// Tracks schemes by name.
-/// E.g. "const" is mapped to <'a, 'b>('a -> 'b -> 'a).
+/// Tracks function schemes by name. E.g. "const" is mapped
+/// to <'a, 'b>('a -> 'b -> 'a).
 type private FunctionTypeEnvironment = Map<Identifier, Scheme>
 
 module private FunctionTypeEnvironment =
@@ -32,44 +32,57 @@ module private FunctionTypeEnvironment =
             (Map.values env)
             |> set
 
+/// The scheme of a member (rather than a normal function).
 type MemberScheme =
     {
+        /// Underlying scheme.
         Scheme : Scheme
+
+        /// Is this member a constructor?
         IsConstructor : bool
     }
 
 module MemberScheme =
 
+    /// Creates a member scheme.
     let create typeVars typ isConstructor =
         {
             Scheme = Scheme.create typeVars typ
             IsConstructor = isConstructor
         }
 
+/// Tracks member schemes by name, hierarchically.
 type private MemberTypeEnvironment =
     {
+        /// Member schemes at this level of the hierarchy.
         Schemes : List<MemberScheme>
+
+        /// Child environments by name. (E.g. Console under System.)
         Children : Map<Identifier, MemberTypeEnvironment>
     }
 
 module private MemberTypeEnvironment =
 
+    /// Empty member type environment.
     let empty =
         {
             Schemes = List.empty
             Children = Map.empty
         }
 
-    // to-do: use QualifiedIdentifier type for path?
-    let private addMember path (mem : #MemberInfo) env getSig add =
+    /// Adds a member to the given environment.
+    let private addMember path (mem : #MemberInfo) typ add env =
         match path with
+
+                // add member scheme at this level
             | [] ->
                 let scheme =
-                    MemberScheme.create
-                        []
-                        (getSig mem)
+                    let isConstructor =
                         (mem.MemberType = MemberTypes.Constructor)
+                    MemberScheme.create [] typ isConstructor   // to-do: allow type variables
                 { env with Schemes = scheme :: env.Schemes }
+
+                // add to child environment
             | ident :: tail ->
                 let child =
                     env.Children
@@ -79,21 +92,29 @@ module private MemberTypeEnvironment =
                 { env with
                     Children = Map.add ident child' env.Children }
 
-    let rec addMethod path method env =
-        addMember path method env
-            Type.getMethodSignature
+    /// Adds a method to the given environment.
+    let rec private addMethod path method env =
+        addMember path method
+            (Type.getMethodSignature method)
             addMethod
+            env
 
-    let rec addProperty path property env =
-        addMember path property env
-            Type.getPropertySignature
+    /// Adds a property to the given environment.
+    let rec private addProperty path property env =
+        addMember path property
+            (Type.getPropertySignature property)
             addProperty
+            env
 
-    let rec addConstructor path constructor env =
-        addMember path constructor env
-            Type.getConstructorSignature
+    /// Adds a constructor to the given environment.
+    let rec private addConstructor path constructor env =
+        addMember path constructor
+            (Type.getConstructorSignature constructor)
             addConstructor
+            env
 
+    /// Creates a member type environment from the given
+    /// assemblies.
     let create assemblies =
         let pairs =
             [|
@@ -101,14 +122,13 @@ module private MemberTypeEnvironment =
                     for typ in assembly.ExportedTypes do
                         if not typ.IsGenericType then
 
-                            let namespaceParts = typ.Namespace.Split('.')
                             let getPath (mem : MemberInfo) =
-                                [
-                                    yield! namespaceParts
-                                    yield typ.Name
+                                let fullName =
                                     if mem.MemberType <> MemberTypes.Constructor then
-                                        yield mem.Name
-                                ] |> List.map Identifier.create
+                                        $"{typ.FullName}.{mem.Name}"
+                                    else typ.FullName
+                                QualifiedIdentifier.parse fullName
+                                    |> NonEmptyList.toList
 
                             for method in typ.GetMethods() do
                                 if not method.IsGenericMethod then
