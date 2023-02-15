@@ -106,6 +106,21 @@ module private MemberAccess =
                 // unrecoverable error
             | Error _ as err -> err
 
+    /// Tries to pick a scheme by unifying with the given type.
+    let tryResolveUnify typ schemes =
+        schemes
+            |> Seq.tryPick (fun (scheme : MemberScheme) ->
+                match Substitution.unify scheme.Scheme.Type typ with
+                    | Ok subst -> Some (subst, scheme)
+                    | Error _ -> None)
+
+    /// Tries to pick a scheme by assuming there's only one.
+    let tryResolveOne schemes =
+        schemes
+            |> Seq.tryExactlyOne
+            |> Option.map (fun scheme ->
+                Substitution.empty, scheme)
+
     /// Infers the type of applying the given argument to the given
     /// member access. E.g. System.Console.WriteLine("Hello world").
     let inferMemberApplication inferExpr env ma (arg : Expression) =
