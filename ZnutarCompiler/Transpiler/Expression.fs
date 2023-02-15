@@ -10,13 +10,7 @@ open Znutar
 open Znutar.Parser
 open Znutar.TypeInference
 
-module Expression =
-
-    /// Transpiles an identifier.
-    let private transpileIdentifier ident =
-        let node : Syntax.ExpressionSyntax =
-            IdentifierName(ident.Name)
-        Ok ([], node)
+module rec Expression =
 
     /// Unit literal.
     let private unitNode : Syntax.ExpressionSyntax =
@@ -30,6 +24,19 @@ module Expression =
                     IdentifierName("Runtime")),
                 IdentifierName("Unit")),
             IdentifierName("Value"))
+
+    /// Transpiles an expression.
+    let rec transpile = function
+        | AnnotatedIdentifierExpr ai -> transpileIdentifier ai.Identifier
+        | AnnotatedApplicationExpr app -> transpileApplication app
+        | AnnotatedLetExpr letb -> transpileLet letb
+        | AnnotatedIfExpr iff -> transpileIf iff
+        | AnnotatedBinaryOperationExpr bop -> transpileBinaryOperation bop
+        | AnnotatedLiteralExpr lit -> transpileLiteral lit
+        | AnnotatedLambdaExpr lam -> transpileLambda lam
+        | AnnotatedStaticMemberAccessExpr sma -> transpileStaticMemberAccess sma
+        | AnnotatedInstanceMemberAccessExpr ima -> transpileInstanceMemberAccess ima
+        | AnnotatedTupleExpr tuple -> transpileTuple tuple
 
     /// Transpiles a literal.
     let private transpileLiteral lit =
@@ -51,27 +58,20 @@ module Expression =
                 | UnitLiteral -> unitNode
         Ok ([], node)
 
-    /// Transpiles an expression.
-    let rec transpile = function
-        | AnnotatedIdentifierExpr ai -> transpileIdentifier ai.Identifier
-        | AnnotatedApplicationExpr app -> transpileApplication app
-        | AnnotatedLetExpr letb -> transpileLet letb
-        | AnnotatedIfExpr iff -> transpileIf iff
-        | AnnotatedBinaryOperationExpr bop -> transpileBinaryOperation bop
-        | AnnotatedLiteralExpr lit -> transpileLiteral lit
-        | AnnotatedLambdaExpr lam -> transpileLambda lam
-        | AnnotatedStaticMemberAccessExpr sma -> transpileStaticMemberAccess sma
-        | AnnotatedInstanceMemberAccessExpr ima -> transpileInstanceMemberAccess ima
-        | AnnotatedTupleExpr tuple -> transpileTuple tuple
+    /// Transpiles an identifier.
+    let private transpileIdentifier ident =
+        let node : Syntax.ExpressionSyntax =
+            IdentifierName(ident.Name)
+        Ok ([], node)
 
     /// Transpiles an application.
-    and private transpileApplication app =
+    let private transpileApplication app =
         app
             |> FunctionCall.create
             |> FunctionCall.transpile transpile
 
     /// Transpiles a "let", possibly by turning it into a function.
-    and private transpileLet letb =
+    let private transpileLet letb =
         match Function.tryCreate letb with
             | Some func -> transpileFunction func
             | None -> transpileLetRaw letb
@@ -91,7 +91,7 @@ module Expression =
             int z = 3;
             return y + z;
      *)
-    and private transpileLetRaw letb =
+    let private transpileLetRaw letb =
         result {
             let typeNode = Type.transpile letb.Argument.Type
             let! argStmtNodes, argExprNode = transpile letb.Argument   // argStmtNodes: int x = 1, argExprNode: 2 * x
@@ -116,11 +116,11 @@ module Expression =
         }
 
     /// Transpiles a function.
-    and private transpileFunction func =
+    let private transpileFunction func =
         Function.transpile transpile func
 
     /// Transpiles an "if".
-    and transpileIf iff =
+    let private transpileIf iff =
         result {
 
             let! condStmtNodes, condExprNode = transpile iff.Condition
@@ -136,7 +136,7 @@ module Expression =
         }
 
     /// Transpiles a binary operation.
-    and private transpileBinaryOperation bop =
+    let private transpileBinaryOperation bop =
         let kind =
             match bop.Operator with
                 | Plus -> SyntaxKind.AddExpression
@@ -167,7 +167,7 @@ module Expression =
     /// transpiles it into a function.
     /// From: fun x -> x
     /// To:   let lambda = (fun x -> x) in lambda
-    and private transpileLambda lam =
+    let private transpileLambda lam =
         let ident = Identifier.create "anonymous"
         let scheme =
             let typeVars =
@@ -193,7 +193,7 @@ module Expression =
         transpile expr
 
     /// Transpiles a static member access.
-    and private transpileStaticMemberAccessRaw sma =
+    let private transpileStaticMemberAccessRaw sma =
 
         let exprNode =
             let init =
@@ -209,7 +209,7 @@ module Expression =
         Ok (List.empty, exprNode)
 
     /// Transpiles an instance member access.
-    and private transpileInstanceMemberAccessRaw ima =
+    let private transpileInstanceMemberAccessRaw ima =
         result {
             let! stmtNodes, exprNode = transpile ima.Expression
             let accessNode =
@@ -246,7 +246,7 @@ module Expression =
                 ((System.Func<Znutar.Runtime.Unit, string>)(x =>
                     System.Console.ReadLine()))
     *)
-    and private wrapMemberAccess (exprNode : Syntax.ExpressionSyntax) typ isConstructor =
+    let private wrapMemberAccess (exprNode : Syntax.ExpressionSyntax) typ isConstructor =
         match typ with
             | TypeArrow (inpType, outType) when
                 inpType = Type.unit ||
@@ -313,7 +313,8 @@ module Expression =
             | _ ->
                 exprNode
 
-    and private transpileStaticMemberAccess sma =
+    /// Transpiles a static member access.
+    let private transpileStaticMemberAccess sma =
         result {
                 // transpile raw member access (e.g. Console.WriteLine)
             let! stmtNodes, exprNode = transpileStaticMemberAccessRaw sma
@@ -323,7 +324,8 @@ module Expression =
             return stmtNodes, exprNode'
         }
 
-    and private transpileInstanceMemberAccess ima =
+    /// Transpiles an instance member access.
+    let private transpileInstanceMemberAccess ima =
         result {
                 // transpile raw member access (e.g. dt.Year)
             let! stmtNodes, exprNode = transpileInstanceMemberAccessRaw ima
@@ -334,7 +336,7 @@ module Expression =
         }
 
     /// Transpiles a tuple.
-    and private transpileTuple tuple =
+    let private transpileTuple tuple =
         result {
                 // transpile each item
             let! pairs =
