@@ -246,7 +246,7 @@ module rec Expression =
                 ((System.Func<Znutar.Runtime.Unit, string>)(x =>
                     System.Console.ReadLine()))
     *)
-    let private wrapMemberAccess (exprNode : Syntax.ExpressionSyntax) typ isConstructor =
+    let private wrapMemberAccess exprNode typ isConstructor =
         match typ with
             | TypeArrow (inpType, outType) when
                 inpType = Type.unit ||
