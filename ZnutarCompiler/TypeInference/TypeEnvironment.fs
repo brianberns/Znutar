@@ -3,22 +3,22 @@
 open System.Reflection
 open Znutar
 
-/// Tracks function schemes by name. E.g. "const" is mapped
+/// Tracks functional schemes by name. E.g. "const" is mapped
 /// to <'a, 'b>('a -> 'b -> 'a).
-type private FunctionTypeEnvironment = Map<Identifier, Scheme>
+type private FunctionalTypeEnvironment = Map<Identifier, Scheme>
 
-module private FunctionTypeEnvironment =
+module private FunctionalTypeEnvironment =
 
     /// Empty type environment.
-    let empty : FunctionTypeEnvironment = Map.empty
+    let empty : FunctionalTypeEnvironment = Map.empty
 
     /// Adds the given scheme with the given identifier to
     /// the given environment.
-    let add ident scheme (env : FunctionTypeEnvironment) : FunctionTypeEnvironment =
+    let add ident scheme (env : FunctionalTypeEnvironment) : FunctionalTypeEnvironment =
         env |> Map.add ident scheme
 
     /// Tries to find a scheme by name in the given environment.
-    let tryFind ident (env : FunctionTypeEnvironment) =
+    let tryFind ident (env : FunctionalTypeEnvironment) =
         match Map.tryFind ident env with
             | Some scheme ->
                 Ok scheme
@@ -26,13 +26,13 @@ module private FunctionTypeEnvironment =
                 Error (UnboundIdentifier ident)
 
     /// Free type variables in the given environment.
-    let freeTypeVariables (env : FunctionTypeEnvironment) =
+    let freeTypeVariables (env : FunctionalTypeEnvironment) =
         Seq.collect
             Scheme.freeTypeVariables
             (Map.values env)
             |> set
 
-/// The scheme of a member (rather than a normal function).
+/// The scheme of a member.
 type MemberScheme =
     {
         /// Underlying scheme.
@@ -113,8 +113,7 @@ module private MemberTypeEnvironment =
             addConstructor
             env
 
-    /// Creates a member type environment from the given
-    /// assemblies.
+    /// Creates a member type environment from the given assemblies.
     let create assemblies =
         let pairs =
             [|
@@ -209,38 +208,49 @@ module private MemberTypeEnvironment =
                 }
             | _ -> None
 
+/// Tracks function and member schemes by name.
 type TypeEnvironment =
     private {
-        FuncTypeEnv : FunctionTypeEnvironment
+
+        /// Functional type environment.
+        FuncTypeEnv : FunctionalTypeEnvironment
+
+        /// Member type environment.
         MemberTypeEnv : MemberTypeEnvironment
     }
 
 module TypeEnvironment =
 
+    /// Creates a type environment from the given assemblies.
     let create assemblies =
         {
-            FuncTypeEnv = FunctionTypeEnvironment.empty
+            FuncTypeEnv = FunctionalTypeEnvironment.empty
             MemberTypeEnv = MemberTypeEnvironment.create assemblies
         }
 
-    /// Adds the given scheme with the given identifier to
-    /// the given environment.
-    let add ident scheme env =
+    /// Adds the given functional scheme with the given identifier
+    /// to the given environment.
+    let addFunctional ident scheme env =
         { env with
             FuncTypeEnv =
-                FunctionTypeEnvironment.add
+                FunctionalTypeEnvironment.add
                     ident
                     scheme
                     env.FuncTypeEnv }
 
-    let tryFindFunc ident env =
-        FunctionTypeEnvironment.tryFind ident env.FuncTypeEnv
+    /// Free type variables in the given environment.
+    let freeTypeVariables env =
+        FunctionalTypeEnvironment.freeTypeVariables env.FuncTypeEnv
 
+    /// Tries to find the given functional identifier in the given
+    /// environment.
+    let tryFindFunctional ident env =
+        FunctionalTypeEnvironment.tryFind ident env.FuncTypeEnv
+
+    /// Tries to find a static member in the given environment.
     let tryFindStaticMember ma env =
         MemberTypeEnvironment.tryFindStatic ma env.MemberTypeEnv
 
+    /// Tries to find an instance member in the given environment.
     let tryFindInstanceMember typ ident env =
         MemberTypeEnvironment.tryFindInstance typ ident env.MemberTypeEnv
-
-    let freeTypeVariables env =
-        FunctionTypeEnvironment.freeTypeVariables env.FuncTypeEnv

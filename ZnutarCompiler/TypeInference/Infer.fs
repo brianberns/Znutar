@@ -62,7 +62,7 @@ module Infer =   // to-do: replace with constraint-based inference
         let private inferIdent env ident =
             result {
                 let! scheme =
-                    TypeEnvironment.tryFindFunc ident env
+                    TypeEnvironment.tryFindFunctional ident env
                 let annex =
                     AnnotatedIdentifierExpr {
                         Identifier = ident
@@ -79,7 +79,7 @@ module Infer =   // to-do: replace with constraint-based inference
                     Type.createFreshTypeVariable lam.Identifier.Name
                 let env' =
                     let scheme = Scheme.create [] identType
-                    TypeEnvironment.add lam.Identifier scheme env
+                    TypeEnvironment.addFunctional lam.Identifier scheme env
 
                     // infer the output type using the input type
                 let! bodySubst, bodyAnnex =
@@ -146,7 +146,7 @@ module Infer =   // to-do: replace with constraint-based inference
                         let scheme =
                             Type.createFreshTypeVariable "arg"
                                 |> generalize env
-                        TypeEnvironment.add
+                        TypeEnvironment.addFunctional
                             letb.Identifier scheme env   // to-do: allow mutual recursion
                     else env
 
@@ -162,7 +162,7 @@ module Infer =   // to-do: replace with constraint-based inference
                     // infer body type using argument type
                 let! bodySubst, bodyAnnex =
                     let env''' =
-                        TypeEnvironment.add
+                        TypeEnvironment.addFunctional
                             letb.Identifier scheme env''
                     infer env''' letb.Body
 
