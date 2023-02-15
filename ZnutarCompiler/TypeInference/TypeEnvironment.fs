@@ -122,35 +122,43 @@ module private MemberTypeEnvironment =
                     for typ in assembly.ExportedTypes do
                         if not typ.IsGenericType then
 
-                            let getPath (mem : MemberInfo) =
-                                let fullName =
-                                    if mem.MemberType <> MemberTypes.Constructor then
-                                        $"{typ.FullName}.{mem.Name}"
-                                    else typ.FullName
-                                QualifiedIdentifier.parse fullName
-                                    |> NonEmptyList.toList
+                                // type's path (e.g. [System; Console])
+                            let typePath = QualifiedIdentifier.parse typ.FullName
+
+                            /// Gets member's full path, including member name.
+                            /// E.g. [System; Console; WriteLine].
+                            let getFullPath (mem : MemberInfo) =
+                                if mem.MemberType = MemberTypes.Constructor then
+                                    typePath
+                                else
+                                    let ident =
+                                        Identifier.create mem.Name
+                                    NonEmptyList.append
+                                        typePath
+                                        (NonEmptyList.singleton ident)
 
                             for method in typ.GetMethods() do
                                 if not method.IsGenericMethod then
-                                    yield getPath method, Choice1Of3 method
+                                    yield getFullPath method, Choice1Of3 method
 
                             for property in typ.GetProperties() do
                                 let method = property.GetMethod
                                 if not method.IsGenericMethod then
-                                    yield getPath property, Choice2Of3 property
+                                    yield getFullPath property, Choice2Of3 property
 
                             for constructor in typ.GetConstructors() do
-                                yield getPath constructor, Choice3Of3 constructor
+                                yield getFullPath constructor, Choice3Of3 constructor
             |]
         (empty, pairs)
             ||> Seq.fold (fun tree (path, choice) ->
+                let path' = NonEmptyList.toList path
                 match choice with
                     | Choice1Of3 method ->
-                        addMethod path method tree
+                        addMethod path' method tree
                     | Choice2Of3 property ->
-                        addProperty path property tree
+                        addProperty path' property tree
                     | Choice3Of3 constructor ->
-                        addConstructor path constructor tree)
+                        addConstructor path' constructor tree)
 
     /// Tries to convert a member access to an identifier path.
     /// E.g. System.Console.WriteLine -> [ System; Console; WriteLine ]
