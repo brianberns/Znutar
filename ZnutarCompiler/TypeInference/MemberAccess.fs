@@ -41,6 +41,8 @@ module private MemberAccess =
                     | None ->
                         Error (UnresolvedMethodOverload ma)
 
+    /// Infers the type of an instance member access.
+    /// E.g. dt.Year.
     let private inferInstanceMemberAccessWith
         env
         (annex : AnnotatedExpression)
