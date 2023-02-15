@@ -169,9 +169,11 @@ and AnnotatedTuple =
 
 module AnnotatedExpression =
 
+    /// Unparses an expression.
     let rec unparse (annex : AnnotatedExpression) =
         annex.Unparse()
 
+    /// Applies the given substitution to the given expression.
     let rec apply subst annex =
 
         let loop = apply subst
