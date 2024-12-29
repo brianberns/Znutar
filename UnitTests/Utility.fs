@@ -35,7 +35,7 @@ module Process =
                     Path.Combine(
                         Path.GetDirectoryName(
                             Assembly.GetExecutingAssembly().Location),
-                        "App.runtimeconfig.json")
+                        "App.runtimeconfig.json")   // MUST MATCH .NET VERSION
                 File.Copy(
                     sourcePath,
                     $"{assemblyName}.runtimeconfig.json",

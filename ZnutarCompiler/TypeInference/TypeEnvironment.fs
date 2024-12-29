@@ -113,6 +113,14 @@ module private MemberTypeEnvironment =
             addConstructor
             env
 
+    /// E.g. Parameter beginEndCallback of ObjectiveCMarshal.Initialize.
+    let hasValidInterface (method : MethodInfo) =
+        let parms =
+            method.GetParameters()
+                |> Seq.forall (fun parm ->
+                    not (isNull parm.ParameterType.FullName))
+        parms && not (isNull method.ReturnType.FullName)
+
     /// Creates a member type environment from the given assemblies.
     let create assemblies =
         let pairs =
@@ -137,7 +145,8 @@ module private MemberTypeEnvironment =
                                         (NonEmptyList.singleton ident)
 
                             for method in typ.GetMethods() do
-                                if not method.IsGenericMethod then
+                                if not method.IsGenericMethod
+                                    && hasValidInterface method then
                                     yield getFullPath method, Choice1Of3 method
 
                             for property in typ.GetProperties() do
