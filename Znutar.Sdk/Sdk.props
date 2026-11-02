@@ -7,7 +7,7 @@
 		<ProduceReferenceAssembly>false</ProduceReferenceAssembly>
 	</PropertyGroup>
 	
-	<UsingTask TaskName="Znc" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\net7.0\Znutar.Sdk.dll" />
+	<UsingTask TaskName="Znc" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\net10.0\Znutar.Sdk.dll" />
 
 	<ItemGroup>
 		<PackageReference Include="Znutar.Runtime" Version="1.0.0" />

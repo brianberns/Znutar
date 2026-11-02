@@ -53,8 +53,8 @@ module Compiler =
                 CSharpCompilation
                     .Create(assemblyName)
                     .WithReferences(
-                        Net80.References.SystemRuntime,
-                        Net80.References.SystemConsole,
+                        Net100.References.SystemRuntime,
+                        Net100.References.SystemConsole,
                         MetadataReference.CreateFromFile(
                             typeof<Unit>.Assembly.Location))
                     .AddSyntaxTrees(compilationUnit.SyntaxTree)

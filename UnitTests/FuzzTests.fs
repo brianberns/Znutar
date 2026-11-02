@@ -2,13 +2,14 @@ namespace Znutar
 
 open Microsoft.VisualStudio.TestTools.UnitTesting
 open FsCheck
+open FsCheck.FSharp
 
 open Znutar.Parser
 open Znutar.TypeInference
 
 module Gen =
 
-    let from<'t> = Arb.from<'t>.Generator   // to-do: is there a better way to get this?
+    let from<'t> = ArbMap.defaults |> ArbMap.generate<'t>
 
     let rec pick chooser gn =               // https://github.com/fscheck/FsCheck/issues/625
         gen {
@@ -44,10 +45,10 @@ type Arbitraries =
 type FuzzTests() =
 
     let config =
-        { Config.QuickThrowOnFailure with
-            Arbitrary = [ typeof<Arbitraries> ]
-            MaxTest = 1000
-            Replay = Some (Random.StdGen (0, 0)) }
+        Config.QuickThrowOnFailure
+            .WithArbitrary([ typeof<Arbitraries> ])
+            .WithMaxTest(1000)
+            .WithReplay(Some { Rnd = Rnd(0UL); Size = None })
 
     [<TestMethod>]
     member _.ParseUnparseIsOriginal() =
@@ -57,7 +58,7 @@ type FuzzTests() =
             let reparsed =
                 Parser.run Expression.parse unparsed
             let msg = sprintf "Text: %s\nResult: %A" unparsed reparsed
-            reparsed = Ok expr |@ msg
+            (reparsed = Ok expr) |> Prop.label msg
 
         Check.One(config, parseUnparseIsOriginal)
 
@@ -74,6 +75,6 @@ type FuzzTests() =
                     (Substitution.unparse subst)
                     (Type.unparse type1')
                     (Type.unparse type2')
-            type1' = type2' |@ msg
+            (type1' = type2') |> Prop.label msg
 
         Check.One(config, unify)

@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="Readme.md" />
+  </Folder>
+  <Project Path="UnitTests/UnitTests.fsproj" />
+  <Project Path="Znutar.Runtime/Znutar.Runtime.fsproj" />
+  <Project Path="Znutar.Sdk/Znutar.Sdk.fsproj" />
+  <Project Path="ZnutarCompiler/ZnutarCompiler.fsproj" />
+</Solution>
