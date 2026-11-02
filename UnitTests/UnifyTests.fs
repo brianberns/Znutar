@@ -51,3 +51,11 @@ type UnifyTests() =
         let expected = Error (UnificationFailure (t1, t2))
         let actual = Substitution.unify t1 t2
         Assert.AreEqual(expected, actual)
+
+    [<TestMethod>]
+    member this.UnifyTupleConsistently() =
+        let t1 = TypeTuple (MultiItemList.create (TypeVariable x) (TypeVariable x) [])
+        let t2 = TypeTuple (MultiItemList.create Type.int Type.bool [])
+        let expected = Error (UnificationFailure (Type.int, Type.bool))
+        let actual = Substitution.unify t1 t2
+        Assert.AreEqual(expected, actual)

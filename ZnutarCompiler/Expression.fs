@@ -23,7 +23,9 @@ module Literal =
     let unparse = function
         | BoolLiteral b ->
             if b then "true" else "false"
-        | IntLiteral n -> string n
+        | IntLiteral n ->
+            if n < 0 then $"({n})"   // "f -1" would parse as subtraction
+            else string n
         | StringLiteral chars ->
             let str =
                 chars

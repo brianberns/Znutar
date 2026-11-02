@@ -43,7 +43,8 @@ type AnnotatedExpression =
                 $"(fun {lam.Identifier.Name} -> \
                     {lam.Body.Unparse()})"
             | AnnotatedLetExpr letb ->
-                $"(let {letb.Identifier.Name} = \
+                let sRec = if letb.Recursive then "rec " else ""
+                $"(let {sRec}{letb.Identifier.Name} = \
                     {letb.Argument.Unparse()} in \
                     {letb.Body.Unparse()})"
             | AnnotatedLiteralExpr literal -> Literal.unparse literal
@@ -98,6 +99,9 @@ and AnnotatedLambdaAbstraction =
 /// let ident = arg in body
 and AnnotatedLetBinding =
     {
+        /// Is the identifier in scope within the argument?
+        Recursive : bool
+
         Identifier : Identifier
 
         /// E.g. <'a, 'b>('a -> 'b -> 'a).

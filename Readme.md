@@ -22,7 +22,7 @@ Here's how to implement factorial:
 ```znutar
 let rec factorial n =
     if n = 0 then 1
-    else n * factorial (n - 1);
+    else n * factorial (n - 1) in
 
 System.Console.WriteLine(factorial 6)
 ```
@@ -34,7 +34,7 @@ System.Console.WriteLine(factorial 6)
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -44,8 +44,8 @@ System.Console.WriteLine(factorial 6)
 </Project>
 ```
 
-3. Compile your program: `dotnet build`.
-4. Run your program: `.\bin\Debug\net7.0\Factorial.exe`. Output is `720`.
+3. Compile your program: `dotnet build`. (Requires the `Znutar.Sdk` and `Znutar.Runtime` packages, which are created by `dotnet pack`.)
+4. Run your program: `.\bin\Debug\net10.0\Factorial.exe`. Output is `720`.
 
 ## Goals
 

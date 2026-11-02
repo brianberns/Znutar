@@ -12,7 +12,7 @@ type CompilerTests() =
         result {
             do!
                 Compiler.compile
-                    [| typeof<Console>.Assembly.Location |]
+                    Array.empty
                     assemblyName
                     $"{assemblyName}.dll"
                     text
@@ -268,3 +268,111 @@ type CompilerTests() =
             dt.Year
             """
         Assert.AreEqual(Ok "2023", run text)
+
+    [<TestMethod>]
+    member _.Precedence() =
+        let text = "1 + 2 * 3 - 4 / 2"
+        Assert.AreEqual(Ok "5", run text)
+
+    /// Statements in an untaken branch must not be executed.
+    [<TestMethod>]
+    member _.LetInBranch() =
+        let text =
+            """
+            let rec factorial n =
+                if n = 0 then 1
+                else
+                    let m = factorial (n-1) in
+                    n * m in
+            factorial 5
+            """
+        Assert.AreEqual(Ok "120", run text)
+
+    [<TestMethod>]
+    member _.Shadowing() =
+        let text = "let x = 1 in let x = x + 1 in x"
+        Assert.AreEqual(Ok "2", run text)
+
+    [<TestMethod>]
+    member _.ShadowNamespace() =
+        let text = "let System = 1 in System.Console.Write(\"ok\")"
+        Assert.AreEqual(Ok "ok", run text)
+
+    [<TestMethod>]
+    member _.MultipleLambdas() =
+        let text = "((fun x -> x + 1) 1, (fun y -> y * 2) 2)"
+        Assert.AreEqual(Ok "(2, 4)", run text)
+
+    [<TestMethod>]
+    member _.PartialApplication() =
+        let text =
+            """
+            let add x y = x + y in
+            let inc = add 1 in
+            inc 2
+            """
+        Assert.AreEqual(Ok "3", run text)
+
+    [<TestMethod>]
+    member _.OverApplication() =
+        let text =
+            """
+            let id x = x in
+            id (fun y -> y + 1) 41
+            """
+        Assert.AreEqual(Ok "42", run text)
+
+    [<TestMethod>]
+    member _.CurriedFunctionValue() =
+        let text =
+            """
+            let apply2 f = f 1 2 in
+            apply2 (fun a -> fun b -> a + b)
+            """
+        Assert.AreEqual(Ok "3", run text)
+
+    [<TestMethod>]
+    member _.GenericFunctionValue() =
+        let text =
+            """
+            let id x = x in
+            let apply f x = f x in
+            apply id 2
+            """
+        Assert.AreEqual(Ok "2", run text)
+
+    [<TestMethod>]
+    member _.FunctionReturnsFunction() =
+        let text =
+            """
+            let id x = x in
+            let f x = id in
+            f 1 2
+            """
+        Assert.AreEqual(Ok "2", run text)
+
+    [<TestMethod>]
+    member _.FunctionInBranch() =
+        let text =
+            """
+            let inc x = x + 1 in
+            let dec x = x - 1 in
+            (if true then inc else dec) 5
+            """
+        Assert.AreEqual(Ok "6", run text)
+
+    /// int * int -> int
+    [<TestMethod>]
+    member _.TupledMethod() =
+        let text = "System.Math.Max(3, 7)"
+        Assert.AreEqual(Ok "7", run text)
+
+    [<TestMethod>]
+    member _.StringEquality() =
+        let text = "\"a\" = \"a\""
+        Assert.AreEqual(Ok "True", run text)
+
+    [<TestMethod>]
+    member _.TupleEquality() =
+        let text = "(1, true) = (1, true)"
+        Assert.AreEqual(Ok "True", run text)

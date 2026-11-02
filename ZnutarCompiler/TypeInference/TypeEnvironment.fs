@@ -123,11 +123,13 @@ module private MemberTypeEnvironment =
 
     /// Creates a member type environment from the given assemblies.
     let create assemblies =
+        let typeNames = System.Collections.Generic.HashSet<string>()
         let pairs =
             [|
                 for (assembly : Assembly) in assemblies do
                     for typ in assembly.ExportedTypes do
-                        if not typ.IsGenericType then
+                        if not typ.IsGenericType
+                            && typeNames.Add(typ.FullName) then   // ignore duplicates
 
                                 // type's path (e.g. [System; Console])
                             let typePath = QualifiedIdentifier.parse typ.FullName
@@ -151,7 +153,9 @@ module private MemberTypeEnvironment =
 
                             for property in typ.GetProperties() do
                                 let method = property.GetMethod
-                                if not method.IsGenericMethod then
+                                if not (isNull method)                          // ignore write-only properties
+                                    && property.GetIndexParameters().Length = 0 // ignore indexers
+                                    && not method.IsGenericMethod then
                                     yield getFullPath property, Choice2Of3 property
 
                             for constructor in typ.GetConstructors() do

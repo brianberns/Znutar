@@ -14,14 +14,69 @@ open Znutar.Runtime
 open Znutar.Transpiler
 open Znutar.TypeInference
 
+/// Resolves assemblies from in-memory images by simple name.
+type private ImageResolver(images : Map<string, byte[]>) =
+    inherit MetadataAssemblyResolver()
+
+    override _.Resolve(context, assemblyName) =
+        match Map.tryFind assemblyName.Name images with
+            | Some image -> context.LoadFromByteArray(image)
+            | None -> null
+
 module Compiler =
+
+    /// Answers the images of the given reference assemblies by
+    /// simple name, defaulting to .NET's reference assemblies if
+    /// none are given. The same references are used to both type-
+    /// check and compile a program.
+    let private getReferenceImages (paths : string[]) =
+        let images =
+            if paths.Length = 0 then
+                Net100.ReferenceInfos.All
+                    |> Seq.map (fun info ->
+                        IO.Path.GetFileNameWithoutExtension(info.FileName),
+                        info.ImageBytes)
+                    |> Map
+            else
+                paths
+                    |> Seq.map (fun path ->
+                        IO.Path.GetFileNameWithoutExtension(path),
+                        IO.File.ReadAllBytes(path))
+                    |> Map
+
+            // Znutar runtime is always needed
+        let runtimeAssembly = typeof<Unit>.Assembly
+        let runtimeName = runtimeAssembly.GetName().Name
+        if images.ContainsKey(runtimeName) then images
+        else
+            images.Add(
+                runtimeName,
+                IO.File.ReadAllBytes(runtimeAssembly.Location))
+
+    /// Infers the types of the given expression using the given
+    /// reference assemblies, which are loaded for inspection only.
+    let private infer images expr =
+        let coreAssemblyName =
+            if Map.containsKey "System.Runtime" images then "System.Runtime"
+            else null
+        use context =
+            new MetadataLoadContext(
+                ImageResolver(images),
+                coreAssemblyName)
+        let assemblies =
+            images.Keys
+                |> Seq.map (fun name ->
+                    context.LoadFromAssemblyName(name))
+                |> Seq.toArray
+        Infer.inferExpression assemblies expr
 
     /// Creates a method node for the given expression.
     let private transpile (expr : AnnotatedExpression) =
         result {
             let typeNode = Type.transpile expr.Type
             let! mainStmtNodes, mainExprNode =
-                Expression.transpile expr
+                let expr', names = Rename.uniquify expr
+                Expression.transpile (Context.create names) expr'
             let stmts =
                 [|
                     yield! mainStmtNodes
@@ -37,12 +92,12 @@ module Compiler =
         }
 
     /// Compiles the given node into an assembly.
-    let private compileNode assemblyName outputPath exprNode =
+    let private compileNode images assemblyName outputPath isUnit exprNode =
 
         let emitResult =
 
             let compilationUnit, mainTypeName =
-                CompilationUnit.create assemblyName exprNode
+                CompilationUnit.create assemblyName isUnit exprNode
 #if DEBUG
             printfn "%A" <| compilationUnit.NormalizeWhitespace()
 #endif
@@ -53,10 +108,11 @@ module Compiler =
                 CSharpCompilation
                     .Create(assemblyName)
                     .WithReferences(
-                        Net100.References.SystemRuntime,
-                        Net100.References.SystemConsole,
-                        MetadataReference.CreateFromFile(
-                            typeof<Unit>.Assembly.Location))
+                        images
+                            |> Map.values
+                            |> Seq.map (fun (image : byte[]) ->
+                                MetadataReference.CreateFromImage(image)
+                                    :> MetadataReference))
                     .AddSyntaxTrees(compilationUnit.SyntaxTree)
                     .WithOptions(options)
             compilation.Emit(outputPath : string)
@@ -77,18 +133,17 @@ module Compiler =
             let! expr = Parser.run Expression.parse text
 
                 // infer types of the resulting syntax tree
-            let! expr' =
-                let refAssemblies =
-                    [|
-                        yield typeof<obj>.Assembly
-                        for ref in references do
-                            yield Assembly.LoadFile(ref)
-                    |]
-                Infer.inferExpression refAssemblies expr
+            let images = getReferenceImages references
+            let! expr' = infer images expr
 
                 // compile tree into an assembly
             let! exprNode = transpile expr'
-            do! compileNode assemblyName outputPath exprNode
+            do! compileNode
+                    images
+                    assemblyName
+                    outputPath
+                    (expr'.Type = Znutar.Type.unit)
+                    exprNode
         }
 
     /// Compiles the given file into an an assembly.

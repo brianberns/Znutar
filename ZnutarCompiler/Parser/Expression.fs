@@ -18,7 +18,7 @@ module Expression =
 
         let private parseLambdaAbstraction =
             parse {
-                do! skipString "fun" >>. spaces
+                do! skipKeyword "fun" >>. spaces
                 let! ident = Identifier.parse
                 do! spaces >>. skipString "->" >>. spaces
                 let! body = parseExpression
@@ -33,15 +33,15 @@ module Expression =
         let private parseLetBinding =
             parse {
 
-                do! skipString "let" >>. spaces
+                do! skipKeyword "let" >>. spaces
                 let! recursive =
-                    opt (skipString "rec" .>> spaces)
+                    opt (skipKeyword "rec" .>> spaces)
                         |>> Option.isSome
                 let! ident = Identifier.parse .>> spaces
                 let! argIdents = many (Identifier.parse .>> spaces)
                 do! skipChar '=' >>. spaces
                 let! binding = parseExpression
-                do! spaces >>. skipString "in" >>. spaces
+                do! spaces >>. skipKeyword "in" >>. spaces
                 let! body = parseExpression
 
                 let binding' =
@@ -63,8 +63,8 @@ module Expression =
 
             let private parseBool =
                 choice [
-                    skipString "true" >>% true
-                    skipString "false" >>% false
+                    skipKeyword "true" >>% true
+                    skipKeyword "false" >>% false
                 ]
 
             /// \uHHHH
@@ -117,11 +117,11 @@ module Expression =
 
         let private parseIf =
             parse {
-                do! skipString "if" >>. spaces
+                do! skipKeyword "if" >>. spaces
                 let! cond = parseExpression
-                do! spaces >>. skipString "then" >>. spaces
+                do! spaces >>. skipKeyword "then" >>. spaces
                 let! trueBranch = parseExpression
-                do! spaces >>. skipString "else" >>. spaces
+                do! spaces >>. skipKeyword "else" >>. spaces
                 let! falseBranch = parseExpression
                 return {
                     Condition = cond
@@ -130,22 +130,24 @@ module Expression =
                 }
             }
 
-        let private parseAnnotation =
+        /// E.g. (expr) -> expr, or (expr : type) -> annotation.
+        /// The expression is parsed only once, to avoid exponential
+        /// backtracking on nested parentheses.
+        let private parseParenExpression =
             parse {
                 let! expr = parseExpression
-                do! spaces >>. skipChar ':' >>. spaces
-                let! typ = Type.parse
-                return {
-                    Expression = expr
-                    Type = typ
-                }
-            }
-                |> parseParens
-                |> attempt
-
-        /// E.g. (expr) -> expr.
-        let private parseParenExpression =
-            parseParens parseExpression
+                let! typOpt =
+                    opt (
+                        spaces >>. skipChar ':' >>. spaces >>. Type.parse
+                            |> attempt)
+                match typOpt with
+                    | Some typ ->
+                        return AnnotationExpr {
+                            Expression = expr
+                            Type = typ
+                        }
+                    | None -> return expr
+            } |> parseParens
 
         /// Parses a simple (non-left-recursive) expression.
         let parse : Parser<_, _> =
@@ -155,7 +157,6 @@ module Expression =
                 parseLetBinding |>> LetExpr
                 Literal.parse |>> LiteralExpr
                 parseIf |>> IfExpr
-                parseAnnotation |>> AnnotationExpr
                 parseParenExpression
             ]
 
@@ -188,6 +189,7 @@ module Expression =
         let parseArgs =
             parse {
                 do! spaces
+                do! notFollowedBy (skipChar '-')   // "f -1" is subtraction, not application
                 return! parseMemberAccessExpr
             } |> attempt
 
@@ -205,7 +207,8 @@ module Expression =
                             })
         }
 
-    /// Parses a chain of binary operations (if any).
+    /// Parses chains of binary operations (if any), with standard
+    /// precedence: multiplicative > additive > comparison.
     let private parseBinaryOperationExpr =
 
         let create (str, op) =
@@ -219,21 +222,17 @@ module Expression =
                     })
             } |> attempt
 
-        let parseOp =
-            [
-                "+", Plus
-                "-", Minus
-                "*", Times
-                "=", Equals
-                ">", GreaterThan
-                "<", LessThan
-                "/", Divide
-                "%", Modulo
-            ]
-                |> List.map create
-                |> choice
+        let level ops operand =
+            let parseOp =
+                ops
+                    |> List.map create
+                    |> choice
+            chainl1 operand parseOp
 
-        chainl1 parseApplicationExpr parseOp
+        parseApplicationExpr
+            |> level [ "*", Times; "/", Divide; "%", Modulo ]
+            |> level [ "+", Plus; "-", Minus ]
+            |> level [ "=", Equals; ">", GreaterThan; "<", LessThan ]
 
     /// Parses a tuple.
     let private parseTupleExpr =

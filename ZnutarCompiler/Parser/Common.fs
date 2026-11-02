@@ -1,5 +1,6 @@
 ﻿namespace Znutar.Parser
 
+open System
 open FParsec
 open Znutar
 
@@ -27,6 +28,13 @@ module private Common =
 
     let parseAngles parser =
         parseBrackets '<' '>' parser
+
+    /// Parses the given keyword, which must not be immediately
+    /// followed by an identifier character. E.g. "in" but not "inx".
+    let skipKeyword str : Parser<unit, _> =
+        skipString str
+            >>. notFollowedBy (satisfy (fun c -> Char.IsLetterOrDigit(c) || c = '_'))
+            |> attempt
 
 module private Identifier =
 

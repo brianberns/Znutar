@@ -21,6 +21,7 @@
     <Compile Include="TypeInference\MemberAccess.fs" />
     <Compile Include="TypeInference\Infer.fs" />
     <Compile Include="Transpiler\Type.fs" />
+    <Compile Include="Transpiler\Rename.fs" />
     <Compile Include="Transpiler\Function.fs" />
     <Compile Include="Transpiler\Expression.fs" />
     <Compile Include="Transpiler\CompilationUnit.fs" />
@@ -31,6 +32,7 @@
     <PackageReference Include="Basic.Reference.Assemblies.Net100" Version="1.8.13" />
     <PackageReference Include="FParsec" Version="1.1.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
+    <PackageReference Include="System.Reflection.MetadataLoadContext" Version="10.0.14" />
   </ItemGroup>
 
   <ItemGroup>

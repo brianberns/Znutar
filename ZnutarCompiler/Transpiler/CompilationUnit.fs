@@ -14,7 +14,7 @@ module CompilationUnit =
             System.Console.Write($exprNode());
         }
     *)
-    let private mainMethod (exprNode : Syntax.MethodDeclarationSyntax) =
+    let private mainMethod isUnit (exprNode : Syntax.MethodDeclarationSyntax) =
 
         let invocation =
 
@@ -22,7 +22,7 @@ module CompilationUnit =
                 InvocationExpression(
                     IdentifierName(exprNode.Identifier))
 
-            if exprNode.ReturnType.ToString() = "Znutar.Runtime.Unit" then   // don't write unit value
+            if isUnit then   // don't write unit value
                 invocation
             else
                 InvocationExpression(
@@ -47,14 +47,14 @@ module CompilationUnit =
             .WithBody(Block(ExpressionStatement(invocation)))
 
     /// Creates a compilation unit.
-    let create assemblyName exprNode =
+    let create assemblyName isUnit exprNode =
         let classNode =
             ClassDeclaration($"{assemblyName}Type")
                 .AddModifiers(
                     Token(SyntaxKind.StaticKeyword))
                 .AddMembers(
                     [|
-                        mainMethod exprNode
+                        mainMethod isUnit exprNode
                             :> Syntax.MemberDeclarationSyntax
                         exprNode
                     |])

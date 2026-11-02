@@ -209,3 +209,47 @@ type TypeInferenceTests() =
                     Assert.AreNotEqual(tv1, tv3)
                 | _ -> Assert.Fail()
         } |> Assert.Ok
+
+    /// Each of these used to type-check.
+    [<TestMethod>]
+    member _.Unsound() =
+        let texts =
+            [
+                "fun x -> if x then x else 1"
+                "fun x -> x + (if x then 1 else 2)"
+                "fun x -> (x + 1, if x then 1 else 2)"
+                "fun f -> (f : 'a * 'a -> int) (1, true)"
+                "let rec f x = if x = 0 then 0 else f true in f 1"
+                "let rec f x = f in f"
+            ]
+        for text in texts do
+            result {
+                let! expr = Parser.run Expression.parse text
+                match infer expr with
+                    | Error (UnificationFailure _) -> ()
+                    | res -> Assert.Fail(sprintf "%s: %A" text res)
+            } |> Assert.Ok
+
+    [<TestMethod>]
+    member _.PolymorphicEquality() =
+        let text = "\"a\" = \"b\""
+        result {
+            let! expr = Parser.run Expression.parse text
+            let! expr' = infer expr
+            Assert.AreEqual(Type.bool, expr'.Type)
+        } |> Assert.Ok
+
+    /// Inner annotations are consistent with the final substitution.
+    [<TestMethod>]
+    member _.InnerAnnotations() =
+        let text = "fun x -> x + 1"
+        result {
+            let! expr = Parser.run Expression.parse text
+            let! expr' = infer expr
+            match expr' with
+                | AnnotatedLambdaExpr {
+                    Body = AnnotatedBinaryOperationExpr {
+                        Left = AnnotatedIdentifierExpr ai } } ->
+                    Assert.AreEqual(Type.int, ai.Type)
+                | _ -> Assert.Fail(expr'.Unparse())
+        } |> Assert.Ok

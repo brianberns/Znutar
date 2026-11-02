@@ -102,3 +102,45 @@ type ParserTests() =
             let! actual = Parser.run Type.parse text
             Assert.AreEqual(expected, actual, actual.Unparse())
         } |> Assert.Ok
+
+    [<TestMethod>]
+    member _.Precedence() =
+        result {
+            let text = "a = b + c * d"
+            let! actual = Parser.run Expression.parse text
+            Assert.AreEqual("(a = (b + (c * d)))", actual.Unparse())
+        } |> Assert.Ok
+
+    [<TestMethod>]
+    member _.SubtractionWithoutSpaces() =
+        result {
+            let text = "f n-1"
+            let! actual = Parser.run Expression.parse text
+            Assert.AreEqual("((f n) - 1)", actual.Unparse())
+        } |> Assert.Ok
+
+    [<TestMethod>]
+    member _.NegativeLiteral() =
+        result {
+            let text = "f (-1)"
+            let! actual = Parser.run Expression.parse text
+            Assert.AreEqual("(f (-1))", actual.Unparse())
+        } |> Assert.Ok
+
+    [<TestMethod>]
+    member _.KeywordPrefix() =
+        result {
+            let text = "let x = 1 in index"
+            let! actual = Parser.run Expression.parse text
+            Assert.AreEqual("(let x = 1 in index)", actual.Unparse())
+        } |> Assert.Ok
+
+    /// Used to take exponential time.
+    [<TestMethod; Timeout(5000)>]
+    member _.NestedParens() =
+        result {
+            let depth = 30
+            let text = String.replicate depth "(" + "1" + String.replicate depth ")"
+            let! actual = Parser.run Expression.parse text
+            Assert.AreEqual(LiteralExpr (IntLiteral 1), actual)
+        } |> Assert.Ok

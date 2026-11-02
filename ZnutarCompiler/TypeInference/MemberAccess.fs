@@ -81,10 +81,10 @@ module private MemberAccess =
     /// given scheme resolver.
     let inferMemberAccessWith inferExpr env (ma : MemberAccess) tryResolve =
 
-        let tryResolve' subst schemes =   // to-do: apply given substitution to each scheme?
-            tryResolve schemes
+        let tryResolve' subst schemes =
+            tryResolve subst schemes
                 |> Option.map (fun (subst', scheme) ->
-                    subst ++ subst', scheme)
+                    subst' ++ subst, scheme)
 
             // determine static vs. instance member access
         match inferExpr env ma.Expression with
@@ -108,16 +108,24 @@ module private MemberAccess =
                 // unrecoverable error
             | Error _ as err -> err
 
-    /// Tries to pick a scheme by unifying with the given type.
-    let tryResolveUnify typ schemes =
-        schemes
-            |> Seq.tryPick (fun (scheme : MemberScheme) ->
-                match Substitution.unify scheme.Scheme.Type typ with
-                    | Ok subst -> Some (subst, scheme)
-                    | Error _ -> None)
+    /// Tries to pick a scheme by unifying with the given type. Fails
+    /// if no scheme matches, or if more than one does (e.g. when the
+    /// argument type is still unknown).
+    let tryResolveUnify typ (subst : Substitution) schemes =
+        let typ' = Substitution.Type.apply subst typ
+        let candidates =
+            schemes
+                |> List.choose (fun (scheme : MemberScheme) ->
+                    match Substitution.unify scheme.Scheme.Type typ' with
+                        | Ok subst' -> Some (subst', scheme)
+                        | Error _ -> None)
+                |> List.distinctBy (fun (_, scheme) -> scheme.Scheme.Type)
+        match candidates with
+            | [ candidate ] -> Some candidate
+            | _ -> None
 
     /// Tries to pick a scheme by assuming there's only one.
-    let tryResolveOne schemes =
+    let tryResolveOne (_ : Substitution) schemes =
         option {
             let! (scheme : MemberScheme) =
                 Seq.tryExactlyOne schemes
@@ -134,10 +142,11 @@ module private MemberAccess =
 
                 // infer the member access type (e.g. WriteLine : string -> void)
             let! maSubst, maAnnex =
+                let env' = Substitution.TypeEnvironment.apply argSubst env
                 let arrowType =
                     argAnnex.Type ^=> Type.createFreshTypeVariable "ma"
                 tryResolveUnify arrowType
-                    |> inferMemberAccessWith inferExpr env ma
+                    |> inferMemberAccessWith inferExpr env' ma
 
                 // gather results
             let! typ =
@@ -154,6 +163,6 @@ module private MemberAccess =
                     Type = typ
                 }
             return
-                argSubst ++ maSubst,
+                maSubst ++ argSubst,
                 annex
         }

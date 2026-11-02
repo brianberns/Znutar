@@ -128,20 +128,22 @@ module Type =
                 |> Seq.map freeTypeVariables
                 |> Set.unionMany
 
-    /// Map from .NET types to Znutar types.
-    let private dotnetTypeDict =
-        dict [   // can't use F# Map because System.Type doesn't implement IComparable
-            typeof<Boolean>, bool
-            typeof<Int32>, int
-            typeof<String>, string
-            typeof<Void>, unit   // convert void to unit
+    /// Map from .NET type names to Znutar types. (Keyed by name
+    /// because types loaded from reference assemblies aren't
+    /// identical to the compiler's own runtime types.)
+    let private dotnetTypeMap =
+        Map [
+            typeof<Boolean>.FullName, bool
+            typeof<Int32>.FullName, int
+            typeof<String>.FullName, string
+            typeof<Void>.FullName, unit   // convert void to unit
         ]
 
     /// Creates a Znutar type from the given .NET type.
-    let private ofDotnetType dotnetType =
-        match dotnetTypeDict.TryGetValue(dotnetType) with
-            | true, typ -> typ
-            | false, _ -> constant dotnetType.FullName
+    let private ofDotnetType (dotnetType : System.Type) =
+        match Map.tryFind dotnetType.FullName dotnetTypeMap with
+            | Some typ -> typ
+            | None -> constant dotnetType.FullName
 
     /// Creates a Znutar type for the signature of the given method.
     let private getMethodBaseSignature returnType (method : MethodBase) =

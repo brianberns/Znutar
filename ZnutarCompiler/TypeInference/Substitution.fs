@@ -43,7 +43,9 @@ module Substitution =
                     |> MultiItemList.map (apply subst)
                     |> TypeTuple
 
-    /// Composition of substitutions.
+    /// Composition of substitutions: subst1 after subst2. I.e.
+    /// applying the result is equivalent to applying subst2 and
+    /// then subst1, so a newer substitution goes on the left.
     let compose (subst1 : Substitution) (subst2 : Substitution) : Substitution =
         subst2
             |> Map.map (fun _ value ->
@@ -95,7 +97,7 @@ module Substitution =
                 unify
                     (Type.apply subst1 right1)
                     (Type.apply subst1 right2)
-            return subst1 ++ subst2
+            return subst2 ++ subst1
         }
 
     /// Attempts to unify the given tuples.
@@ -107,8 +109,12 @@ module Substitution =
         (empty, pairs)
             ||> Result.foldM (fun acc (type1, type2) ->
                 result {
-                    let! subst = unify type1 type2
-                    return acc ++ subst
+                        // earlier items constrain later ones (e.g. 'a * 'a vs. int * bool)
+                    let! subst =
+                        unify
+                            (Type.apply acc type1)
+                            (Type.apply acc type2)
+                    return subst ++ acc
                 })
 
     module Expression =

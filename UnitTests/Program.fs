@@ -11,7 +11,7 @@ module Program =
             """
         let assemblyName = "Test"
         do! Compiler.compile
-                [| typeof<Console>.Assembly.Location |]
+                Array.empty
                 assemblyName
                 $"{assemblyName}.dll"
                 text
